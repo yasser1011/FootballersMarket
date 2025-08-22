@@ -1,0 +1,140 @@
+.title-style {
+    margin-top: 10px;
+    color: #222226;
+    text-align: center;
+    font: 700 16px / 1.25 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+}
+
+.top-players-row{
+    display: flex;
+    -webkit-box-align: center;
+    align-items: center;
+    padding-left: 8px;
+    padding-right: 16px;
+    /* background-color: green; */
+    /* width: 65%; */
+    height: 50px;
+}
+
+.trending-player-imgs{
+    position: relative;
+    margin-left: 12px;
+    /* background-color: red; */
+}
+
+.trending-player-img{
+    border: 1px solid rgba(34, 34, 38, 0.15);
+    border-radius: 50%;
+    object-fit: cover;
+    overflow: clip; 
+    
+}
+.trending-player-club-img{
+    position: absolute;
+    bottom: 0px;
+    right: -8px;
+    object-fit: cover;
+    border-style: none;
+    
+} 
+.trending-player-data{
+    display: flex;
+    -webkit-box-align: center;
+    overflow: hidden;
+    align-items: center;
+    -webkit-box-pack: justify;
+    justify-content: space-between;
+    -webkit-box-flex: 1;
+    flex-grow: 1;
+    
+}
+.trending-player-name-match{
+    display: flex;
+    -webkit-box-pack: center;
+    justify-content: center;
+    flex-direction: column;
+    overflow: hidden;
+    height: 56px;
+    margin-left: 16px;
+    margin-right: 8px;
+}
+.trending-player-name{
+    margin-bottom: 4px;
+    color: #222226;
+    text-align: left;
+    font: 400 14px / 1.14 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    text-overflow: ellipsis;
+    overflow-x: clip;
+    white-space: nowrap;
+    min-width: 0px;
+}
+.trending-player-match{
+    color: rgba(34, 34, 38, 0.45);
+    text-align: left;
+    font: 500 12px / 1.33 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    text-overflow: ellipsis;
+    overflow-x: clip;
+    white-space: nowrap;
+    min-width: 0px;
+}
+.trending-player-match-score-container{
+    flex-shrink: 0;
+}
+.trending-player-match-score-wrapper{
+    display: block;
+    unicode-bidi: isolate;
+}
+.trending-player-match-score-num{
+    opacity: 1;
+    animation: 330ms ease-in 0s 1 normal none running dhjQFA, 330ms ease-in 0s 1 normal none running gMuMjs;
+    position: relative;
+    transform: translate3d(0px, 0px, 0px);
+    background-size: 100% 200%;
+    background-image: linear-gradient(rgb(55, 77, 245) 50%, rgb(55, 77, 245) 50%);
+    display: flex;
+    -webkit-box-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    justify-content: center;
+    -webkit-box-flex: 0;
+    height: 24px;
+    width: 24px;
+    text-align: center;
+}
+.trending-player-match-score-num-span{
+    color: white;
+    cursor: inherit;
+    user-select: none;
+    text-align: center;
+    font-style: normal;
+    font-kerning: auto;
+    font-optical-sizing: auto;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    font-weight: 700;
+    font-stretch: normal;
+    font-family: "Sofascore Sans Condensed", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1;
+    font-variant: tabular-nums;
+    letter-spacing: -0.5px;
+}
+.trending-player-match-score-num-span-div{
+    display: block;
+    unicode-bidi: isolate;
+    color: white;
+    user-select: none;
+    text-align: center;
+    font-style: normal;
+    font-kerning: auto;
+    font-optical-sizing: auto;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    font-weight: 700;
+    font-stretch: normal;
+    font-family: "Sofascore Sans Condensed", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1;
+    font-variant: tabular-nums;
+    letter-spacing: -0.5px;
+}

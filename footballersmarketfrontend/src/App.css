@@ -1,0 +1,19 @@
+.App {
+  text-align: center;
+}
+
+.center-div{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-left{
+  display: flex;
+  align-items: center;
+  justify-content: left;
+}
+body{
+  background-color: #edf1f6;
+}
+

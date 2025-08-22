@@ -1,0 +1,63 @@
+.player-latest-avg-rating-wrapper{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-left: 10px;
+    margin-right: 10px;
+    /* background-color: red; */
+}
+
+.player-latest-avg-rating-title{
+    color: black;
+    /* text-align: left; */
+    font: 700 16px / 1.14 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+}
+
+.vertical-line-horizontal-wrapper{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* this height to position the rating line up or down */
+    margin-top: 50px;
+    height: 150px; 
+    background-color: rgba(229, 233, 239, 0.4);
+    border-radius: 8px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+.vertical-line-horizontal{
+  border: 1px solid black;
+  width: 95%;
+  /* background-color: red; */
+}
+
+.ratings-container{
+display: flex;
+justify-content: space-around;
+align-items: left;
+width: 90%;
+/* background-color: red; */
+}
+.ratings-item{
+    /* margin-left: 10px; */
+    display: flex;
+    flex-direction: column;
+justify-content: center;
+align-items: center;
+}
+
+.rating-item-number-style{
+    color: #222226;
+    text-align: center;
+    display: block;
+    font: 700 15px / 1.33 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+
+}
+
+.rating-item-date-style{
+    margin-bottom: 8px;
+    color: rgba(34, 34, 38, 0.45);
+    text-align: center;
+    font: 500 12px / 1.33 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+}

@@ -1,0 +1,208 @@
+.search{
+    width: 330px;
+    height: 13px;
+    display: flex;
+    align-items: center;
+    padding: 14px;
+    border-radius: 13px;
+    background-color: white;
+}
+
+.search-input{
+    font-size: 16px;
+    font-family: 'lexend', sans-serif;
+    color: #333333;
+    margin-left: 14px;
+    outline: none;
+    border: none;
+    background: transparent;
+    flex: 1; /*applies the same width of the search class*/
+}
+
+.search-input::placeholder,
+.search-icon{
+    color: rgba(0,0,0,0.5);
+
+}
+
+.search-result-box{
+  background-color: white;
+  position: absolute;
+  top: 53px;
+  z-index: 3;
+  padding-top: 10px;
+  padding-bottom: 8px;
+  border-radius: 4px;
+  box-shadow: 0 1px 8px 2px rgba(6, 6, 6, 0.41);
+  min-width: 360px;
+}
+
+.search-player-row-div{
+    display: flex;
+    align-items: center;
+    padding-bottom: 5px;
+    padding-top: 5px;
+}
+.search-player-row-div:hover{
+    background-color: #eff2f5;
+    cursor: pointer;
+}
+
+.search-player-row-info{
+    display: "flex";
+    flex-direction: column;
+    /* background-color: red; */
+    margin-left: 20px;
+    /* min-height: 50px; */
+}
+.search-player-row-img{
+    margin-left: 6px;
+    border-radius: 50%;
+    border: 1px solid rgba(34, 34, 38, 0.15);
+}
+
+.search-player-row-club-info{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 4px;
+    /* background-color: red; */
+}
+
+.search-player-row-name-style{
+  color: black;
+  text-align: left;
+  font: 16px / 1.14 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+}
+.search-player-row-clubname-style{
+  margin-left: 4px;
+  color: rgba(34, 34, 38, 0.45);;
+  text-align: left;
+  font: 600 13px / 1.33 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+  text-overflow: ellipsis;
+}
+
+.hover-pointer:hover{
+ cursor: pointer;
+ background-color: #555;
+}
+
+.navbar-user-data{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.toggle-button{
+    position: absolute;
+    top: 1.25rem;
+    right: 1rem;
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 21px;
+}
+
+.toggle-button .bar{
+    height: 3px;
+    width: 100%;
+    background-color: white;
+    border-radius: 10px;
+}
+
+.navbar-main{
+    display: flex;
+    align-items: center;
+}
+.nav-home-search-div{
+              display: flex;
+              align-items: center;
+              flex-grow: 1;
+}
+
+.nav-home-icon{
+    display: none;
+}
+
+.app-name{
+    /* textDecoration: "none", color: "white" */
+    text-decoration: none;
+    color: white;
+}
+
+
+@media (min-width: 851px) and (max-width: 1000px) {
+    
+    .app-name{
+        display: none;
+    }
+    .nav-home-icon{
+        display: flex;
+        align-items: flex-start;
+        color: white;
+    }
+    
+}
+
+@media (min-width: 600px) and (max-width: 850px) {
+    .search{
+        width: 230px;
+    }
+    .toggle-button{
+        display: flex;
+    }
+
+    .navbar-user-data{
+        display: none;
+        /* flex-direction: column; */
+    }
+    .navbar-main{
+        flex-direction: column;
+        align-items: center;
+    }
+    .nav-home-search-div{
+        width: 100%;
+    }
+
+    .navbar-user-data.active{
+        display: flex;
+        flex-direction: column;
+    }
+
+}
+
+@media (max-width: 600px) {
+    .search{
+        width: 230px;
+    }
+
+    .toggle-button{
+        display: flex;
+    }
+
+    .navbar-user-data{
+        display: none;
+        /* flex-direction: column; */
+    }
+    .navbar-main{
+        flex-direction: column;
+        align-items: center;
+    }
+    .nav-home-search-div{
+        width: 100%;
+    }
+
+    .app-name{
+        display: none;
+    }
+    .nav-home-icon{
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .navbar-user-data.active{
+        display: flex;
+        flex-direction: column;
+    }
+}

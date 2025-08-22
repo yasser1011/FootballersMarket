@@ -1,0 +1,32 @@
+.table-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.main-table-body tr:hover{
+    background-color: #eff2f5;
+}
+
+.table-player-col-style{
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    /* background-color: red; */
+}
+
+.table-player-col-name-style{
+    color: rgb(34, 37, 49);
+    margin-left: 10px;
+    font-size: medium;
+    font-weight: 500;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, segoe ui, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.table-player-col-number-style{
+    color: rgb(88, 102, 126);
+    font-size: 14px;
+    font-weight: 700;
+    margin-right: 10px;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, segoe ui, Roboto, Helvetica, Arial, sans-serif;
+}

@@ -1,0 +1,144 @@
+.player-details-info-main-card{
+    background-color: white;
+    width: 52rem;
+    height: 25rem;
+    border-radius: 17px;
+}
+
+.player-details-info-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.player-details-info-wrapper{
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    margin-top: 2rem;
+    width: 95%;
+    /* background-color: red; */
+
+}
+
+.player-details-header{
+    background: #273F6D;
+    border-top-left-radius: 17px;
+    border-top-right-radius: 17px;
+    width: 100%;
+    height: 120px;
+    /* background-color: red; */
+}
+.player-details-header-content{
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    
+}
+
+.player-details-header-content-name-wrapper{
+    margin: 20px;
+    display: flex;
+    justify-content: left;
+    align-items: left;
+    /* background-color: red; */
+    min-width: 35rem;
+}
+.player-details-header-content-name{
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: left;
+text-align: left;
+margin-left: 10px;
+height: 100px;
+/* background-color: red; */
+}
+.player-details-header-content-club-wrapper{
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    width: 18rem;
+    /* background-color: green; */
+
+}
+
+.player-details-content-wrapper{
+    display: flex;
+    /* justify-content: left; */
+    /* align-items: flex-start; */
+    /* background-color: red; */
+}
+
+.player-details-content-section-wrapper{
+    margin: 20px;
+    width: 50%;
+    /* background-color: brown; */
+
+}
+
+.player-details-content-grid-style{
+    display: grid;
+    column-gap: 24px;
+    row-gap: 31px;
+    justify-content: flex-start;
+    align-items: center;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 20px;
+    width: 100%;
+    /* background-color: blue; */
+
+}
+
+.vertical-line{
+    border-left: 1px solid rgb(228, 221, 221);
+    height: 279px;
+}
+.player-details-header-title{
+    color: #222226;
+    text-align: center;
+    display: block;
+    font: 500 16px / 1.14 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    text-overflow: ellipsis;
+    overflow-x: clip;
+    white-space: nowrap;
+    min-width: 0px;
+}
+
+.player-details-league-stats-title {
+    color: #222226;
+    text-align: center;
+    font: 700 16px / 1.25 "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+}
+
+
+
+@media (max-width: 1300px) {
+    .player-details-info-wrapper{
+      flex-direction: column;
+      gap: 20px;
+    }
+}
+
+@media (max-width: 850px) {
+    .player-details-info-main-card{
+        width: 420px;
+        
+    }
+    .player-details-header{
+        height: 180px;
+    }
+    .player-details-header-content-name-wrapper{
+        /* min-width: none; */
+        min-width: 50px;
+        margin-left: 0;
+    }
+    .player-details-header-content-name{
+        width: 180px;
+    }
+
+    .player-details-content-section-wrapper{
+        margin: 0;
+    }
+    
+}

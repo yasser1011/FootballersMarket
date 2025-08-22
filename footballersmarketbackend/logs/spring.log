@@ -1,0 +1,23 @@
+2025-08-23 00:02:23.108  INFO 25016 --- [main] c.y.f.FootballersmarketApplication       : Starting FootballersmarketApplication using Java 12 on SARIYLCD9094K48 with PID 25016 (D:\personal\pc\footballersmarket\target\classes started by asm in D:\personal\pc\footballersmarket)
+2025-08-23 00:02:23.171  INFO 25016 --- [main] c.y.f.FootballersmarketApplication       : No active profile set, falling back to 1 default profile: "default"
+2025-08-23 00:02:24.682  INFO 25016 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-08-23 00:02:25.092  INFO 25016 --- [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 390 ms. Found 7 JPA repository interfaces.
+2025-08-23 00:02:27.487  INFO 25016 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8083 (http)
+2025-08-23 00:02:27.503  INFO 25016 --- [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-08-23 00:02:27.503  INFO 25016 --- [main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.68]
+2025-08-23 00:02:27.741  INFO 25016 --- [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-08-23 00:02:27.741  INFO 25016 --- [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 4475 ms
+2025-08-23 00:02:28.049  INFO 25016 --- [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-08-23 00:02:28.101  INFO 25016 --- [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 5.6.12.Final
+2025-08-23 00:02:28.375  INFO 25016 --- [main] o.hibernate.annotations.common.Version   : HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2025-08-23 00:02:28.543  INFO 25016 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-08-23 00:02:28.874  INFO 25016 --- [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-08-23 00:02:28.890  INFO 25016 --- [main] org.hibernate.dialect.Dialect            : HHH000400: Using dialect: org.hibernate.dialect.PostgreSQLDialect
+2025-08-23 00:02:30.546  INFO 25016 --- [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+2025-08-23 00:02:30.562  INFO 25016 --- [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-08-23 00:02:32.582  INFO 25016 --- [main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@3338d706, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@f776b4a, org.springframework.security.web.context.SecurityContextPersistenceFilter@6a7b4ff5, org.springframework.security.web.header.HeaderWriterFilter@57fb6900, org.springframework.web.filter.CorsFilter@7890324e, org.springframework.security.web.authentication.logout.LogoutFilter@6bab8290, com.yasser.footballersmarket.security.JwtAuthenticationFilter@753c7411, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@3f7d73e3, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@1ae2028d, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@2fb555e8, org.springframework.security.web.session.SessionManagementFilter@5ac35b17, org.springframework.security.web.access.ExceptionTranslationFilter@1f67d37f, org.springframework.security.web.access.intercept.AuthorizationFilter@7ab8c972]
+2025-08-23 00:02:32.748  WARN 25016 --- [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-08-23 00:02:33.197  INFO 25016 --- [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8083 (http) with context path ''
+2025-08-23 00:02:33.213  INFO 25016 --- [main] c.y.f.FootballersmarketApplication       : Started FootballersmarketApplication in 10.83 seconds (JVM running for 11.614)
+2025-08-23 00:02:33.734  INFO 25016 --- [scheduling-1] c.y.f.r.PlayersDataFetchingScheduler     : page number 1
+2025-08-23 00:02:33.734  INFO 25016 --- [scheduling-1] c.y.f.r.PlayersDataFetchingScheduler     : fetching url https://v3.football.api-sports.io/players?league=39&season=2025&team=49&page=1
