@@ -35,3 +35,4 @@ build/
 postgres/*
 src/main/resources/*
 src/test/resources/*
+logs/*
