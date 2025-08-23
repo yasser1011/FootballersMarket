@@ -48,15 +48,15 @@ public class PlayersDataFetchingProcessingService {
         PlayerInfo playerInfo = playerDto.getPlayer();
         Long playerId = playerInfo.getId();
 
-//        String playerName = playerInfo.getName();
-        String playerName = "";
-        String playerInfoFirstname = playerInfo.getFirstname();
-        String playerInfoLastname = playerInfo.getLastname();
-        if(playerInfoFirstname == null || playerInfoLastname == null){
-            playerName = playerInfo.getName();
-        }else{
-            playerName = playerInfo.getFirstname() + " " + playerInfo.getLastname();
-        }
+        String playerName = playerInfo.getName();
+//        String playerName = "";
+//        String playerInfoFirstname = playerInfo.getFirstname();
+//        String playerInfoLastname = playerInfo.getLastname();
+//        if(playerInfoFirstname == null || playerInfoLastname == null){
+//            playerName = playerInfo.getName();
+//        }else{
+//            playerName = playerInfo.getFirstname() + " " + playerInfo.getLastname();
+//        }
         PlayerLeagueStats playerLeagueStatsInHashmap = playersMap.get(playerId);
 
         String playerCurrentRecordClub = playerDto.getStatistics().get(playerDto.getStatistics().size() - 1)
