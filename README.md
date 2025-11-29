@@ -1,4 +1,4 @@
-<a href="https://playermarketcap.live" target="_blank">Link</a>
+[playermarketcap.live](https://playermarketcap.live)
 
 This is a stock market application but instead of a normal companies stock market, it's stock market for football players where users can buy stocks of their favourite players based on the prediction of their performances along the season.
 
