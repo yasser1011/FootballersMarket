@@ -103,7 +103,16 @@ const NavUserData = () => {
           setAuthModalType={setAuthModalType}
         />
       )}
-      <div className="navbar-user-data">
+      <a
+        href="#"
+        className="toggle-button"
+        onClick={() => navUserLinksRef.current.classList.toggle("active")}
+      >
+        <span className="bar"></span>
+        <span className="bar"></span>
+        <span className="bar"></span>
+      </a>
+      <div ref={navUserLinksRef} className="navbar-user-data">
         <Link
           style={{
             textDecoration: "none",
