@@ -40,6 +40,7 @@ public class PlayersDataFetchingScheduler {
     private final RestTemplate restTemplate;
     private final RapidApiConfig rapidApiConfig;
     private final ScoresConfig scoresConfig;
+    private final Util util;
     private final PlayersDataFetchingProcessingService playersDataFetchingProcessing;
     private final PlayersDataSavingService playersDataSavingService;
     private final SofascoreService sofascoreService;
@@ -74,7 +75,8 @@ public class PlayersDataFetchingScheduler {
                                         PlayerUserCurrentBoughtService playerUserCurrBoughtService,
                                         RestTemplate restTemplate,
                                         ScoresService scoresService,
-                                        ScoresConfig scoresConfig) {
+                                        ScoresConfig scoresConfig,
+                                        Util util) {
         this.webClient = webClient;
         this.rapidApiConfig = rapidApiConfig;
         this.scoresConfig = scoresConfig;
@@ -88,12 +90,15 @@ public class PlayersDataFetchingScheduler {
         this.playerUserCurrBoughtService = playerUserCurrBoughtService;
         this.restTemplate = restTemplate;
         this.scoresService = scoresService;
+        this.util = util;
     }
 
     // 2 am every day
-    @Scheduled(cron="0 0 2 * * *", zone="Europe/Istanbul")
+    @Scheduled(cron="0 0 0 * * *", zone="Europe/Istanbul")
 //    @Scheduled(initialDelay = 500, fixedDelay = Long.MAX_VALUE)
     public void rapidApiSchedulerRunner() throws InterruptedException, JsonProcessingException {
+        util.logMemoryUsage("Start of Scheduler");
+
         List<HashMap<String, String>> schedulerTeamsSearchInput = rapidApiConfig.getSchedulerTeamsSearchInput();
         for (HashMap<String, String> searchTeam: schedulerTeamsSearchInput){
             int totalNumPages = 1;
@@ -104,18 +109,20 @@ public class PlayersDataFetchingScheduler {
 
                 PlayersApiResponse playersDataResponse = fetchPlayersData(fullUrl);
                 // for rate limiting
-                Thread.sleep(10000);
 
                 if(playersDataResponse != null){
                     logger.info("page number {} finished", pageNum);
                     playersDataFetchingProcessing.addFetchedPlayersList(playersDataResponse.getResponse());
                     totalNumPages = playersDataResponse.getTotalNoOfPages();
                 }
+                Thread.sleep(10000);
             }
         }
+        util.logMemoryUsage("After playersMap creation");
 //        savePlayersMap();
         // process and clean the fetched players map
         PlayersDataSavingDto playersDataSavingDto = playersDataFetchingProcessing.triggerPlayersMapProcess();
+        util.logMemoryUsage("Before savePlayersData");
         // send dto to saving service
         playersDataSavingService.savePlayersData(playersDataSavingDto);
     }
@@ -136,16 +143,16 @@ public class PlayersDataFetchingScheduler {
         try {
             ResponseEntity<PlayersApiResponse> res = restTemplate.exchange(
                     String.valueOf(fullUrl), HttpMethod.GET, requestEntity, PlayersApiResponse.class);
+
             if(res.getBody() == null){
                 logger.error("error in fetching players data url: {}", fullUrl);
                 return null;
             }
 
-//            for (PlayerResponse player : res.getBody().getResponse()) {
-//                PlayerLeagueStats playerTotalLeagueStats = createPlayerEntity(player);
-//
-//                playersMap.put(playerTotalLeagueStats.getPlayer().getId(), playerTotalLeagueStats);
-//            }
+            logger.info("URL: {} | Status: {} | list Length: {}",
+                    fullUrl,
+                    res.getStatusCode(),
+                    res.getBody().getResponse().size());
             return res.getBody();
         }catch (Exception e){
             logger.error(e.getMessage());

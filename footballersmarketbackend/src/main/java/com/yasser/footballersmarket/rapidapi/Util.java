@@ -1,6 +1,8 @@
 package com.yasser.footballersmarket.rapidapi;
 
 import com.yasser.footballersmarket.player.dto.PlayerExternalServiceBasicDetails;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -10,6 +12,8 @@ import java.util.StringTokenizer;
 
 @Component
 public class Util {
+    private final Logger logger = LoggerFactory.getLogger(Util.class);
+
     public String determinePlayerSchedulerMultipleRecordsClub(String[] clubList, String externalServiceTeamName) {
         if (clubList.length < 1) return "";
         if (externalServiceTeamName == null || externalServiceTeamName.isEmpty()) return clubList[0];
@@ -69,5 +73,12 @@ public class Util {
 
         return LocalDate.now().isEqual(summerTransferMarketEndDate) ||
                 LocalDate.now().isEqual(winterTransferMarketEndDate);
+    }
+
+    public void logMemoryUsage(String areaName) {
+        Runtime rt = Runtime.getRuntime();
+        long usedMB = (rt.totalMemory() - rt.freeMemory()) / 1024 / 1024;
+        long maxMB = rt.maxMemory() / 1024 / 1024;
+        logger.info("Area: {} | Used Memory: {}MB / Max: {}MB", areaName, usedMB, maxMB);
     }
 }
