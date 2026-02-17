@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import HomeTable from "./HomeTable";
 import HomeHeaderCards from "../cardssection/HomeHeaderCards";
 import { styled } from "@mui/material/styles";
@@ -18,6 +18,7 @@ import {
 import "./Home.css";
 import { useState } from "react";
 import { apiBaseUrl } from "../config/Config";
+import { HomePageContext } from "../Context/HomePageContext";
 
 export const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -31,12 +32,15 @@ export const StyledTableCell = styled(TableCell)(({ theme }) => ({
 }));
 
 const Home = () => {
-  const [paginationOptions, setPaginationOptions] = useState({
-    disabled: true,
-    currentPage: 0,
-    rowsPerPage: 0,
-    totalCount: 0,
-  });
+  // const [paginationOptions, setPaginationOptions] = useState({
+  //   disabled: true,
+  //   currentPage: 0,
+  //   rowsPerPage: 0,
+  //   totalCount: 0,
+  // });
+
+  const { paginationOptions, setPaginationOptions } =
+    useContext(HomePageContext);
 
   const handleChangePage = (event, newPage) => {
     setPaginationOptions((currOptions) => {

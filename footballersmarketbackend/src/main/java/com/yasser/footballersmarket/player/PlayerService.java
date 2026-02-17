@@ -96,9 +96,14 @@ public class PlayerService {
             logger.error("Couldn't get player details from external service, sofascoreId: {}", sofascoreId);
             throw new IllegalStateException("Player not found in external service");
         }
-
         // Update league stats
         PlayerLeagueStats leagueStats = externalPlayer.getLeagueStats();
+        // if no data early return and don't update db
+        if(leagueStats == null){
+            playerDto.setRecentMatches(externalPlayer.getRecentMatches());
+            return playerDto;
+        }
+
         playerDto.setLeagueStats(leagueStats);
         playerDto.setRecentMatches(externalPlayer.getRecentMatches());
 
@@ -191,7 +196,7 @@ public class PlayerService {
     }
 
     public PlayerDetailsResDto getPlayerBySofascoreId(Integer sofascoreId){
-        Player oneBySofascoreId = playerRepository.findOneBySofascoreId(sofascoreId);
+        Player oneBySofascoreId = playerRepository.findFirstBySofascoreId(sofascoreId);
         return convertPlayerEntityToPlayerDto(oneBySofascoreId);
     }
 

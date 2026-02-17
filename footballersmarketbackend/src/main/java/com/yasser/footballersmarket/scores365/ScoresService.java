@@ -197,9 +197,14 @@ public class ScoresService {
         playerDto.setClubPhotoUrl(scoresConfig.getScoresImageBaseUrl() + scoresConfig.getScoresClubsImageEndPoint() + playerStatDetailsDto.getClubId());
 
         com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats leagueStats = playerStatDetailsDto.getLeagueStats();
-        PlayerLeagueStats playerEntityLeagueStats = new PlayerLeagueStats(leagueStats.getGoals(),
-                leagueStats.getAssists(), leagueStats.getAppearances(), leagueStats.getRating());
-        playerDto.setLeagueStats(playerEntityLeagueStats);
+        if(leagueStats == null){
+            playerDto.setLeagueStats(null);
+        }else{
+            PlayerLeagueStats playerEntityLeagueStats = new PlayerLeagueStats(leagueStats.getGoals(),
+                    leagueStats.getAssists(), leagueStats.getAppearances(), leagueStats.getRating());
+            playerDto.setLeagueStats(playerEntityLeagueStats);
+        }
+
 
         playerDto.setRecentMatches(recentMatches);
 

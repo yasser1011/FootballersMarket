@@ -117,15 +117,10 @@ export const PlayerDetailsInfo = ({
         // get from player service by rapid id
         fetchPlayerDetailsInternal(id);
       } else if (
-        // because from search I already fetched his correct data no need to fetch again
-        state.srcLocation === "search" // need to just set player last ratings in corresponding state
+        // have the correct player data but need to fetch latest ratings
+        state.srcLocation === "search" ||
+        state.player.areClubStatsUpdated
       ) {
-        setPlayerDetails(state.player);
-        setPlayerLastRatings(state.player.recentMatches);
-        setSelectedPlayerSofascoreId(state.player.externalServicePlayerId);
-        // setFetchStatus(FETCH_STATUS.SUCCESS);
-      } else if (state.player.areClubStatsUpdated) {
-        // need to fetch last ratings
         let urlParams = `sofascoreId=${state.player.externalServicePlayerId}`;
         setPlayerDetails(state.player);
         fetchPlayerLastRatings(urlParams);

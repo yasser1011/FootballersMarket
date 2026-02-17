@@ -23,6 +23,8 @@ public class PlayerDetailsDto {
     private PlayerLeagueStats leagueStats;
     private List<PlayerRecentMatch> recentMatches;
 
+    private final Double DEFAULT_RATING = 6.5;
+
     public PlayerDetailsDto() {
     }
 
@@ -44,6 +46,12 @@ public class PlayerDetailsDto {
         this.dateOfBirth = LocalDate.parse(safeGetString(playerDetObj, "title"), formatter);
 
         List<Map<String, Object>> statList = safeGetListMap(player, "highlightStats");
+        if(statList == null){
+            this.leagueStats = null;
+            this.recentMatches = new ArrayList<>();
+            return;
+        }
+
         Map<String, Object> leagueStatsObj = statList.get(0);
 
         List<Map<String, Object>> stats = safeGetListMap(leagueStatsObj, "stats");
@@ -67,11 +75,12 @@ public class PlayerDetailsDto {
         if (assistsMatcher.find())
             assists = assistsMatcher.group();
 
-        Map<String, Object> ratingObj = stats.get(3);
-        String rating = safeGetString(ratingObj, "value");
+//        Map<String, Object> ratingObj = stats.get(3);
+//        String rating = safeGetString(ratingObj, "value");
+        Double ratingVal = parsePlayerRatingValue(stats);
 
         this.leagueStats = new PlayerLeagueStats(Integer.valueOf(appearances),
-                Integer.valueOf(goals), Integer.valueOf(assists), Double.valueOf(rating));
+                Integer.valueOf(goals), Integer.valueOf(assists), ratingVal);
         Map<String, Object> lastMatches = safeGetMap(player, "lastMatches");
         if (lastMatches != null)
             this.recentMatches = parsePlayerRecentMatchesRating(safeGetListMap(lastMatches, "games"));
@@ -84,6 +93,21 @@ public class PlayerDetailsDto {
         }
         Map<String,Object> currentClubObj = competitors.get(0);
         this.clubName = safeGetString(currentClubObj, "name");
+    }
+
+    private Double parsePlayerRatingValue(List<Map<String,Object>> stats){
+        for(Map<String,Object> statObj: stats){
+            String statName = safeGetString(statObj, "name");
+            if(statName == null || !statName.equalsIgnoreCase("rating"))
+                continue;
+            String rating = safeGetString(statObj, "value");
+            try {
+                return Double.parseDouble(rating);
+            } catch (NumberFormatException e) {
+                return DEFAULT_RATING;
+            }
+        }
+        return DEFAULT_RATING;
     }
 
     private List<PlayerRecentMatch> parsePlayerRecentMatchesRating(List<Map<String,Object>> games){
@@ -124,7 +148,7 @@ public class PlayerDetailsDto {
             Map<String, Object> minutesPlayedObj = statsListObj.get(0);
             if (minutesPlayedObj == null || Integer.parseInt(safeGetString(minutesPlayedObj, "value")) <= 10) break;
             Map<String, Object> ratingObj = statsListObj.get(4);
-            Double rating = 6.5;
+            Double rating = DEFAULT_RATING;
             if (ratingObj != null)
                 rating = Double.valueOf(safeGetString(ratingObj, "value"));
             playerRecentMatches.add(new PlayerRecentMatch(opponentName, rating, opponentId, startDate));

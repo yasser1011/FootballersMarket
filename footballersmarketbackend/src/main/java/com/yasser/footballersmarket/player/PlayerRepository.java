@@ -57,7 +57,7 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     @Query("UPDATE Player p SET p.updatedBy = 'sofascore' where p.id = ?1")
     void updatePlayerUpdatedByStatusToSofascore(Long playerId);
 
-    Player findOneBySofascoreId(Integer sofascoreId);
+    Player findFirstBySofascoreId(Integer sofascoreId);
 
     Player findOneByIdAndSofascoreId(Long playerId, Integer sofascoreId);
 

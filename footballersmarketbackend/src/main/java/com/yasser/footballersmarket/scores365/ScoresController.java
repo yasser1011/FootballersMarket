@@ -4,6 +4,7 @@ import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.scores365.dto.FeaturedMatch;
 import com.yasser.footballersmarket.scores365.dto.FeaturedPlayersResponse;
+import com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats;
 import com.yasser.footballersmarket.sofascore.dto.SearchPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +71,14 @@ public class ScoresController {
                     logger.info("not found in database from external service id, " +
                             "getting player details from scores, scores id {}", sofascoreId);
 
-                    return ResponseEntity.ok(scoresService.getPlayerEntityFromExternalService(sofascoreId));
+                    PlayerDetailsResDto playerEntityFromExternalService = scoresService.getPlayerEntityFromExternalService(sofascoreId);
+                    if(playerEntityFromExternalService.getLeagueStats() == null){
+                        com.yasser.footballersmarket.playerstats.PlayerLeagueStats playerEntityLeagueStats =
+                                new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(0,
+                                0, 0, 6.5);
+                        playerEntityFromExternalService.setLeagueStats(playerEntityLeagueStats);
+                    }
+                    return ResponseEntity.ok(playerEntityFromExternalService);
                 }
             }else{
                 logger.info("getting player details from scores, player id {} scores id {}",
@@ -79,7 +87,7 @@ public class ScoresController {
                 return ResponseEntity.ok(playerDetailsById);
             }
         }catch (Exception e){
-            logger.error("scores get player details error {}", e.getMessage());
+            logger.error("scores get player details error {} external id {}", e.getMessage(), sofascoreId);
             return ResponseEntity.internalServerError().body("error occurred");
         }
 
