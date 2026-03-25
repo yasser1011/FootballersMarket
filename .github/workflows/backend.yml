@@ -16,17 +16,17 @@ jobs:
       run:
         working-directory: backend
     steps:
-      name: checkout code
-      uses: actions/checkout@v4
+      - name: checkout code
+        uses: actions/checkout@v4
 
-      name: setup java 17 and maven
-      uses: actions/setup-java@v4
-      with:
-        java-version: "17"
-        distribution: "correto"
-        cache: "maven"
+      - name: setup java 17 and maven
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "correto"
+          cache: "maven"
 
-      name: generate jar with maven
-      run: |
-        mvn clean package
-        ls
+      - name: generate jar with maven
+        run: |
+          mvn clean package
+          ls
