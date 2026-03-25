@@ -1,4 +1,4 @@
-name: Spring Boot Pipeline Deployment
+name: React Pipeline Deployment
 
 on:
   push:
@@ -16,6 +16,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
       - name: Test
         run: |
           ls
