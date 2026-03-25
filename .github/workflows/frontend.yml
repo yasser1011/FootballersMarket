@@ -1,0 +1,21 @@
+name: Spring Boot Pipeline Deployment
+
+on:
+  push:
+    paths:
+      - ".github/workflows/frontend.yml"
+      - "frontend/**"
+    branches:
+      - "main"
+
+jobs:
+  build-deploy:
+    name: Build and Deploy React app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Test
+        run: |
+          ls
