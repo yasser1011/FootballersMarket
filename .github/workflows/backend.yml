@@ -29,4 +29,4 @@ jobs:
       - name: generate jar with maven
         run: |
           mvn clean package
-          ls
+          ls -h
