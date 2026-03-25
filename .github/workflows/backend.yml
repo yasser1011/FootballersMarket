@@ -29,6 +29,7 @@ jobs:
       - name: generate jar with maven
         env: # to have env variables available in the tests
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          X_RAPIDAPI_KEY: ${{ secrets.X_RAPIDAPI_KEY }}
         run: |
           mvn clean package
           ls -h
