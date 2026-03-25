@@ -1,0 +1,32 @@
+name: Spring Boot Pipeline Deployment
+
+on:
+  push:
+    paths:
+      - "./github/workflows/backend.yml"
+      - "./backend/**"
+    branches:
+      - "main"
+
+jobs:
+  build-deploy:
+    name: Build and Deploy Spring app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      name: checkout code
+      uses: actions/checkout@v4
+
+      name: setup java 17 and maven
+      uses: actions/setup-java@v4
+      with:
+        java-version: "17"
+        distribution: "correto"
+        cache: "maven"
+
+      name: generate jar with maven
+      run: |
+        mvn clean package
+        ls

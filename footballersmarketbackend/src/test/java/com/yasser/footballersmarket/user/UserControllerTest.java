@@ -10,6 +10,7 @@ import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
 import com.yasser.footballersmarket.scores365.ScoresService;
+import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import com.yasser.footballersmarket.transaction.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,12 +38,12 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@TestPropertySource(
-        locations = "classpath:application-integrationtest.properties")
+//@SpringBootTest
+//@TestPropertySource(
+//        locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc
-@ExtendWith(MockitoExtension.class)
-class UserControllerTest {
+//@ExtendWith(MockitoExtension.class)
+class UserControllerTest extends BaseIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;

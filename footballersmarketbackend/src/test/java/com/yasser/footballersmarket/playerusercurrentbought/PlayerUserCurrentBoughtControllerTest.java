@@ -7,6 +7,7 @@ import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.security.JwtService;
+import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import com.yasser.footballersmarket.user.AuthService;
 import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserService;
@@ -46,12 +47,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 //@WebMvcTest(PlayerUserCurrentBoughtController.class)
-@SpringBootTest
-@TestPropertySource(
-        locations = "classpath:application-integrationtest.properties")
+//@SpringBootTest
+//@TestPropertySource(
+//        locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc
 //@ExtendWith(MockitoExtension.class)
-class PlayerUserCurrentBoughtControllerTest {
+class PlayerUserCurrentBoughtControllerTest extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());

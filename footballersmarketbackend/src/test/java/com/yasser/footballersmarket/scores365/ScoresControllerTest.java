@@ -8,6 +8,7 @@ import com.yasser.footballersmarket.scores365.dto.FeaturedPlayersResponse;
 import com.yasser.footballersmarket.sofascore.dto.SearchPlayerEntity;
 import com.yasser.footballersmarket.sofascore.dto.TrendingPlayer;
 import com.yasser.footballersmarket.sofascore.dto.TrendingPlayersResponse;
+import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import me.xuender.unidecode.Unidecode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -30,10 +32,12 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+//@SpringBootTest
+//@TestPropertySource(
+//        locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc
-@ExtendWith(MockitoExtension.class)
-class ScoresControllerTest {
+//@ExtendWith(MockitoExtension.class)
+class ScoresControllerTest extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());

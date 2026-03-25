@@ -8,6 +8,7 @@ import com.yasser.footballersmarket.scores365.dto.FeaturedPlayersResponse;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
 import com.yasser.footballersmarket.sofascore.dto.TrendingPlayer;
 import com.yasser.footballersmarket.sofascore.dto.TrendingPlayersResponse;
+import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -31,10 +33,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // 1- get players from sofascore by mocking and make sure players were not found in db with today's date
 // 2- get players from db with today's date players
 
-@SpringBootTest
+//@SpringBootTest
+//@TestPropertySource(
+//        locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc
-@ExtendWith(MockitoExtension.class)
-class FeaturedPlayerServiceTest {
+//@ExtendWith(MockitoExtension.class)
+class FeaturedPlayerServiceTest extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired

@@ -11,6 +11,7 @@ import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBou
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
 import com.yasser.footballersmarket.scores365.ScoresService;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
+import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import com.yasser.footballersmarket.transaction.dto.TransactionRequest;
 import com.yasser.footballersmarket.transaction.dto.TransactionResponse;
 import com.yasser.footballersmarket.user.User;
@@ -36,11 +37,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@TestPropertySource(
-        locations = "classpath:application-integrationtest.properties")
+//@SpringBootTest
+//@TestPropertySource(
+//        locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc
-class TransactionControllerTest {
+class TransactionControllerTest extends BaseIntegrationTest {
 
     @Autowired
     private UserService userService;

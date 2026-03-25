@@ -3,6 +3,7 @@ package com.yasser.footballersmarket.player;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.scores365.ScoresService;
+import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,11 +21,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
-@SpringBootTest
-@TestPropertySource(
-        locations = "classpath:application-integrationtest.properties")
-@ExtendWith(MockitoExtension.class)
-class PlayerServiceTest {
+//@SpringBootTest
+//@TestPropertySource(
+//        locations = "classpath:application-integrationtest.properties")
+//@ExtendWith(MockitoExtension.class)
+class PlayerServiceTest extends BaseIntegrationTest {
 
     @Autowired
     private PlayerService playerService;
