@@ -26,10 +26,19 @@ jobs:
           distribution: "corretto"
           cache: "maven"
 
-      - name: generate jar with maven
-        env: # to have env variables available in the tests
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          X_RAPIDAPI_KEY: ${{ secrets.X_RAPIDAPI_KEY }}
+      # - name: generate jar with maven
+      #   env: # to have env variables available in the tests
+      #     JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      #     X_RAPIDAPI_KEY: ${{ secrets.X_RAPIDAPI_KEY }}
+      #   run: |
+      #     mvn clean package
+      #     ls -h
+
+      - name: setup ssh key
         run: |
-          mvn clean package
-          ls -h
+          mkdir ~/ssh
+          cd ~/ssh
+          echo ${{ secrets.AWS_PRIVATE_KEY }} > private_key.pem
+          chmod 600 private_key.pem
+          ssh -i private_key.pem ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}} \ 
+            "echo success ssh"
