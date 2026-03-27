@@ -26,13 +26,13 @@ jobs:
           distribution: "corretto"
           cache: "maven"
 
-      # - name: generate jar with maven
-      #   env: # to have env variables available in the tests
-      #     JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-      #     X_RAPIDAPI_KEY: ${{ secrets.X_RAPIDAPI_KEY }}
-      #   run: |
-      #     mvn clean package
-      #     ls -h
+      - name: generate jar with maven
+        env: # to have env variables available in the tests
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          X_RAPIDAPI_KEY: ${{ secrets.X_RAPIDAPI_KEY }}
+        run: |
+          mvn clean package
+          ls -h
 
       - name: setup ssh key
         run: |
@@ -41,3 +41,18 @@ jobs:
           chmod 600 ~/.ssh/aws_key.pem
           ssh-keyscan -H ${{ secrets.AWS_SERVER_IP }} >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/aws_key.pem ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}} "echo 'success ssh'"
+
+      - name: generate env file
+        run:
+          ssh -i ~/.ssh/aws_key.pem ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}} << 'EOF'
+          echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" > ~/footballersmarketspringbackend/.env
+          echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> ~/footballersmarketspringbackend/.env
+          echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> ~/footballersmarketspringbackend/.env
+          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> ~/footballersmarketspringbackend/.env
+          echo "X_RAPIDAPI_KEY=${{ secrets.X_RAPIDAPI_KEY }}" >> ~/footballersmarketspringbackend/.env
+          EOF
+      - name: copy jar and dockerfile to aws server
+        run: |
+          scp -i ~/.ssh/aws_key.pem target/*.jar ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}}:~/footballersmarketspringbackend/footballersmarketapi.jar
+          scp -i ~/.ssh/aws_key.pem Dockerfile ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}}:~/footballersmarketspringbackend/Dockerfile
+          ssh -i ~/.ssh/aws_key.pem ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}} "ls ~/footballersmarketspringbackend"
