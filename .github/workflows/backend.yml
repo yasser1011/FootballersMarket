@@ -44,12 +44,13 @@ jobs:
 
       - name: generate env file
         run:
+          # prettier-ignore
           ssh -i ~/.ssh/aws_key.pem ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}} << 'EOF'
-          echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" > ~/footballersmarketspringbackend/.env
-          echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> ~/footballersmarketspringbackend/.env
-          echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> ~/footballersmarketspringbackend/.env
-          echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> ~/footballersmarketspringbackend/.env
-          echo "X_RAPIDAPI_KEY=${{ secrets.X_RAPIDAPI_KEY }}" >> ~/footballersmarketspringbackend/.env
+            echo "SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}" > ~/footballersmarketspringbackend/.env
+            echo "SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}" >> ~/footballersmarketspringbackend/.env
+            echo "SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}" >> ~/footballersmarketspringbackend/.env
+            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> ~/footballersmarketspringbackend/.env
+            echo "X_RAPIDAPI_KEY=${{ secrets.X_RAPIDAPI_KEY }}" >> ~/footballersmarketspringbackend/.env
           EOF
       - name: copy jar and dockerfile to aws server
         run: |
