@@ -19,6 +19,39 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v4
 
-      - name: Test
+      - name: Set up npm
+        uses: actions/setup-node@v4
+        with:
+          cache-dependency-path: package-lock.json
+          node-version: "lts/*"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: setup ssh key
         run: |
-          ls
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > ~/.ssh/aws_key.pem
+          chmod 600 ~/.ssh/aws_key.pem
+          ssh-keyscan -H ${{ secrets.AWS_SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: build react app
+        run: npm run build
+
+      - name: copy build and dockerfile to aws server
+        run: |
+          scp -r -i ~/.ssh/aws_key.pem build ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }}:~/footballersmarketreactfrontend/build
+          scp -i ~/.ssh/aws_key.pem Dockerfile ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }}:~/footballersmarketreactfrontend/Dockerfile
+
+      - name: restart docker containers
+        run: |
+          ssh -i ~/.ssh/aws_key.pem ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }} "
+            cd ~/footballersmarketreactfrontend
+            docker build -t footballersmarketfrontend:2.0 . &&
+            docker stop footballersmarketfrontapp || true &&
+            docker rm footballersmarketfrontapp || true &&
+            docker image prune -f &&
+            docker run -d --name footballersmarketfrontapp -p 5000:3000 --net footballers-market-network footballersmarketfrontend:2.0 &&
+            docker ps
+          "

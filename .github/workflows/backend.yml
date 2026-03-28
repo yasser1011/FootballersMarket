@@ -68,4 +68,5 @@ jobs:
             docker rm footballersmarketapi || true &&
             docker image prune -f &&
             docker run -d --name footballersmarketapi -p 8083:8083 -v ./logs:/footballersmarketapp/logs --net footballers-market-network footballersmarketbackend:1.0 &&
-            docker ps"
+            docker ps
+            rm .env"
