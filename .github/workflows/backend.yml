@@ -42,18 +42,19 @@ jobs:
           ssh-keyscan -H ${{ secrets.AWS_SERVER_IP }} >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/aws_key.pem ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}} "echo 'success ssh'"
 
-      - name: generate env file on the remote aws server
+      - name: generate env file on github runner
         run: |
-          ssh -i ~/.ssh/aws_key.pem ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }} "cat > ~/footballersmarketspringbackend/.env << 'EOF'
-          SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
-          SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
-          SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
-          JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-          X_RAPIDAPI_KEY=${{ secrets.X_RAPIDAPI_KEY }}
+          cat > .env << 'EOF'
+            SPRING_DATASOURCE_URL=${{ secrets.SPRING_DATASOURCE_URL }}
+            SPRING_DATASOURCE_USERNAME=${{ secrets.SPRING_DATASOURCE_USERNAME }}
+            SPRING_DATASOURCE_PASSWORD=${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+            X_RAPIDAPI_KEY=${{ secrets.X_RAPIDAPI_KEY }}
           EOF
-            ls ~/footballersmarketspringbackend"
-      - name: copy jar and dockerfile to aws server
+          ls -a
+      - name: copy jar, dockerfile, .env to aws server
         run: |
           scp -i ~/.ssh/aws_key.pem target/*.jar ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}}:~/footballersmarketspringbackend/footballersmarketapi.jar
           scp -i ~/.ssh/aws_key.pem Dockerfile ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}}:~/footballersmarketspringbackend/Dockerfile
-          ssh -i ~/.ssh/aws_key.pem ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}} "ls ~/footballersmarketspringbackend"
+          scp -i ~/.ssh/aws_key.pem .env ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}}:~/footballersmarketspringbackend/.env
+          ssh -i ~/.ssh/aws_key.pem ${{secrets.AWS_SERVER_USER}}@${{secrets.AWS_SERVER_IP}} "ls -a ~/footballersmarketspringbackend"
