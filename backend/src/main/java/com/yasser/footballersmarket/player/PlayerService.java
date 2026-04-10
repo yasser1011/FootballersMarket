@@ -25,95 +25,33 @@ import java.util.List;
 @Transactional
 public class PlayerService {
     private final PlayerRepository playerRepository;
-    private final ScoresService scoresService;
     private final PlayerLeagueStatsService playerLeagueStatsService;
-    Logger logger = LoggerFactory.getLogger(PlayerService.class);
+    private final Logger logger = LoggerFactory.getLogger(PlayerService.class);
 
     public PlayerService(PlayerRepository playerRepository,
-                         PlayerLeagueStatsService playerLeagueStatsService, ScoresService scoresService) {
+                         PlayerLeagueStatsService playerLeagueStatsService) {
         this.playerRepository = playerRepository;
         this.playerLeagueStatsService = playerLeagueStatsService;
-        this.scoresService = scoresService;
     }
 
-    public PlayerDetailsResDto getPlayerDetailsById(Long rapidApiId, Integer sofascoreId){
-        // todo
-        // check stats updated flag if not get stats from sofascore service and update db stats and add updated by sofascore
-
-        // 1- check if both ids available -> means he was already checked from before and his stats not updated
-        // get stats from sofascore service and update db data
-        // will need to fetch his details again anyway to get CL stats
-        // 2- check if rapid id available
-        // get player from db and check status flag to update his local data
-        // 3- check if sofascore id available
-        // get player from sofascore and check status flag to update his local data
-        logger.info("getting player details player id {} sofascore id {}", rapidApiId, sofascoreId);
-        try {
-            PlayerDetailsResDto playerDto = null;
-            // if both available just return stats from sofascore and update db stats
-            if (rapidApiId != 0 && sofascoreId != 0){
-                playerDto = getPlayerDbDetails(rapidApiId);
-                return updatePlayerStatsInDbAndReturnUpdatedStatsPlayerResponse(playerDto);
-            }
-            else if (rapidApiId != 0){
-                logger.info("getting player from database player id {}", rapidApiId);
-                playerDto = getPlayerDbDetails(rapidApiId);
-            }else if(sofascoreId != 0){
-                logger.info("getting player from db by sofascore id {}", sofascoreId);
-                playerDto = getPlayerBySofascoreId(sofascoreId);
-            }
-            if (playerDto == null){
-                logger.error("error retrieving player details player id {} sofascore id {}", rapidApiId, sofascoreId);
-                return null;
-            }
-
-            if (!playerDto.getAreClubStatsUpdated()){
-                return updatePlayerStatsInDbAndReturnUpdatedStatsPlayerResponse(playerDto);
-            }
-            logger.info("retrieved player details from database sofascore id {}, player id {}", sofascoreId, rapidApiId);
-            return playerDto;
-        }catch(Exception e){
-            logger.error("error getting player details player id {} , sofascore id {}", rapidApiId, sofascoreId);
-            throw new IllegalStateException("couldn't get player details player id "
-                    + rapidApiId + " , sofascore id " + sofascoreId + " error " + e.getMessage());
-        }
-    }
-
-    private PlayerLeagueStatsDetails createLeagueStatsDetails(PlayerLeagueStats leagueStats) {
-        Double rating = leagueStats.getRating();
-        Integer goals = leagueStats.getGoals();
-        Integer total = goals + leagueStats.getAssists();
-        Integer totalNumOfGames = leagueStats.getTotalNumOfGames();
-        return new PlayerLeagueStatsDetails(rating, goals, total, totalNumOfGames);
-    }
-
-    private PlayerDetailsResDto updatePlayerStatsInDbAndReturnUpdatedStatsPlayerResponse(PlayerDetailsResDto playerDto) {
-        Integer sofascoreId = playerDto.getExternalServicePlayerId();
-        logger.info("Player details not updated in database, retrieving from external service by id {}", sofascoreId);
-
-        PlayerDetailsResDto externalPlayer = scoresService.getPlayerEntityFromExternalService(sofascoreId);
-        if (externalPlayer == null) {
-            logger.error("Couldn't get player details from external service, sofascoreId: {}", sofascoreId);
-            throw new IllegalStateException("Player not found in external service");
-        }
-        // Update league stats
-        PlayerLeagueStats leagueStats = externalPlayer.getLeagueStats();
-        // if no data early return and don't update db
-        if(leagueStats == null){
-            playerDto.setRecentMatches(externalPlayer.getRecentMatches());
-            return playerDto;
-        }
-
-        playerDto.setLeagueStats(leagueStats);
-        playerDto.setRecentMatches(externalPlayer.getRecentMatches());
-
-        // Prepare and update stats details
-        PlayerLeagueStatsDetails statsDetails = createLeagueStatsDetails(leagueStats);
-        updatePlayerLeagueStatsDetails(playerDto.getId(), statsDetails);
-
-        logger.info("Updated player stats from external service - sofascoreId: {}", sofascoreId);
+    public PlayerDetailsResDto getPlayerDetailsByInternalId(Long rapidApiId) {
+        logger.info("getting player from database player id {}", rapidApiId);
+        PlayerDetailsResDto playerDto = getPlayerDbDetails(rapidApiId);
+        logger.info("retrieved player details from database, player id {}", rapidApiId);
         return playerDto;
     }
+
+    public PlayerDetailsResDto getPlayerDetailsByExternalId(Integer externalServiceId) {
+        logger.info("getting player from database external player id {}", externalServiceId);
+        PlayerDetailsResDto playerDto = getPlayerBySofascoreId(externalServiceId);
+        if (playerDto == null){
+            logger.error("player not found external player id {}", externalServiceId);
+            return null;
+        }
+        logger.info("retrieved player details from database, external player id {}", externalServiceId);
+        return playerDto;
+    }
+
 
 
     public List<PlayerBasic> getPlayersUpdatedBySofascore(){
@@ -125,7 +63,7 @@ public class PlayerService {
         return playerRepository.getPlayersWithoutRapidId();
     }
 
-    private PlayerDetailsResDto getPlayerDbDetails(Long id) throws JsonProcessingException {
+    private PlayerDetailsResDto getPlayerDbDetails(Long id) {
         // 1- check if the player has updated by sofascore flag
         // 2- check his name in sofascore to see if his club name is updated
         // 3- decide if data should be returned from db or from sofascore
@@ -137,19 +75,12 @@ public class PlayerService {
 
     }
 
-    private PlayerLeagueStats updatePlayerLeagueStatsDetails(Long rapidId, PlayerLeagueStatsDetails playerSofascoreLeagueStats){
+    public void updatePlayerLeagueStatsDetails(Long rapidId, PlayerLeagueStats updatedLeagueStats){
         logger.info("updating player data in database player id {}", rapidId);
-        Integer goals = playerSofascoreLeagueStats.getGoals();
-        Integer assists = playerSofascoreLeagueStats.getGoalsAssistsSum() - goals;
-        Integer numOfGames = playerSofascoreLeagueStats.getCountRating();
-        Double rating = playerSofascoreLeagueStats.getRating();
-        PlayerLeagueStats playerLeagueStats = new PlayerLeagueStats(rapidId, goals,
-                assists, rating, numOfGames);
-        playerLeagueStatsService.savePlayerLeagueStats(playerLeagueStats);
+        updatedLeagueStats.setPlayerId(rapidId);
+        playerLeagueStatsService.savePlayerLeagueStats(updatedLeagueStats);
         updatePlayerUpdatedByStatusToSofascore(rapidId);
-
         logger.info("player data updated in database player id {}", rapidId);
-        return playerLeagueStats;
     }
 
     public void deleteRapidDataPlayers(){

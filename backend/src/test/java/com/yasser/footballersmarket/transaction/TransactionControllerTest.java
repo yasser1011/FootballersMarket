@@ -10,6 +10,7 @@ import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
 import com.yasser.footballersmarket.scores365.ScoresService;
+import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
 import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import com.yasser.footballersmarket.transaction.dto.TransactionRequest;
@@ -122,9 +123,10 @@ class TransactionControllerTest extends BaseIntegrationTest {
 
         userService.saveUsersList(List.of(user1));
 
-//        Player playerFromSofascore = sofascoreService.getPlayerEntityFromSofascore(818244);
-//        PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(playerFromSofascore);
-        PlayerDetailsResDto playerDetailsResDto = scoresService.getPlayerEntityFromExternalService(39779);
+        int playerExternalServiceId = 39779;
+        PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerExternalServiceId);
+        PlayerDetailsResDto playerDetailsResDto = scoresService.convertDtoToPlayerDetailsDto(playerExternalServiceId, playerDetailsDto, playerDetailsDto.getRecentMatches());
+
         TransactionRequest transactionRequest = new TransactionRequest(null, playerDetailsResDto.getExternalServicePlayerId(),
                 1, playerDetailsResDto.getPrice());
 

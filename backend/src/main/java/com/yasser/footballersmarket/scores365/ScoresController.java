@@ -5,12 +5,14 @@ import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.scores365.dto.FeaturedMatch;
 import com.yasser.footballersmarket.scores365.dto.FeaturedPlayersResponse;
 import com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats;
+import com.yasser.footballersmarket.scores365.dto.PlayerRecentMatch;
 import com.yasser.footballersmarket.sofascore.dto.SearchPlayerEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,7 +22,7 @@ public class ScoresController {
     private final ScoresService scoresService;
     private final PlayerService playerService;
 
-    Logger logger = LoggerFactory.getLogger(ScoresController.class);
+    private final Logger logger = LoggerFactory.getLogger(ScoresController.class);
 
     public ScoresController(ScoresService scoresService, PlayerService playerService) {
         this.scoresService = scoresService;
@@ -52,42 +54,26 @@ public class ScoresController {
 
     }
     @GetMapping("/players")
-    public ResponseEntity getPlayerDetails(@RequestParam(name = "sofascoreId") Integer sofascoreId,
-                                           @RequestParam(name = "rapidId", required = false) Long rapidId){
-        try{
-            if(rapidId == null){
-                // maybe user bought a player that wasn't in db and then refreshed on old sf/{external_id} url he will not see the sell button
-                PlayerDetailsResDto playerByExternalServiceId = playerService.getPlayerBySofascoreId(sofascoreId);
-                if(playerByExternalServiceId != null){
-                    Long playerInternalId = playerByExternalServiceId.getId();
-                    logger.info("found in database from external service id." +
-                                    " getting player details from scores, player id {} scores id {}",
-                            playerInternalId, sofascoreId);
-                    PlayerDetailsResDto playerDetailsById = playerService.getPlayerDetailsById(
-                            playerInternalId, sofascoreId);
-                    return ResponseEntity.ok(playerDetailsById);
-                }else{
-                    // not found in database
-                    logger.info("not found in database from external service id, " +
-                            "getting player details from scores, scores id {}", sofascoreId);
-
-                    PlayerDetailsResDto playerEntityFromExternalService = scoresService.getPlayerEntityFromExternalService(sofascoreId);
-                    if(playerEntityFromExternalService.getLeagueStats() == null){
-                        com.yasser.footballersmarket.playerstats.PlayerLeagueStats playerEntityLeagueStats =
-                                new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(0,
-                                0, 0, 6.5);
-                        playerEntityFromExternalService.setLeagueStats(playerEntityLeagueStats);
-                    }
-                    return ResponseEntity.ok(playerEntityFromExternalService);
-                }
-            }else{
-                logger.info("getting player details from scores, player id {} scores id {}",
-                        rapidId, sofascoreId);
-                PlayerDetailsResDto playerDetailsById = playerService.getPlayerDetailsById(rapidId, sofascoreId);
-                return ResponseEntity.ok(playerDetailsById);
-            }
+    public ResponseEntity getPlayerDetails(@RequestParam(name = "externalId") Integer externalId){
+        try {
+            PlayerDetailsResDto playerDetailsById = scoresService.getPlayerDetailsById(externalId);
+            return ResponseEntity.ok(playerDetailsById);
+        }catch (EntityNotFoundException e){
+            return ResponseEntity.badRequest().body("player not found");
         }catch (Exception e){
-            logger.error("scores get player details error {} external id {}", e.getMessage(), sofascoreId);
+            return ResponseEntity.internalServerError().body("error occurred");
+        }
+
+    }
+
+    @GetMapping("/players/last-ratings")
+    public ResponseEntity getPlayerLastRatingDetails(@RequestParam(name = "externalId") Integer externalId){
+        try {
+            List<PlayerRecentMatch> playerRecentMatches = scoresService.fetchPlayerLastRatings(externalId);
+            return ResponseEntity.ok(playerRecentMatches);
+        }catch (EntityNotFoundException e){
+            return ResponseEntity.badRequest().body("player not found");
+        }catch (Exception e){
             return ResponseEntity.internalServerError().body("error occurred");
         }
 

@@ -42,6 +42,7 @@ public class PlayerUserCurrentBoughtController {
         Long userId = user.getId();
 
         logger.info("fetching user players team, user id {}", userId);
-        return playerUserCurrentBoughtService.getUserBoughtPlayers(userId);
+        List<PlayerUserCurrentBoughtDto> userBoughtPlayers = playerUserCurrentBoughtService.getUserBoughtPlayers(userId);
+        return userBoughtPlayers;
     }
 }

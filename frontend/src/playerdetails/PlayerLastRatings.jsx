@@ -38,7 +38,7 @@ const PlayerLastRatings = ({
   //   }
   // }, [selectedPlayerSofascoreId]);
 
-  if (fetchExternallyStatus === FETCH_STATUS.LOADING) {
+  if (fetchStatus === FETCH_STATUS.LOADING) {
     return (
       <div>
         <Box>
@@ -53,7 +53,7 @@ const PlayerLastRatings = ({
     );
   }
 
-  if (fetchExternallyStatus === FETCH_STATUS.ERROR) {
+  if (fetchStatus === FETCH_STATUS.ERROR) {
     return (
       <div>
         <Box>

@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
+import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.scores365.ScoresService;
+import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,10 +68,11 @@ public class UserService implements UserDetailsService {
             PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(pl);
             Integer playerPrice;
             if(!playerDetailsResDto.getAreClubStatsUpdated() || (updatedBy != null && updatedBy.contains("sofascore"))){
-//                Player playerEntityFromSofascore = sofascoreService.getPlayerEntityFromSofascore(playerSofascoreId);
-                PlayerDetailsResDto playerEntityFromExternally = scoresService.getPlayerEntityFromExternalService(playerSofascoreId);
-//                PlayerDetailsResDto playerDetailsResExtDto = playerService.convertPlayerEntityToPlayerDto(playerEntityFromSofascore);
-                playerPrice = playerEntityFromExternally.getPrice();
+                PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerSofascoreId);
+                PlayerLeagueStats leagueStatsDto = scoresService.createLeagueStatsDto(playerDetailsDto.getLeagueStats());
+                playerService.updatePlayerLeagueStatsDetails(playerId, leagueStatsDto);
+                PlayerDetailsResDto playerDetailsResDto1 = scoresService.convertDtoToPlayerDetailsDto(playerSofascoreId, playerDetailsDto, playerDetailsDto.getRecentMatches());
+                playerPrice = playerDetailsResDto1.getPrice();
             }else{
                 playerPrice = ((BigDecimal) userPlayerRecord[8]).intValue();
             }

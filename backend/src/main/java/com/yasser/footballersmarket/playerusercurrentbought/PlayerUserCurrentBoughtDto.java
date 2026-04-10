@@ -1,5 +1,7 @@
 package com.yasser.footballersmarket.playerusercurrentbought;
 
+import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+
 import java.time.LocalDate;
 
 public class PlayerUserCurrentBoughtDto {
@@ -19,10 +21,11 @@ public class PlayerUserCurrentBoughtDto {
     private Integer buyPrice;
     private Integer price;
     private Boolean areClubStatsUpdated;
+    private PlayerLeagueStats leagueStats;
 
     public PlayerUserCurrentBoughtDto(){}
 
-    public PlayerUserCurrentBoughtDto(Long playerId, Integer externalServicePlayerId, String playerName, String playerPhotoUrl, String externalServicePlayerClub, String clubPhotoUrl, String nationality, LocalDate dateOfBirth, String position, String updatedBy, Integer goals, Integer assists, Double rating, Integer buyPrice, Integer price, Boolean areClubStatsUpdated) {
+    public PlayerUserCurrentBoughtDto(Long playerId, Integer externalServicePlayerId, String playerName, String playerPhotoUrl, String externalServicePlayerClub, String clubPhotoUrl, String nationality, LocalDate dateOfBirth, String position, String updatedBy, Integer goals, Integer assists, Double rating, Integer buyPrice, Integer price, Boolean areClubStatsUpdated, PlayerLeagueStats playerLeagueStats) {
         this.id = playerId;
         this.externalServicePlayerId = externalServicePlayerId;
         this.externalServicePlayerClub = externalServicePlayerClub;
@@ -39,6 +42,7 @@ public class PlayerUserCurrentBoughtDto {
         this.name = playerName;
         this.photoUrl = playerPhotoUrl;
         this.areClubStatsUpdated = areClubStatsUpdated;
+        this.leagueStats = playerLeagueStats;
     }
 
     public Long getId() {
@@ -103,5 +107,9 @@ public class PlayerUserCurrentBoughtDto {
 
     public Integer getPrice() {
         return price;
+    }
+
+    public PlayerLeagueStats getLeagueStats() {
+        return leagueStats;
     }
 }

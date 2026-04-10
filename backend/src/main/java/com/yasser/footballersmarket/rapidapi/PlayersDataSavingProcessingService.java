@@ -59,6 +59,7 @@ public class PlayersDataSavingProcessingService {
         removeOutdatedSchedulerDataPlayers(playersMap);
 
         // get player ids in main player entity table
+        // todo change name getPlayerExternalServiceBasicDetails
         HashMap<Long, PlayerExternalServiceBasicDetails> idsInPlayerTable =
                 util.getPlayerIdsWithBasicExternalServiceDetailsInHashmap(playerService.getPlayerExternalServiceBasicDetails());
         // get player ids in main league stats entity table

@@ -108,7 +108,6 @@ public class PlayersDataFetchingScheduler {
                 String fullUrl = buildFetchingUrl(pageNum, searchTeam).toString();
 
                 PlayersApiResponse playersDataResponse = fetchPlayersData(fullUrl);
-                // for rate limiting
 
                 if(playersDataResponse != null){
                     logger.info("page number {} finished", pageNum);

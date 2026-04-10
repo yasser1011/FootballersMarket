@@ -4,8 +4,7 @@ import com.yasser.footballersmarket.scores365.dto.PlayerRecentMatch;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class PlayerDetailsResDto {
     private Long id;
@@ -28,6 +27,17 @@ public class PlayerDetailsResDto {
     private String clubPhotoUrl;
     private String updatedBy;
     private List<PlayerRecentMatch> recentMatches;
+
+    private static final Map<String, String> NORMALIZATION_MAP = Map.of(
+            "utd", "united",
+            "man", "manchester",
+            "munchen", "munich",
+            "psg", "paris saint germain"
+    );
+
+    private static final Set<String> IGNORED_WORDS = Set.of(
+            "fc", "cf", "club","u19", "u18", "u17", "u16"
+    );
 
     public PlayerDetailsResDto(){}
 
@@ -94,10 +104,38 @@ public class PlayerDetailsResDto {
     public Boolean getAreClubStatsUpdated() {
         if (rapidApiClub == null || externalServicePlayerClub == null)
             return false;
-        return areClubNamesSimilar(rapidApiClub, externalServicePlayerClub);
+        String normalized1 = normalizeClubName(rapidApiClub);
+        String normalized2 = normalizeClubName(externalServicePlayerClub);
+
+        return normalized1.equals(normalized2);
     }
 
-    private boolean areClubNamesSimilar(String firstClub, String secondClub){
+    private String normalizeClubName(String name) {
+        // remove accents (München -> Munchen)
+        name = java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
+        String[] words = name.toLowerCase().split(" ");
+
+        List<String> normalizedWords = new ArrayList<>();
+
+        for (String word : words) {
+            if (IGNORED_WORDS.contains(word)) continue;
+
+            if (NORMALIZATION_MAP.containsKey(word)) {
+                String mapped = NORMALIZATION_MAP.get(word);
+                normalizedWords.addAll(Arrays.asList(mapped.split(" ")));
+            } else {
+                normalizedWords.add(word);
+            }
+        }
+
+        Collections.sort(normalizedWords);
+
+        return String.join(" ", normalizedWords);
+    }
+
+    private Boolean areClubNamesSimilar(String firstClub, String secondClub){
         if (firstClub.contains(secondClub) || secondClub.contains(firstClub)) return true;
 
         String[] firstClubStrArr = firstClub.split(" ");

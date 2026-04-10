@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -42,8 +43,12 @@ public class PlayerController {
     public ResponseEntity getPlayerInfo(@PathVariable(value = "id") Long playerId){
         try {
             logger.info("get player details: player id {}", playerId);
-            PlayerDetailsResDto playerDbDetails = playerService.getPlayerDetailsById(playerId, 0);
+//            PlayerDetailsResDto playerDbDetails = playerService.getPlayerDetailsById(playerId, 0);
+            PlayerDetailsResDto playerDbDetails = playerService.getPlayerDetailsByInternalId(playerId);
             return ResponseEntity.ok(playerDbDetails);
+        }catch (EntityNotFoundException e){
+            logger.error("player not found player id {}", e.getMessage());
+            return ResponseEntity.badRequest().body("player not found");
         }catch (Exception e){
             logger.error("get player details error {}", e.getMessage());
             return ResponseEntity.internalServerError().body("error occurred");
@@ -56,7 +61,8 @@ public class PlayerController {
         try {
             logger.info("checking if player is in database by sofascore id {}", sofascoreId);
             HashMap<String, Object> response = new HashMap<>();
-            PlayerDetailsResDto playerDetailsBySofascoreId = playerService.getPlayerDetailsById(0L, sofascoreId);
+//            PlayerDetailsResDto playerDetailsBySofascoreId = playerService.getPlayerDetailsById(0L, sofascoreId);
+            PlayerDetailsResDto playerDetailsBySofascoreId = playerService.getPlayerDetailsByExternalId(sofascoreId);
             response.put("player", playerDetailsBySofascoreId);
             if (playerDetailsBySofascoreId == null){
                 logger.info("player not found in database {}", sofascoreId);

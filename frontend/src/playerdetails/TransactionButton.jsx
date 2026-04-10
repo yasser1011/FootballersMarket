@@ -55,7 +55,7 @@ const TransactionButton = ({
     try {
       const transactionTypeRes = await axios.get(
         `${apiBaseUrl}/users/player-transaction-type?playerId=${player.id}`,
-        { headers: { Authorization: userData.token } }
+        { headers: { Authorization: userData.token } },
       );
       if (transactionTypeRes && transactionTypeRes.data) {
         setFetchStatus(FETCH_STATUS.SUCCESS);
@@ -76,7 +76,7 @@ const TransactionButton = ({
       fetchPlayerTransactionType();
       ranOnce = true;
     }
-  }, [userData.token]); // to fetch when user logs in in the same page
+  }, [userData.token, player.id]); // to fetch when user logs in in the same page
 
   if (fetchStatus === FETCH_STATUS.LOADING) {
     return <CircularProgress />;

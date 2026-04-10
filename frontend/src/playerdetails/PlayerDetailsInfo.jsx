@@ -19,10 +19,6 @@ export const PlayerDetailsInfo = ({
   fetchStatus,
   setFetchStatus,
   setPlayerLastRatings,
-  fetchinternallyStatus,
-  fetchExternallyStatus,
-  setFetchExternallyStatus,
-  setFetchInternallyStatus,
 }) => {
   const { state, pathname } = useLocation();
   const { id } = useParams();
@@ -37,119 +33,64 @@ export const PlayerDetailsInfo = ({
 
   let ranOnce = false;
 
-  const fetchPlayerDetailsExternal = async (urlParams) => {
+  const fetchPlayerDetails = async (playerExternalId) => {
     try {
-      setFetchExternallyStatus(FETCH_STATUS.LOADING);
       const playerDetRes = await axios.get(
-        `${apiBaseUrl}/ss/players?${urlParams}`
+        `${apiBaseUrl}/ss/players?externalId=${playerExternalId}`,
       );
       if (playerDetRes && playerDetRes.data) {
-        setFetchExternallyStatus(FETCH_STATUS.SUCCESS);
-        return playerDetRes.data;
-      }
-      throw new Error("No data received");
-    } catch (error) {
-      setFetchExternallyStatus(FETCH_STATUS.ERROR);
-      throw error;
-    }
-  };
-
-  const fetchPlayerDetailsInternal = async (playerId) => {
-    try {
-      setFetchInternallyStatus(FETCH_STATUS.LOADING);
-      const playerDetRes = await axios.get(`${apiBaseUrl}/players/${playerId}`);
-      if (playerDetRes && playerDetRes.data) {
         setPlayerDetails(playerDetRes.data);
-        setSelectedPlayerSofascoreId(playerDetRes.data.externalServicePlayerId);
-        let urlParams = `sofascoreId=${playerDetRes.data.externalServicePlayerId}`;
-        // need to fetch last ratings
-        fetchPlayerLastRatings(urlParams);
-        // setFetchStatus(FETCH_STATUS.SUCCESS);
-        setFetchInternallyStatus(FETCH_STATUS.SUCCESS);
+        setPlayerLastRatings(playerDetRes.data.recentMatches);
+        setFetchStatus(FETCH_STATUS.SUCCESS);
       }
-      throw new Error("No data received");
     } catch (error) {
-      // setFetchStatus(FETCH_STATUS.ERROR);
-      setFetchInternallyStatus(FETCH_STATUS.ERROR);
+      setFetchStatus(FETCH_STATUS.ERROR);
       throw error;
     }
   };
 
-  const setExternalPlayerDetailsState = async (urlParams) => {
+  const fetchPlayerLastRatings = async (playerExternalId) => {
     try {
-      let playerDetRes = await fetchPlayerDetailsExternal(urlParams);
-      setPlayerDetails(playerDetRes);
-      setSelectedPlayerSofascoreId(playerDetRes.externalServicePlayerId);
+      setFetchStatus(FETCH_STATUS.LOADING);
 
-      setPlayerLastRatings(playerDetRes.recentMatches);
-      // setFetchStatus(FETCH_STATUS.SUCCESS);
-    } catch (error) {
-      console.log("error");
-      // setFetchStatus(FETCH_STATUS.ERROR);
-    }
-  };
-
-  const fetchPlayerLastRatings = async (urlParams) => {
-    try {
-      let playerDetRes = await fetchPlayerDetailsExternal(urlParams);
-      // setPlayerDetails(playerDetRes);
-      setPlayerLastRatings(playerDetRes.recentMatches);
-      setSelectedPlayerSofascoreId(playerDetRes.externalServicePlayerId);
-      // setFetchStatus(FETCH_STATUS.SUCCESS);
-    } catch (error) {
-      console.log("error");
-      // setFetchStatus(FETCH_STATUS.ERROR);
-    }
-  };
-
-  const fetchPlayerDetails = () => {
-    // url is /rp/:id
-    // 1- if player state is available and club stats is updated -> render player details as is
-    // 2- if player state is available and club stats is not updated -> get details from sofascore by sofascore id param
-    // and add updated by sofascore
-    // 3- if player state not available -> fetch by id from db -> if club stats not updated
-    // get player details from sofascore by sofascore id and update data in db from sofascore details and add updated by
-    // url is /sf/:id
-    // 1- get his stats as a view only from sofascore by sofascore id in url
-    // console.log("test all");
-    if (pathname.includes("/rp/")) {
-      if (state == null) {
-        // get from player service by rapid id
-        fetchPlayerDetailsInternal(id);
-      } else if (
-        // have the correct player data but need to fetch latest ratings
-        state.srcLocation === "search" ||
-        state.player.areClubStatsUpdated
-      ) {
-        let urlParams = `sofascoreId=${state.player.externalServicePlayerId}`;
-        setPlayerDetails(state.player);
-        fetchPlayerLastRatings(urlParams);
-        setSelectedPlayerSofascoreId(state.player.externalServicePlayerId);
-      } else if (!state.player.areClubStatsUpdated) {
-        // get from sofascore service by sofascore id
-        // means he's in db but data is not updated
-
-        let urlParams = `sofascoreId=${state.player.externalServicePlayerId}&rapidId=${state.player.id}`;
-        setExternalPlayerDetailsState(urlParams); // need to just set player last ratings in corresponding state
+      const playerDetRes = await axios.get(
+        `${apiBaseUrl}/ss/players/last-ratings?externalId=${playerExternalId}`,
+      );
+      if (playerDetRes && playerDetRes.data) {
+        setFetchStatus(FETCH_STATUS.SUCCESS);
+        setPlayerLastRatings(playerDetRes.data);
       }
+    } catch (error) {
+      setFetchStatus(FETCH_STATUS.ERROR);
+      throw error;
+    }
+  };
+
+  const getPlayerDetails = () => {
+    // coming from home table
+    if (
+      state != null &&
+      state.player != null &&
+      state.player.areClubStatsUpdated
+    ) {
+      setPlayerDetails(state.player);
+      fetchPlayerLastRatings(id);
     } else {
-      // get from sofascore service for view only
-      let urlParams = `sofascoreId=${id}`;
-      setExternalPlayerDetailsState(urlParams); // need to just set player last ratings in corresponding state
+      fetchPlayerDetails(id);
     }
   };
 
   useEffect(() => {
+    console.log("player details use effect");
+
     if (!ranOnce) {
-      fetchPlayerDetails();
+      console.log("player details use effect ran once");
+      getPlayerDetails();
       ranOnce = true;
     }
   }, [id]);
 
-  if (
-    fetchinternallyStatus === FETCH_STATUS.LOADING ||
-    fetchExternallyStatus === FETCH_STATUS.LOADING
-  ) {
+  if (fetchStatus === FETCH_STATUS.LOADING) {
     return (
       <div>
         <Box>
@@ -164,10 +105,7 @@ export const PlayerDetailsInfo = ({
     );
   }
 
-  if (
-    fetchinternallyStatus === FETCH_STATUS.ERROR ||
-    fetchExternallyStatus === FETCH_STATUS.ERROR
-  ) {
+  if (fetchStatus === FETCH_STATUS.ERROR) {
     return (
       <div>
         <Box>

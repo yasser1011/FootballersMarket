@@ -64,7 +64,15 @@ const MyTeam = () => {
                 <StyledTableCell align="center"></StyledTableCell>
               </TableRow>
             </TableHead>
-            <HomeTable fetchPlayersUrl={`${apiBaseUrl}/users/myteam`} />
+            <HomeTable
+              fetchPlayersUrl={`${apiBaseUrl}/users/myteam`}
+              paginationOptions={{
+                disabled: true,
+                currentPage: 0,
+                rowsPerPage: 50,
+                totalCount: 50,
+              }}
+            />
           </Table>
         </TableContainer>
       </div>

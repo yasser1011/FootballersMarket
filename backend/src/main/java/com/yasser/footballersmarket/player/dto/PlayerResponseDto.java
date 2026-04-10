@@ -8,6 +8,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Transient;
 import java.time.LocalDate;
+import java.util.*;
 
 public class PlayerResponseDto {
     private Long id;
@@ -31,6 +32,17 @@ public class PlayerResponseDto {
     private String photoUrl;
     private String clubPhotoUrl;
     private String updatedBy;
+
+    private static final Map<String, String> NORMALIZATION_MAP = Map.of(
+            "utd", "united",
+            "man", "manchester",
+            "munchen", "munich",
+            "psg", "paris saint germain"
+    );
+
+    private static final Set<String> IGNORED_WORDS = Set.of(
+            "fc", "cf", "club","u19", "u18", "u17", "u16"
+    );
 
     public PlayerResponseDto(Long id, Integer sofascoreId, String name, String nationality,
                              LocalDate dateOfBirth, String position, String rapidApiClub,
@@ -169,7 +181,35 @@ public class PlayerResponseDto {
     public Boolean getAreClubStatsUpdated() {
         if (rapidApiClub == null || sofascoreClub == null)
             return false;
-        return isClubNamesSimilar(rapidApiClub, sofascoreClub);
+        String normalized1 = normalizeClubName(rapidApiClub);
+        String normalized2 = normalizeClubName(sofascoreClub);
+
+        return normalized1.equals(normalized2);
+    }
+
+    private String normalizeClubName(String name) {
+        // remove accents (München -> Munchen)
+        name = java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+
+        String[] words = name.toLowerCase().split(" ");
+
+        List<String> normalizedWords = new ArrayList<>();
+
+        for (String word : words) {
+            if (IGNORED_WORDS.contains(word)) continue;
+
+            if (NORMALIZATION_MAP.containsKey(word)) {
+                String mapped = NORMALIZATION_MAP.get(word);
+                normalizedWords.addAll(Arrays.asList(mapped.split(" ")));
+            } else {
+                normalizedWords.add(word);
+            }
+        }
+
+        Collections.sort(normalizedWords);
+
+        return String.join(" ", normalizedWords);
     }
 
     private boolean isClubNamesSimilar(String firstClub, String secondClub){

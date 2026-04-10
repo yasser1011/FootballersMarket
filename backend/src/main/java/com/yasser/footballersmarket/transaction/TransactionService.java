@@ -7,6 +7,7 @@ import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
 import com.yasser.footballersmarket.scores365.ScoresService;
+import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
 import com.yasser.footballersmarket.transaction.dto.TransactionError;
 import com.yasser.footballersmarket.transaction.dto.TransactionResponse;
@@ -170,7 +171,6 @@ public class TransactionService {
             logger.error("player ids not provided");
             throw new IllegalStateException("no player ids provided");
         }
-        Player player;
         PlayerDetailsResDto playerDetailsResDto;
         if(playerId == null){
             logger.info("getting player in sofascore sofascore id {}", playerSofascoreId);
@@ -181,7 +181,8 @@ public class TransactionService {
                 throw new IllegalStateException("player found in db while no player id provided");
             }
             // player not found in db get from sofascore service
-            playerDetailsResDto = scoresService.getPlayerEntityFromExternalService(playerSofascoreId);
+            PlayerDetailsDto playerResponse = scoresService.fetchPlayerEntityFromExternalService(playerSofascoreId);
+            playerDetailsResDto = scoresService.convertDtoToPlayerDetailsDto(playerSofascoreId, playerResponse, playerResponse.getRecentMatches());
             Player player1 = playerService.convertPlayerDtoToPlayerEntity(playerDetailsResDto);
             String generateUUIDNo2 = String.format("%010d", new BigInteger(UUID.randomUUID().toString().replace("-", ""), 16));
             Long uniqueRandomId = Long.parseLong(generateUUIDNo2.substring(generateUUIDNo2.length() - 10));

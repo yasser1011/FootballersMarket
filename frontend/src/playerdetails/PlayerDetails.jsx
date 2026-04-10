@@ -15,12 +15,6 @@ const PlayerDetails = () => {
     useState("");
 
   const [fetchStatus, setFetchStatus] = useState(FETCH_STATUS.LOADING);
-  const [fetchExternallyStatus, setFetchExternallyStatus] = useState(
-    FETCH_STATUS.IDLE
-  );
-  const [fetchinternallyStatus, setFetchInternallyStatus] = useState(
-    FETCH_STATUS.IDLE
-  );
   const [playerLastRatings, setPlayerLastRatings] = useState();
 
   const [
@@ -39,10 +33,6 @@ const PlayerDetails = () => {
           fetchStatus={fetchStatus}
           setFetchStatus={setFetchStatus}
           setPlayerLastRatings={setPlayerLastRatings}
-          setFetchExternallyStatus={setFetchExternallyStatus}
-          setFetchInternallyStatus={setFetchInternallyStatus}
-          fetchinternallyStatus={fetchinternallyStatus}
-          fetchExternallyStatus={fetchExternallyStatus}
         />
         <PlayerLastRatings
           selectedPlayerSofascoreId={selectedPlayerSofascoreId}
@@ -50,7 +40,6 @@ const PlayerDetails = () => {
           fetchStatus={fetchStatus}
           setFetchStatus={setFetchStatus}
           playerLastRatings={playerLastRatings}
-          fetchExternallyStatus={fetchExternallyStatus}
         />
       </div>
       <Snackbar

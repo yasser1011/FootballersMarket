@@ -33,7 +33,7 @@ const SearchPlayer = ({
     try {
       let playerSofascoreId = searchPlayer.id;
       const playerFoundRes = await axios.get(
-        `${apiBaseUrl}/players/sofascore?sofascoreId=${playerSofascoreId}`
+        `${apiBaseUrl}/players/sofascore?sofascoreId=${playerSofascoreId}`,
       );
       if (!playerFoundRes || !playerFoundRes.data) {
         setFetchStatus(FETCH_STATUS.ERROR);
@@ -61,7 +61,14 @@ const SearchPlayer = ({
   };
 
   return (
-    <div className="search-player-row-div" onClick={checkSearchPlayerStatus}>
+    <div
+      className="search-player-row-div"
+      onClick={() =>
+        navigate(`/players/${searchPlayer.id}`, {
+          state: null,
+        })
+      }
+    >
       <img
         src={searchPlayer.img}
         alt={searchPlayer.name}

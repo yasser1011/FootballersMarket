@@ -88,8 +88,11 @@ export default function HomeTable({
   };
 
   const navigatePlayerDetails = (player) => {
-    return navigate(`/players/rp/${player.id}`, {
-      state: { player, srcLocation: "hometable" },
+    // return navigate(`/players/rp/${player.id}`, {
+    //   state: { player, srcLocation: "hometable" },
+    // });
+    return navigate(`/players/${player.externalServicePlayerId}`, {
+      state: { player },
     });
   };
 

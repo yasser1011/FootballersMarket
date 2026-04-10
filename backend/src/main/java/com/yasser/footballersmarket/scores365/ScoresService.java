@@ -1,10 +1,13 @@
 package com.yasser.footballersmarket.scores365;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yasser.footballersmarket.featuredplayer.FeaturedPlayer;
+import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
-import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.scores365.dto.*;
+import com.yasser.footballersmarket.sofascore.dto.PlayerLeagueStatsDetails;
 import com.yasser.footballersmarket.sofascore.dto.SearchPlayerEntity;
+import com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats;
 import me.xuender.unidecode.Unidecode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import javax.persistence.EntityNotFoundException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -23,19 +28,81 @@ import java.util.stream.Collectors;
 public class ScoresService {
     private final RestTemplate restTemplate;
     private final ScoresConfig scoresConfig;
+    private final PlayerService playerService;
 
     private boolean featuredPlayerLeagueFetchingToggle = true;
 
-    Logger logger = LoggerFactory.getLogger(ScoresService.class);
+    private final Logger logger = LoggerFactory.getLogger(ScoresService.class);
 
-    public ScoresService(RestTemplate restTemplate, ScoresConfig scoresConfig) {
+    public ScoresService(RestTemplate restTemplate, ScoresConfig scoresConfig, PlayerService playerService) {
         this.restTemplate = restTemplate;
         this.scoresConfig = scoresConfig;
+        this.playerService = playerService;
+    }
+    // main method for fetching player details page
+    public PlayerDetailsResDto getPlayerDetailsById(Integer playerId) {
+        // fetch player stats from external service
+        // check if player is available in db
+        // if available return everything as is except league stats and recent games stats
+        // if clubs are not matching
+        // update in db from here
+        PlayerDetailsResDto playerDetailsByExternalId = playerService.getPlayerDetailsByExternalId(playerId);
+        PlayerDetailsDto playerDetailsResponseByExternalId = fetchPlayerEntityFromExternalService(playerId);
+        // if any errors occur in the web service return db data
+        if(playerDetailsResponseByExternalId == null){
+            logger.error("player not found by external id {}", playerId);
+            if(playerDetailsByExternalId == null){
+                throw new EntityNotFoundException("player not found in both db and scores service external id " + playerId);
+            }else{
+                logger.error("player not found by external id {} returning db data", playerId);
+                return playerDetailsByExternalId;
+            }
+        }
+        logger.info("player found in external service id {}", playerId);
+
+        // new player not found in db
+        if(playerDetailsByExternalId == null){
+            logger.info("new player not found in database external id {}", playerId);
+            PlayerDetailsResDto playerDetailsResDto = convertDtoToPlayerDetailsDto(playerId, playerDetailsResponseByExternalId, playerDetailsResponseByExternalId.getRecentMatches());
+            // if response from external service returned improper result return default data
+            if(playerDetailsResDto.getLeagueStats() == null) {
+                com.yasser.footballersmarket.playerstats.PlayerLeagueStats playerEntityLeagueStats =
+                        new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(0,
+                                0, 0, 6.5);
+                playerDetailsResDto.setLeagueStats(playerEntityLeagueStats);
+            }
+            return playerDetailsResDto;
+        }
+        logger.info("player found in database external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
+        playerDetailsByExternalId.setRecentMatches(playerDetailsResponseByExternalId.getRecentMatches());
+        Boolean areClubStatsUpdated = playerDetailsByExternalId.getAreClubStatsUpdated();
+        if(!areClubStatsUpdated){
+            logger.info("player club stats not updated in db external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
+            if(playerDetailsResponseByExternalId.getLeagueStats() != null) {
+                playerDetailsByExternalId.setLeagueStats(createLeagueStatsDto(playerDetailsResponseByExternalId.getLeagueStats()));
+                playerService.updatePlayerLeagueStatsDetails(playerDetailsByExternalId.getId(),
+                        createLeagueStatsDto(playerDetailsResponseByExternalId.getLeagueStats()));
+            }
+        }
+        logger.info("player club stats updated in db external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
+        return playerDetailsByExternalId;
     }
 
-    public PlayerDetailsResDto getPlayerEntityFromExternalService(Integer playerId){
-        try {
+    public List<PlayerRecentMatch> fetchPlayerLastRatings(Integer playerId) {
+        logger.info("fetching player last ratings only from 365 player external id {}", playerId);
+        PlayerDetailsDto playerStatsResponse = fetchPlayerEntityFromExternalService(playerId);
+        if(playerStatsResponse == null) return new ArrayList<>();
 
+        List<PlayerRecentMatch> recentMatches = playerStatsResponse.getRecentMatches();
+        for (PlayerRecentMatch recentMatch : recentMatches) {
+            recentMatch.setOpponentTeamPhotoUrl(scoresConfig.getScoresImageBaseUrl() +
+                    scoresConfig.getScoresClubsImageEndPoint() + recentMatch.getOpponentTeamId());
+        }
+        return playerStatsResponse.getRecentMatches();
+    }
+
+    public PlayerDetailsDto fetchPlayerEntityFromExternalService(Integer playerId){
+        try {
             String url = scoresConfig.getScoresApiBaseUrl() + "/athletes/?appTypeId=5&athletes=" + playerId + "&fullDetails=true";
             logger.info("getting player league stats from 365 scores url {}", url);
 
@@ -45,18 +112,25 @@ public class ScoresService {
             if(playerStatsResponse == null) return null;
 
             List<PlayerRecentMatch> recentMatches = playerStatsResponse.getRecentMatches();
+            if(recentMatches == null) recentMatches = new ArrayList<>();
             for (PlayerRecentMatch recentMatch : recentMatches) {
                 recentMatch.setOpponentTeamPhotoUrl(scoresConfig.getScoresImageBaseUrl() +
                         scoresConfig.getScoresClubsImageEndPoint() + recentMatch.getOpponentTeamId());
             }
 
-            return convertDtoToPlayerDetailsDto(playerId, playerStatsResponse, recentMatches);
+            return playerStatsResponse;
 
-        }catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e){
+        }catch (Exception e){
             // player details not found for the current season in scores, return default data
             return null;
         }
     }
+
+    public com.yasser.footballersmarket.playerstats.PlayerLeagueStats createLeagueStatsDto(PlayerLeagueStats externalPlayerLeagueStats){
+        return new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(externalPlayerLeagueStats.getGoals(),
+                externalPlayerLeagueStats.getAssists(), externalPlayerLeagueStats.getAppearances(), externalPlayerLeagueStats.getRating());
+    }
+
     public SearchPlayerEntity searchClosestPlayerByName(String playerName){
         playerName = Unidecode.decode(playerName);
         try {
@@ -156,20 +230,6 @@ public class ScoresService {
         }
     }
 
-    public List<PlayerRecentMatch> getPlayerRecentRatings(Integer playerId){
-        try {
-            PlayerDetailsResDto playerEntityFromExternally = getPlayerEntityFromExternalService(playerId);
-            if (playerEntityFromExternally == null){
-                logger.error("error getting player details {}", playerId);
-                return null;
-            }
-            return playerEntityFromExternally.getRecentMatches();
-        }catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e){
-            logger.error("error getting player recent matches player id {} {}" ,playerId, e.getMessage());
-            return null;
-        }
-    }
-
     private SearchPlayerEntity convertToSearchPlayerEntity(PlayerSearchEntityDto playerDto) {
         return new SearchPlayerEntity(
                 playerDto.getId(),
@@ -182,7 +242,7 @@ public class ScoresService {
         );
     }
 
-    private PlayerDetailsResDto convertDtoToPlayerDetailsDto(Integer playerId,
+    public PlayerDetailsResDto convertDtoToPlayerDetailsDto(Integer playerId,
                                                           PlayerDetailsDto playerStatDetailsDto,
                                                           List<PlayerRecentMatch> recentMatches){
         PlayerDetailsResDto playerDto = new PlayerDetailsResDto();
@@ -200,7 +260,8 @@ public class ScoresService {
         if(leagueStats == null){
             playerDto.setLeagueStats(null);
         }else{
-            PlayerLeagueStats playerEntityLeagueStats = new PlayerLeagueStats(leagueStats.getGoals(),
+            com.yasser.footballersmarket.playerstats.PlayerLeagueStats playerEntityLeagueStats =
+                    new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(leagueStats.getGoals(),
                     leagueStats.getAssists(), leagueStats.getAppearances(), leagueStats.getRating());
             playerDto.setLeagueStats(playerEntityLeagueStats);
         }

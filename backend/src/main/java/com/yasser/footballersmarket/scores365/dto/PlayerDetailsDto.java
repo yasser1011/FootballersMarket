@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,32 +52,9 @@ public class PlayerDetailsDto {
         Map<String, Object> leagueStatsObj = statList.get(0);
 
         List<Map<String, Object>> stats = safeGetListMap(leagueStatsObj, "stats");
-        Map<String, Object> appearancesObj = stats.get(0);
-        String appearancesVal = safeGetString(appearancesObj, "value");
-        String appearances = appearancesVal == null ? "0": appearancesVal.split("/")[0];
 
-        Map<String, Object> goalsObj = stats.get(1);
-        String goalsVal = safeGetString(goalsObj, "value");
 
-        Map<String, Object> assistsObj = stats.get(2);
-        String assistsVal = safeGetString(assistsObj, "value");
-        // find the first sequence of digits
-        Pattern pattern = Pattern.compile("\\d+");
-        Matcher goalsMatcher = pattern.matcher(goalsVal);
-        Matcher assistsMatcher = pattern.matcher(assistsVal);
-        String goals = "0";
-        String assists = "0";
-        if (goalsMatcher.find())
-            goals = goalsMatcher.group();
-        if (assistsMatcher.find())
-            assists = assistsMatcher.group();
-
-//        Map<String, Object> ratingObj = stats.get(3);
-//        String rating = safeGetString(ratingObj, "value");
-        Double ratingVal = parsePlayerRatingValue(stats);
-
-        this.leagueStats = new PlayerLeagueStats(Integer.valueOf(appearances),
-                Integer.valueOf(goals), Integer.valueOf(assists), ratingVal);
+        this.leagueStats = parsePlayerStatValues(stats);
         Map<String, Object> lastMatches = safeGetMap(player, "lastMatches");
         if (lastMatches != null)
             this.recentMatches = parsePlayerRecentMatchesRating(safeGetListMap(lastMatches, "games"));
@@ -93,6 +67,51 @@ public class PlayerDetailsDto {
         }
         Map<String,Object> currentClubObj = competitors.get(0);
         this.clubName = safeGetString(currentClubObj, "name");
+    }
+
+    private PlayerLeagueStats parsePlayerStatValues(List<Map<String, Object>> stats) {
+        int appearances = 0;
+        int goals = 0;
+        int assists = 0;
+        double rating = DEFAULT_RATING;
+
+        Pattern pattern = Pattern.compile("\\d+");
+
+        for (Map<String, Object> statObj : stats) {
+            String statName = safeGetString(statObj, "name");
+            if (statName == null) continue;
+            String value = safeGetString(statObj, "value");
+            if ("rating".equalsIgnoreCase(statName)) {
+                try {
+                    if (value != null) {
+                        rating = Double.parseDouble(value);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+
+            } else if ("appearances".equalsIgnoreCase(statName)) {
+                if (value != null && !value.isEmpty()) {
+                    try {
+                        appearances = Integer.parseInt(value.split("/")[0]);
+                    } catch (NumberFormatException ignored) {
+                    }
+                }
+
+            } else if ("goals".equalsIgnoreCase(statName)) {
+                if (value != null) {
+                    Matcher m = pattern.matcher(value);
+                    if (m.find()) goals = Integer.parseInt(m.group());
+                }
+
+            } else if ("assists".equalsIgnoreCase(statName)) {
+                if (value != null) {
+                    Matcher m = pattern.matcher(value);
+                    if (m.find()) assists = Integer.parseInt(m.group());
+                }
+            }
+        }
+
+        return new PlayerLeagueStats(appearances, goals, assists, rating);
     }
 
     private Double parsePlayerRatingValue(List<Map<String,Object>> stats){
@@ -120,7 +139,7 @@ public class PlayerDetailsDto {
             Boolean isPlayed = (Boolean) match.get("played");
             Boolean hasStats = (Boolean) match.get("hasStats");
 
-            if(!isPlayed || !hasStats) break;
+            if(!isPlayed || !hasStats) continue;
 
             Map<String, Object> game = safeGetMap(match, "game");
             String startTime = safeGetString(game, "startTime");
@@ -146,7 +165,7 @@ public class PlayerDetailsDto {
 
             List<Map<String, Object>> statsListObj = safeGetListMap(match, "athleteStats");
             Map<String, Object> minutesPlayedObj = statsListObj.get(0);
-            if (minutesPlayedObj == null || Integer.parseInt(safeGetString(minutesPlayedObj, "value")) <= 10) break;
+            if (minutesPlayedObj == null || Integer.parseInt(safeGetString(minutesPlayedObj, "value")) <= 10) continue;
             Map<String, Object> ratingObj = statsListObj.get(4);
             Double rating = DEFAULT_RATING;
             if (ratingObj != null)
@@ -187,5 +206,17 @@ public class PlayerDetailsDto {
 
     public List<PlayerRecentMatch> getRecentMatches() {
         return recentMatches;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setLeagueStats(PlayerLeagueStats leagueStats) {
+        this.leagueStats = leagueStats;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 }

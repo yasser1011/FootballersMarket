@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.yasser.footballersmarket.player.Player;
+import com.yasser.footballersmarket.player.PlayerRepository;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+import com.yasser.footballersmarket.playerstats.PlayerLeagueStatsRepository;
 import com.yasser.footballersmarket.security.JwtService;
 import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import com.yasser.footballersmarket.user.AuthService;
@@ -65,12 +67,18 @@ class PlayerUserCurrentBoughtControllerTest extends BaseIntegrationTest {
     private UserService userService;
     @Autowired
     private PlayerUserCurrentBoughtService playerUserCurrentBoughtService;
+    @Autowired
+    private PlayerRepository playerRepository;
+    @Autowired
+    private PlayerLeagueStatsRepository playerLeagueStatsRepository;
 
     @BeforeEach
     void setUp() {
+        playerLeagueStatsRepository.deleteAll();
         playerUserCurrentBoughtService.deleteAll();
+        playerRepository.deleteAll();
         userService.deleteAll();
-        playerService.deleteAll();
+//        playerService.deleteAll();
     }
 
     private static Player aPlayer(){

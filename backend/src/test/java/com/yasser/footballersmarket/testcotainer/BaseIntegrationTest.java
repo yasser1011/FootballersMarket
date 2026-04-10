@@ -24,8 +24,7 @@ public abstract class BaseIntegrationTest {
             );
 
     static {
-        // 3. Manually start the container in a static block
-        // This ensures it starts ONCE and stays alive until the JVM exits
+        // 3. Manually starting the container in a static block instead of @Testcontainers annotation
         postgres.start();
     }
 

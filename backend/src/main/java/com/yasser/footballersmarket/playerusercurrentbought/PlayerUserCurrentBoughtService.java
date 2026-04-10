@@ -3,6 +3,9 @@ package com.yasser.footballersmarket.playerusercurrentbought;
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
+import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+import com.yasser.footballersmarket.scores365.ScoresService;
+import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -17,13 +20,15 @@ import java.util.List;
 public class PlayerUserCurrentBoughtService {
     private final PlayerUserCurrentBoughtRepository playerUserCurrentBoughtRepository;
     private final PlayerService playerService;
+    private final ScoresService scoresService;
 
     Logger logger = LoggerFactory.getLogger(PlayerUserCurrentBoughtService.class);
 
     public PlayerUserCurrentBoughtService(PlayerUserCurrentBoughtRepository playerUserCurrentBoughtRepository,
-                                          PlayerService playerService) {
+                                          PlayerService playerService, ScoresService scoresService) {
         this.playerUserCurrentBoughtRepository = playerUserCurrentBoughtRepository;
         this.playerService = playerService;
+        this.scoresService = scoresService;
     }
 
     public PlayerUserCurrentBoughtResponse isPlayerCurrentlyBoughtByUser(Long userId, Long playerId){
@@ -56,11 +61,16 @@ public class PlayerUserCurrentBoughtService {
             PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(playerEntity);
             if (!playerDetailsResDto.getAreClubStatsUpdated() ||
                     (playerEntity.getUpdatedBy() != null && playerEntity.getUpdatedBy().contains("sofascore"))){
-                PlayerDetailsResDto playerDet = playerService.getPlayerDetailsById(playerEntity.getId(), playerEntity.getSofascoreId());
-                Player player1 = playerService.convertPlayerDtoToPlayerEntity(playerDet);
-                player.setPlayer(player1);
-                playerEntity = player1;
-                Thread.sleep(400);
+                // fetch updated stats and update in db
+                // and set current entity league stats instead of creating new entity to avoid
+                // A different object with the same identifier value was already associated with the session
+                PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerEntity.getSofascoreId());
+                PlayerLeagueStats playerEntityLeagueStats = playerEntity.getLeagueStats();
+                playerEntityLeagueStats.setRating(playerDetailsDto.getLeagueStats().getRating());
+                playerEntityLeagueStats.setGoals(playerDetailsDto.getLeagueStats().getGoals());
+                playerEntityLeagueStats.setAssists(playerDetailsDto.getLeagueStats().getAssists());
+                playerEntityLeagueStats.setTotalNumOfGames(playerDetailsDto.getLeagueStats().getAppearances());
+                playerService.updatePlayerLeagueStatsDetails(playerEntity.getId(), playerEntityLeagueStats);
             }
             playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(playerEntity);
             PlayerUserCurrentBoughtDto playerResponse = new PlayerUserCurrentBoughtDto(playerDetailsResDto.getId(),
@@ -69,7 +79,7 @@ public class PlayerUserCurrentBoughtService {
                     playerDetailsResDto.getNationality(), playerDetailsResDto.getDateOfBirth(), playerDetailsResDto.getPosition(),
                     playerDetailsResDto.getUpdatedBy(), playerDetailsResDto.getTotalGoals(), playerDetailsResDto.getTotalAssists(),
                     playerDetailsResDto.getAvgRating(), player.getBuyPrice(), playerDetailsResDto.getPrice(),
-                    playerDetailsResDto.getAreClubStatsUpdated());
+                    playerDetailsResDto.getAreClubStatsUpdated(), playerDetailsResDto.getLeagueStats());
             userPlayersList.add(playerResponse);
         }
         // sort list based on price desc

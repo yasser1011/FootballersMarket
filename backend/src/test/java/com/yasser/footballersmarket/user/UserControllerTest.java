@@ -10,6 +10,7 @@ import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
 import com.yasser.footballersmarket.scores365.ScoresService;
+import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import com.yasser.footballersmarket.transaction.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,14 +27,18 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.anyOf;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,8 +62,10 @@ class UserControllerTest extends BaseIntegrationTest {
     private PlayerUserCurrentBoughtService playerUserCurrentBoughtService;
     @Autowired
     private TransactionService transactionService;
-    @MockBean
+    @Autowired
     private ScoresService scoresService;
+    @MockBean
+    private RestTemplate restTemplate;
 
     @BeforeEach
     void setUp() {
@@ -156,9 +163,22 @@ class UserControllerTest extends BaseIntegrationTest {
         playerUserCurrentBoughtService.savePlayerUserCurrBoughtTransactions(List.of(currBoughtTransaction1,
                 currBoughtTransaction2, currBoughtTransaction3));
 
-        Mockito
-                .when(scoresService.getPlayerEntityFromExternalService(any()))
-                .thenReturn(mockedPlayerDetails);
+//        Mockito
+//                .when(scoresService.getPlayerEntityFromExternalService(any()))
+//                .thenReturn(mockedPlayerDetails);
+        PlayerDetailsDto playerWebServiceResponse = new PlayerDetailsDto();
+        com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats playerLeagueStatsWebServiceResponse =
+                new com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats(2, 1, 0, 7.0);
+        playerWebServiceResponse.setName("Mr.Kane");
+        playerWebServiceResponse.setDateOfBirth(dob);
+        playerWebServiceResponse.setLeagueStats(playerLeagueStatsWebServiceResponse);
+        PlayerDetailsResDto playerDetailsResDto = scoresService.convertDtoToPlayerDetailsDto(10, playerWebServiceResponse, new ArrayList<>());
+
+        when(restTemplate.getForObject(anyString(), eq(PlayerDetailsDto.class)))
+                .thenReturn(playerWebServiceResponse);
+//        Mockito
+//                .when(scoresService.fetchPlayerEntityFromExternalService(any()))
+//                .thenReturn(playerWebServiceResponse);
 
         MvcResult mvcResult = mockMvc.perform(get("/api/users/rankings"))
                 .andExpect(status().isOk())
@@ -168,16 +188,19 @@ class UserControllerTest extends BaseIntegrationTest {
         List<UserResponse> jsonResponse = objectMapper.readValue(stringResponse, new TypeReference<>(){});
 
         assertThat(jsonResponse.size()).isEqualTo(2);
-        Optional<UserResponse> user1Res = jsonResponse.stream().filter(user -> user.getUserId() == user1.getId()).findFirst();
+//        Optional<UserResponse> user1Res = jsonResponse.stream().filter(user -> user.getUserId() == user1.getId()).findFirst();
+        Optional<UserResponse> user1Res = jsonResponse.stream().filter(user -> Objects.equals(user.getUserId(), user1.getId())).findFirst();
         assertThat(user1Res).isNotEmpty();
-        Optional<UserResponse> user2Res = jsonResponse.stream().filter(user -> user.getUserId() == user2.getId()).findFirst();
+//        Optional<UserResponse> user2Res = jsonResponse.stream().filter(user -> user.getUserId() == user2.getId()).findFirst();
+        Optional<UserResponse> user2Res = jsonResponse.stream().filter(user -> Objects.equals(user.getUserId(), user2.getId())).findFirst();
         assertThat(user2Res).isNotEmpty();
 
         UserResponse user1ResObj = user1Res.get();
         UserResponse user2ResObj = user2Res.get();
         assertThat(user1ResObj.getPoints()).isEqualTo(
                 user1.getPoints() + price2 +
-                        mockedPlayerDetails.getPrice());
+//                        mockedPlayerDetails.getPrice());
+                        playerDetailsResDto.getPrice());
         assertThat(user2ResObj.getPoints()).isEqualTo(
                 user2.getPoints() + price3);
 
