@@ -94,7 +94,7 @@ public class PlayersDataFetchingScheduler {
     }
 
     // 2 am every day
-//    @Scheduled(cron="0 0 0 * * *", zone="Europe/Istanbul")
+    @Scheduled(cron="0 0 0 * * *", zone="Europe/Istanbul")
 //    @Scheduled(initialDelay = 500, fixedDelay = Long.MAX_VALUE)
     public void rapidApiSchedulerRunner() throws InterruptedException, JsonProcessingException {
         util.logMemoryUsage("Start of Scheduler");
