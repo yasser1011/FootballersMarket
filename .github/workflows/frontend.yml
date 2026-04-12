@@ -43,7 +43,7 @@ jobs:
 
       - name: copy build and dockerfile to aws server
         run: |
-          scp -r -i ~/.ssh/aws_key.pem build ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }}:~/footballersmarketreactfrontend/build/
+          scp -r -i ~/.ssh/aws_key.pem build ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }}:~/footballersmarketreactfrontend/
           scp -i ~/.ssh/aws_key.pem Dockerfile ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }}:~/footballersmarketreactfrontend/Dockerfile
 
       # - name: restart docker containers
