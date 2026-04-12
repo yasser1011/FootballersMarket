@@ -57,18 +57,18 @@ class FeaturedPlayerServiceTest extends BaseIntegrationTest {
     @Test
     void shouldFetchPlayersFromExternalServiceWhenNoPlayerSavedInDbWithSameCurrDate() throws Exception {
         FeaturedPlayer featuredPlayer1 = new FeaturedPlayer("player1", 1,
-                "5.5", 1, LocalDate.of(2025, 4, 4), "", "");
+                "5.5", 1, LocalDate.of(2025, 4, 4), 1, "", "");
         FeaturedPlayer featuredPlayer2 = new FeaturedPlayer("player2", 2,
-                "5.5", 2, LocalDate.of(2025, 4, 4), "", "");
+                "5.5", 2, LocalDate.of(2025, 4, 4), 2, "", "");
         FeaturedPlayer featuredPlayer3 = new FeaturedPlayer("player3", 3,
-                "5.5", 3, LocalDate.of(2025, 4, 2), "", "");
+                "5.5", 3, LocalDate.of(2025, 4, 2), 1, "", "");
         featuredPlayerRepository.saveAll(List.of(featuredPlayer1, featuredPlayer2, featuredPlayer3));
 
 
         FeaturedPlayer externalSrvcFeaturedPlayer1 = new FeaturedPlayer("player10", 10,
-                "", 10,"5.5", "test");
+                "", 1, 10,"5.5", "test");
         FeaturedPlayer externalSrvcFeaturedPlayer2 = new FeaturedPlayer("player11", 11,
-                "",10,"5.5", "test");
+                "", 2,10,"5.5", "test");
         FeaturedPlayersResponse trendingPlayersResponseSof = new FeaturedPlayersResponse();
         trendingPlayersResponseSof.setFeaturedPlayers(List.of(externalSrvcFeaturedPlayer1, externalSrvcFeaturedPlayer2));
 //        Mockito
@@ -98,19 +98,19 @@ class FeaturedPlayerServiceTest extends BaseIntegrationTest {
     @Test
     void shouldFetchPlayersFromDbWhenCurrentDateIsAvailable() throws Exception {
         FeaturedPlayer featuredPlayer1 = new FeaturedPlayer("player1", 1,
-                "5.5", 1, LocalDate.now(), "", "");
+                "5.5", 1, LocalDate.now(), 1, "", "");
         FeaturedPlayer featuredPlayer2 = new FeaturedPlayer("player2", 2,
-                "5.5", 2, LocalDate.now(), "", "");
+                "5.5", 2, LocalDate.now(), 2, "", "");
         FeaturedPlayer featuredPlayer3 = new FeaturedPlayer("player3", 3,
-                "5.5", 3, LocalDate.now(), "", "");
+                "5.5", 3, LocalDate.now(), 3, "", "");
         List<FeaturedPlayer> featuredPlayersDb = List.of(featuredPlayer1, featuredPlayer2, featuredPlayer3);
         featuredPlayerRepository.saveAll(featuredPlayersDb);
 
 
         FeaturedPlayer externalSrvcFeaturedPlayer1 = new FeaturedPlayer("player10", 10,
-                "", 10,"5.5", "test");
+                "", 1, 10,"5.5", "test");
         FeaturedPlayer externalSrvcFeaturedPlayer2 = new FeaturedPlayer("player11", 11,
-                "",10,"5.5", "test");
+                "", 2,10,"5.5", "test");
         FeaturedPlayersResponse trendingPlayersResponseSof = new FeaturedPlayersResponse();
         trendingPlayersResponseSof.setFeaturedPlayers(List.of(externalSrvcFeaturedPlayer1, externalSrvcFeaturedPlayer2));
 //        Mockito
@@ -139,5 +139,12 @@ class FeaturedPlayerServiceTest extends BaseIntegrationTest {
         assertThat(player2ResponseRes.getPlayerName()).isEqualTo(featuredPlayer2.getPlayerName());
         assertThat(player3ResponseRes.getPlayerId()).isEqualTo(featuredPlayer3.getPlayerId());
         assertThat(player3ResponseRes.getPlayerName()).isEqualTo(featuredPlayer3.getPlayerName());
+    }
+
+    @Test
+    void shouldRaiseExceptionAndReturnDbDataIfThereWasDuplicateDatabasePlayerInsertion(){
+        // 1- add players to db normally
+        // 2- run method again and let repo.find return empty at first time
+        // 3- exception raised then return what's in the db
     }
 }
