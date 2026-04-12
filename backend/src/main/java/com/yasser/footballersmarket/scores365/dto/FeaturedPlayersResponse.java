@@ -40,7 +40,7 @@ public class FeaturedPlayersResponse {
             List<Map<String, Object>> playerRatingStatList = safeGetListMap(playerObj, "stats");
             Map<String, Object> playerRatingStatObj = playerRatingStatList.get(0);
             String rating = safeGetString(playerRatingStatObj, "value");
-            FeaturedPlayer featuredPlayer = new FeaturedPlayer(playerName, playerId, rating, playerTeamId, "", "");
+            FeaturedPlayer featuredPlayer = new FeaturedPlayer(playerName, playerId, rating, i + 1, playerTeamId, "", "");
 
             featuredPlayers.add(featuredPlayer);
         }

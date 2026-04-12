@@ -52,7 +52,7 @@ class ScoresControllerTest extends BaseIntegrationTest {
         FeaturedPlayersResponse trendingPlayersResponseSof = new FeaturedPlayersResponse();
         TrendingPlayer trendingPlayer = new TrendingPlayer("Pedri",
                 992587,"barcelona","test","8",2817);
-        FeaturedPlayer featuredPlayer = new FeaturedPlayer("Pedri", 2, "8.0", 2, "", "");
+        FeaturedPlayer featuredPlayer = new FeaturedPlayer("Pedri", 2, "8.0", 1, 2, "", "");
         trendingPlayersResponseSof.setFeaturedPlayers(List.of(featuredPlayer));
 
         Mockito

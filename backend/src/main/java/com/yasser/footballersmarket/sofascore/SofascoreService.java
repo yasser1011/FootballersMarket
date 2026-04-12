@@ -266,9 +266,10 @@ public class SofascoreService {
 
         List<FeaturedPlayer> featuredPlayersList = new ArrayList<>();
 
-        for (TrendingPlayer player: trendingPlayersResponse.getTrendingPlayers()) {
+        for (int i = 0; i < trendingPlayersResponse.getTrendingPlayers().size(); i++) {
+            TrendingPlayer player = trendingPlayersResponse.getTrendingPlayers().get(i);
             FeaturedPlayer featuredPlayer = new FeaturedPlayer(player.getPlayerName(), player.getPlayerId(),
-                    player.getRating(), player.getPlayerTeamId(), player.getHomeTeam(), player.getAwayTeam());
+                    player.getRating(), i + 1, player.getPlayerTeamId(), player.getHomeTeam(), player.getAwayTeam());
             featuredPlayersList.add(featuredPlayer);
         }
         return new FeaturedPlayersResponse(featuredPlayersList);

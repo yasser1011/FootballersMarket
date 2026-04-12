@@ -46,14 +46,13 @@ jobs:
           scp -r -i ~/.ssh/aws_key.pem build ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }}:~/footballersmarketreactfrontend/
           scp -i ~/.ssh/aws_key.pem Dockerfile ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }}:~/footballersmarketreactfrontend/Dockerfile
 
-      # - name: restart docker containers
-      #   run: |
-      #     ssh -i ~/.ssh/aws_key.pem ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }} "
-      #       cd ~/footballersmarketreactfrontend
-      #       docker build -t footballersmarketfrontend:2.0 . &&
-      #       docker stop footballersmarketfrontapp || true &&
-      #       docker rm footballersmarketfrontapp || true &&
-      #       docker image prune -f &&
-      #       docker run -d --name footballersmarketfrontapp -p 5000:3000 --net footballers-market-network footballersmarketfrontend:2.0 &&
-      #       docker ps
-      #     "
+      - name: restart docker containers
+        run: |
+          ssh -i ~/.ssh/aws_key.pem ${{ secrets.AWS_SERVER_USER }}@${{ secrets.AWS_SERVER_IP }} "
+            cd ~/footballersmarketreactfrontend
+            docker build -t footballersmarketfrontend:2.0 . &&
+            docker stop footballersmarketfrontapp || true &&
+            docker rm footballersmarketfrontapp || true &&
+            docker image prune -f &&
+            docker run -d --name footballersmarketfrontapp -p 5000:3000 --net footballers-market-network footballersmarketfrontend:2.0 &&
+            docker ps"

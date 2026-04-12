@@ -23,10 +23,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 //        locations = "classpath:application-integrationtest.properties")
 @AutoConfigureMockMvc
 //@ExtendWith(MockitoExtension.class)
-class FeaturedPlayerServiceTest extends BaseIntegrationTest {
+class FeaturedPlayerIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
@@ -139,12 +142,5 @@ class FeaturedPlayerServiceTest extends BaseIntegrationTest {
         assertThat(player2ResponseRes.getPlayerName()).isEqualTo(featuredPlayer2.getPlayerName());
         assertThat(player3ResponseRes.getPlayerId()).isEqualTo(featuredPlayer3.getPlayerId());
         assertThat(player3ResponseRes.getPlayerName()).isEqualTo(featuredPlayer3.getPlayerName());
-    }
-
-    @Test
-    void shouldRaiseExceptionAndReturnDbDataIfThereWasDuplicateDatabasePlayerInsertion(){
-        // 1- add players to db normally
-        // 2- run method again and let repo.find return empty at first time
-        // 3- exception raised then return what's in the db
     }
 }

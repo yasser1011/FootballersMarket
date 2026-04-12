@@ -6,6 +6,9 @@ import javax.persistence.*;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "featured_player", uniqueConstraints = {
+        @UniqueConstraint(name = "uc_date_position", columnNames = {"date", "position"})
+})
 public class FeaturedPlayer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,27 +22,30 @@ public class FeaturedPlayer {
     @Transient
     private String playerTeamImgUrl;
     private LocalDate date;
+    private Integer position;
     private String homeTeamName;
     private String awayTeamName;
 
     public FeaturedPlayer(){}
 
-    public FeaturedPlayer(String playerName, Integer playerId, String rating, Integer playerTeamId, String homeTeamName, String awayTeamName) {
+    public FeaturedPlayer(String playerName, Integer playerId, String rating, Integer position, Integer playerTeamId, String homeTeamName, String awayTeamName) {
         this.playerName = playerName;
         this.playerId = playerId;
         this.rating = rating;
+        this.position = position;
         this.playerTeamId = playerTeamId;
         this.date = LocalDate.now();
         this.homeTeamName = homeTeamName;
         this.awayTeamName = awayTeamName;
     }
 
-    public FeaturedPlayer(String playerName, Integer playerId, String rating, Integer playerTeamId, LocalDate date, String homeTeamName, String awayTeamName) {
+    public FeaturedPlayer(String playerName, Integer playerId, String rating, Integer playerTeamId, LocalDate date, Integer position, String homeTeamName, String awayTeamName) {
         this.playerName = playerName;
         this.playerId = playerId;
         this.rating = rating;
         this.playerTeamId = playerTeamId;
         this.date = date;
+        this.position = position;
         this.homeTeamName = homeTeamName;
         this.awayTeamName = awayTeamName;
     }

@@ -9,6 +9,7 @@ import com.yasser.footballersmarket.sofascore.dto.TrendingPlayersResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -20,13 +21,13 @@ public class FeaturedPlayerService {
 
     @Autowired
     private FeaturedPlayerRepository featuredPlayerRepository;
-    @Autowired
-    private SofascoreService sofascoreService;
+//    @Autowired
+//    private SofascoreService sofascoreService;
     @Autowired
     private ScoresService scoresService;
-    @Autowired
-    private SofascoreConfig sofascoreConfig;
-    Logger logger = LoggerFactory.getLogger(FeaturedPlayerService.class);
+//    @Autowired
+//    private SofascoreConfig sofascoreConfig;
+    private Logger logger = LoggerFactory.getLogger(FeaturedPlayerService.class);
 
     public FeaturedPlayersResponse getFeaturedPlayers(){
         List<FeaturedPlayer> currDateFeaturedPlayers = featuredPlayerRepository.
@@ -35,7 +36,6 @@ public class FeaturedPlayerService {
         if (currDateFeaturedPlayers.size() > 0){
             logger.info("featured players fetched from database");
             FeaturedPlayersResponse featuredPlayersResponse = new FeaturedPlayersResponse(currDateFeaturedPlayers);
-//            sofascoreService.addBaseUrlToTrendingPlayersResponse(featuredPlayersResponse);
             scoresService.addBaseUrlToTrendingPlayersResponse(featuredPlayersResponse);
             return featuredPlayersResponse;
         }
@@ -44,12 +44,24 @@ public class FeaturedPlayerService {
         FeaturedPlayersResponse trendingPlayers = scoresService.getFeaturedPlayers();
         if (trendingPlayers == null) return new FeaturedPlayersResponse(new ArrayList<>());
 
-        logger.info("fetched featured players from external service saving to database");
-        featuredPlayerRepository.saveAll(trendingPlayers.getFeaturedPlayers());
-        logger.info("featured players saved to database");
-//        sofascoreService.addBaseUrlToTrendingPlayersResponse(trendingPlayers);
-        scoresService.addBaseUrlToTrendingPlayersResponse(trendingPlayers);
+        try {
+            logger.info("fetched featured players from external service saving to database");
+            featuredPlayerRepository.saveAll(trendingPlayers.getFeaturedPlayers());
+            logger.info("featured players saved to database");
+            scoresService.addBaseUrlToTrendingPlayersResponse(trendingPlayers);
 
-        return trendingPlayers;
+            return trendingPlayers;
+        } catch (DataIntegrityViolationException e) {
+            // there are already data saved for this date
+            List<FeaturedPlayer> featuredPlayers = featuredPlayerRepository.
+                    findByDate(LocalDate.now());
+
+            logger.info("featured players fetching again from db");
+            FeaturedPlayersResponse featResponse = new FeaturedPlayersResponse(featuredPlayers);
+            scoresService.addBaseUrlToTrendingPlayersResponse(featResponse);
+            return featResponse;
+
+        }
+
     }
 }
