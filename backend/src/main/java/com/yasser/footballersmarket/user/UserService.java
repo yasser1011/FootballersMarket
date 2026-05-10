@@ -138,6 +138,11 @@ public class UserService implements UserDetailsService {
                 new EntityNotFoundException("Player not found with id " + userId));
     }
 
+    public User findByIdForUpdate(Long userId){
+        return userRepository.findByIdForUpdate(userId).orElseThrow(() ->
+                new EntityNotFoundException("Player not found with id " + userId));
+    }
+
     public void deleteAll(){
         userRepository.deleteAll();
     }

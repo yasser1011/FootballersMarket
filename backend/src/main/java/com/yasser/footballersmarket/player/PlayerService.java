@@ -35,24 +35,11 @@ public class PlayerService {
     }
 
     public PlayerDetailsResDto getPlayerDetailsByInternalId(Long rapidApiId) {
-        logger.info("getting player from database player id {}", rapidApiId);
-        PlayerDetailsResDto playerDto = getPlayerDbDetails(rapidApiId);
-        logger.info("retrieved player details from database, player id {}", rapidApiId);
-        return playerDto;
+        Player playerLocalDb = playerRepository.findById(rapidApiId)
+                .orElseThrow(() -> new EntityNotFoundException("Player not found with id " + rapidApiId));
+        logger.info("player found in database, player id {}", rapidApiId);
+        return convertPlayerEntityToPlayerDto(playerLocalDb);
     }
-
-    public PlayerDetailsResDto getPlayerDetailsByExternalId(Integer externalServiceId) {
-        logger.info("getting player from database external player id {}", externalServiceId);
-        PlayerDetailsResDto playerDto = getPlayerBySofascoreId(externalServiceId);
-        if (playerDto == null){
-            logger.error("player not found external player id {}", externalServiceId);
-            return null;
-        }
-        logger.info("retrieved player details from database, external player id {}", externalServiceId);
-        return playerDto;
-    }
-
-
 
     public List<PlayerBasic> getPlayersUpdatedBySofascore(){
         logger.info("retrieving players which are updated by sofascore");
@@ -61,18 +48,6 @@ public class PlayerService {
     public List<Integer> getPlayersWithoutRapidId(){
         logger.info("retrieving players which was bought from sofascore search");
         return playerRepository.getPlayersWithoutRapidId();
-    }
-
-    private PlayerDetailsResDto getPlayerDbDetails(Long id) {
-        // 1- check if the player has updated by sofascore flag
-        // 2- check his name in sofascore to see if his club name is updated
-        // 3- decide if data should be returned from db or from sofascore
-
-         Player playerLocalDb = playerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Player not found with id " + id));
-         logger.info("player found in database, player id {}", id);
-        return convertPlayerEntityToPlayerDto(playerLocalDb);
-
     }
 
     public void updatePlayerLeagueStatsDetails(Long rapidId, PlayerLeagueStats updatedLeagueStats){
@@ -126,7 +101,7 @@ public class PlayerService {
         playerRepository.updatePlayerUpdatedByStatusToSofascore(playerId);
     }
 
-    public PlayerDetailsResDto getPlayerBySofascoreId(Integer sofascoreId){
+    public PlayerDetailsResDto getPlayerDetailsByExternalId(Integer sofascoreId){
         Player oneBySofascoreId = playerRepository.findFirstBySofascoreId(sofascoreId);
         return convertPlayerEntityToPlayerDto(oneBySofascoreId);
     }

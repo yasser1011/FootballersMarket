@@ -1,31 +1,29 @@
 package com.yasser.footballersmarket.transaction.dto;
 
-public class TransactionRequest {
-    private Long playerId;
-    private Integer playerSofascoreId;
-    private Integer transactionType;
-    private Integer price;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-    public TransactionRequest(Long playerId, Integer playerSofascoreId, Integer transactionType, Integer price) {
-        this.playerId = playerId;
-        this.playerSofascoreId = playerSofascoreId;
-        this.transactionType = transactionType;
-        this.price = price;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+
+public record TransactionRequest(
+        Long playerId,
+        Integer playerSofascoreId,
+        @NotNull @Min(1) @Max(2) Integer transactionType,
+        @NotNull @Positive Integer price
+) {
+    @AssertTrue(message = "playerId or playerSofascoreId must be provided")
+    @JsonIgnore
+    // to avoid adding it with any TransactionRequest object
+    public boolean isPlayerIdentifierProvided() {
+        return playerId != null || playerSofascoreId != null;
     }
 
-    public Long getPlayerId() {
-        return playerId;
-    }
-
-    public Integer getTransactionType() {
-        return transactionType;
-    }
-
-    public Integer getPlayerSofascoreId() {
-        return playerSofascoreId;
-    }
-
-    public Integer getPrice() {
-        return price;
+    @AssertTrue(message = "playerId is required when selling")
+    @JsonIgnore
+    public boolean isPlayerIdProvidedForSell() {
+        return transactionType == null || transactionType != 2 || playerId != null;
     }
 }
