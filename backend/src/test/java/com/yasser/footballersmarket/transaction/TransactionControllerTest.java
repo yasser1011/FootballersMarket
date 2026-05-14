@@ -189,7 +189,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
                         .with(user(user1))
                         .content(objectMapper.writeValueAsString(transactionRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andReturn();
 
         String transactionResponseStr = mvcResult.getResponse().getContentAsString();
@@ -234,7 +234,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
                         .with(user(user1))
                         .content(objectMapper.writeValueAsString(transactionRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andReturn();
 
         String transactionResponseStr = mvcResult.getResponse().getContentAsString();
@@ -275,7 +275,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
                         .with(user(user1))
                         .content(objectMapper.writeValueAsString(transactionRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andReturn();
 
         String transactionResponseStr = mvcResult.getResponse().getContentAsString();
@@ -364,7 +364,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
                         .with(user(user1))
                         .content(objectMapper.writeValueAsString(transactionRequest))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
+                .andExpect(status().isBadRequest())
                 .andReturn();
 
         String transactionResponseStr = mvcResult.getResponse().getContentAsString();

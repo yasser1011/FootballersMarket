@@ -17,6 +17,7 @@ import axios from "axios";
 import { useEffect } from "react";
 import { useOnMountUnsafe } from "../customhooks/useOnMountUnsafe";
 import { UserContext } from "../Context/UserContext";
+import { SelectedHomeTablePlayerContext } from "../Context/SelectedHomeTablePlayerContext";
 import { useContext } from "react";
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
@@ -38,6 +39,9 @@ export default function HomeTable({
   paginationOptions,
 }) {
   const { userData } = useContext(UserContext);
+  const { setSelectedHomeTablePlayer } = useContext(
+    SelectedHomeTablePlayerContext,
+  );
 
   let ranOnce = false;
 
@@ -88,12 +92,8 @@ export default function HomeTable({
   };
 
   const navigatePlayerDetails = (player) => {
-    // return navigate(`/players/rp/${player.id}`, {
-    //   state: { player, srcLocation: "hometable" },
-    // });
-    return navigate(`/players/${player.externalServicePlayerId}`, {
-      state: { player },
-    });
+    setSelectedHomeTablePlayer(player);
+    return navigate(`/players/${player.externalServicePlayerId}`);
   };
 
   useEffect(() => {

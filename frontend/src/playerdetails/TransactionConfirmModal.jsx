@@ -121,22 +121,11 @@ export const TransactionConfirmModal = ({
     };
 
     try {
-      const transactionRes = await axios.post(
+      await axios.post(
         `${apiBaseUrl}/transactions`,
         transactionReqData,
         { headers: { Authorization: userData.token } }
       );
-      // console.log(transactionRes);
-
-      if (!transactionRes || !transactionRes.data) {
-        handleTransactionErr();
-        return;
-      }
-      const transactionStatus = transactionRes.data.status;
-      if (transactionStatus !== 0) {
-        handleTransactionErr(transactionRes.data);
-        return;
-      }
 
       setTransactionStatus(TRANSACTION_STATUSES.SUCCESS);
       if (transactionType.name === transactionTypes.buy.name) {
@@ -183,7 +172,7 @@ export const TransactionConfirmModal = ({
     } catch (error) {
       console.log(error);
 
-      handleTransactionErr();
+      handleTransactionErr(error.response && error.response.data);
     }
   };
 

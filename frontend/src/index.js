@@ -5,13 +5,16 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { UserProvider } from "./Context/UserContext";
 import { HomePageProvider } from "./Context/HomePageContext";
+import { SelectedHomeTablePlayerProvider } from "./Context/SelectedHomeTablePlayerContext";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <UserProvider>
       <HomePageProvider>
-        <App />
+        <SelectedHomeTablePlayerProvider>
+          <App />
+        </SelectedHomeTablePlayerProvider>
       </HomePageProvider>
     </UserProvider>
   </React.StrictMode>

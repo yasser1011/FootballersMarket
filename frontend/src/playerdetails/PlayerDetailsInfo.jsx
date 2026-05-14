@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import "./PlayerDetails.css";
 import { Box, Button, Card, CircularProgress, Typography } from "@mui/material";
 import { useLocation, useParams } from "react-router-dom";
@@ -11,6 +11,7 @@ import ArrowDropDownSharpIcon from "@mui/icons-material/ArrowDropDownSharp";
 import ArrowDropUpSharpIcon from "@mui/icons-material/ArrowDropUpSharp";
 import HorizontalRuleSharpIcon from "@mui/icons-material/HorizontalRuleSharp";
 import { apiBaseUrl } from "../config/Config";
+import { SelectedHomeTablePlayerContext } from "../Context/SelectedHomeTablePlayerContext";
 
 export const PlayerDetailsInfo = ({
   setOuterTransactionConfirmNotificationOpen,
@@ -20,8 +21,11 @@ export const PlayerDetailsInfo = ({
   setFetchStatus,
   setPlayerLastRatings,
 }) => {
-  const { state, pathname } = useLocation();
+  const { pathname } = useLocation();
   const { id } = useParams();
+  const { selectedHomeTablePlayer } = useContext(
+    SelectedHomeTablePlayerContext,
+  );
 
   const [playerDetails, setPlayerDetails] = useState();
 
@@ -67,13 +71,14 @@ export const PlayerDetailsInfo = ({
   };
 
   const getPlayerDetails = () => {
-    // coming from home table
+    // last condition if we're in player's page and we used to search for another player from search bar
+    // state would still be having old player data and won't be null so won't fetch newew player's data
     if (
-      state != null &&
-      state.player != null &&
-      state.player.areClubStatsUpdated
+      selectedHomeTablePlayer != null &&
+      selectedHomeTablePlayer.areClubStatsUpdated &&
+      String(selectedHomeTablePlayer.externalServicePlayerId) === String(id)
     ) {
-      setPlayerDetails(state.player);
+      setPlayerDetails(selectedHomeTablePlayer);
       fetchPlayerLastRatings(id);
     } else {
       fetchPlayerDetails(id);
