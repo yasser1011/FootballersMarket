@@ -8,10 +8,15 @@ import com.yasser.footballersmarket.sofascore.SofascoreService;
 import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
@@ -24,20 +29,17 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-class FeaturedPlayerServiceTest extends BaseIntegrationTest {
-    // real repo but can override method to mock results
-    @SpyBean
+@ExtendWith(MockitoExtension.class)
+class FeaturedPlayerServiceTest {
+//    // real repo but can override method to mock results
+//    @SpyBean
+    @Mock
     private FeaturedPlayerRepository featuredPlayerRepository;
-    @Autowired
-    private FeaturedPlayerService featuredPlayerService;
-    @MockBean
+    @Mock
     private ScoresService scoresService;
-    private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    @InjectMocks
+    private FeaturedPlayerService featuredPlayerService;
 
-    @BeforeEach
-    void setUp() {
-        featuredPlayerRepository.deleteAll();
-    }
 
     @Test
     void shouldRaiseExceptionAndReturnDbDataIfThereWasDuplicateDatabasePlayerInsertion(){
@@ -48,12 +50,19 @@ class FeaturedPlayerServiceTest extends BaseIntegrationTest {
         // works best for spies
         FeaturedPlayer entity = new FeaturedPlayer("test name", 1,
                 "5.5", 1, 1, "home team", "away team");
-        featuredPlayerRepository.save(entity);
-        List<FeaturedPlayer> dbSnapshot = featuredPlayerRepository.findByDate(LocalDate.now());
+//        featuredPlayerRepository.save(entity);
+//        List<FeaturedPlayer> dbSnapshot = featuredPlayerRepository.findByDate(LocalDate.now());
+        List<FeaturedPlayer> dbSnapshot = List.of(entity);
 
+        // featuredPlayerRepository.findByDate
+        // first time return empty list
+        // second time return what's in the db
         doReturn(Collections.emptyList())
                 .doReturn(dbSnapshot)
                 .when(featuredPlayerRepository).findByDate(any(LocalDate.class));
+
+        doThrow(new DataIntegrityViolationException("duplicate"))
+                .when(featuredPlayerRepository).saveAll(any());
 
         FeaturedPlayer externalSrvcFeaturedPlayer1 = new FeaturedPlayer("player10", 10,
                 "", 1, 10,"5.5", "test");

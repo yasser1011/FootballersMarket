@@ -19,21 +19,21 @@ import java.util.List;
 @Service
 public class FeaturedPlayerService {
 
-    @Autowired
-    private FeaturedPlayerRepository featuredPlayerRepository;
-//    @Autowired
-//    private SofascoreService sofascoreService;
-    @Autowired
-    private ScoresService scoresService;
-//    @Autowired
-//    private SofascoreConfig sofascoreConfig;
-    private Logger logger = LoggerFactory.getLogger(FeaturedPlayerService.class);
+
+    private final FeaturedPlayerRepository featuredPlayerRepository;
+    private final ScoresService scoresService;
+    private final Logger logger = LoggerFactory.getLogger(FeaturedPlayerService.class);
+
+    public FeaturedPlayerService(FeaturedPlayerRepository featuredPlayerRepository, ScoresService scoresService){
+        this.featuredPlayerRepository = featuredPlayerRepository;
+        this.scoresService = scoresService;
+    }
 
     public FeaturedPlayersResponse getFeaturedPlayers(){
         List<FeaturedPlayer> currDateFeaturedPlayers = featuredPlayerRepository.
                 findByDate(LocalDate.now());
 
-        if (currDateFeaturedPlayers.size() > 0){
+        if (!currDateFeaturedPlayers.isEmpty()){
             logger.info("featured players fetched from database");
             FeaturedPlayersResponse featuredPlayersResponse = new FeaturedPlayersResponse(currDateFeaturedPlayers);
             scoresService.addBaseUrlToTrendingPlayersResponse(featuredPlayersResponse);
