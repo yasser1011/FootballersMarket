@@ -14,9 +14,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/featured-players")
 public class FeaturedPlayerController {
-    @Autowired
-    private FeaturedPlayerService featuredPlayerService;
+
+    private final FeaturedPlayerService featuredPlayerService;
     Logger logger = LoggerFactory.getLogger(FeaturedPlayerController.class);
+
+    public FeaturedPlayerController(FeaturedPlayerService featuredPlayerService){
+        this.featuredPlayerService = featuredPlayerService;
+    }
 
     @GetMapping
     public ResponseEntity getFeaturedPlayerService() {
