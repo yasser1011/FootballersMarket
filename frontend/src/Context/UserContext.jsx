@@ -12,9 +12,8 @@ export const UserProvider = (props) => {
   const fetchUser = async () => {
     let token = localStorage.getItem("auth-token");
 
-    if (token == null) {
+    if (token == null || token === "") {
       localStorage.setItem("auth-token", "");
-      token = "";
       setUserLoading(false);
       return;
     }
@@ -27,8 +26,12 @@ export const UserProvider = (props) => {
       setUserData({ token: token, user: userRes.data });
       setUserLoading(false);
     } catch (err) {
+      // server rejected the token (stale/invalid): clear it so we stop
+      // sending it with every request; keep it on network errors
+      if (err.response && err.response.status >= 400 && err.response.status < 500) {
+        localStorage.setItem("auth-token", "");
+      }
       setUserLoading(false);
-      // console.log(err);
     }
   };
 
