@@ -1,7 +1,20 @@
 package com.yasser.footballersmarket.worldcup;
 
+import java.util.Set;
+
 public final class WorldCupConstants {
     private WorldCupConstants() {}
+
+    // --- rapid api world cup identifiers (api-football league 1, edition 2026) ---
+    public static final String WC_RAPID_LEAGUE_ID = "1";
+    public static final String WC_RAPID_SEASON = "2026";
+
+    // --- results polling (api status short codes that mean the match is over) ---
+    public static final Set<String> FINISHED_STATUSES = Set.of("FT", "AET", "PEN");
+    // added to a fixture's checkAgainMinutes each time it is polled and found not yet finished
+    public static final int CHECK_AGAIN_BACKOFF_MINUTES = 60;
+    // pause between consecutive rapid api calls in a polling batch, to stay under the rate limit
+    public static final long RESULTS_RATE_LIMIT_MS = 10_000L;
 
     // --- pricing categories, derived from baseRating (last season league rating snapshot) ---
     public static final double ELITE_RATING_THRESHOLD = 7.2;
