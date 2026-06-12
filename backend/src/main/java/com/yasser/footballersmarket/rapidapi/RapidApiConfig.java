@@ -59,21 +59,21 @@ public class RapidApiConfig {
 
     public List<HashMap<String, String>> getSchedulerTeamsSearchInput(){
         return List.of(
-//                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, CHELSEA_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(SPANISH_LEAGUE_ID, rapidSearchSeason, BARCELONA_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, MANCITY_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, LIVERPOOL_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, ARSENAL_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, MANUTD_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, TOTTENHAM_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ITALIAN_LEAGUE_ID, rapidSearchSeason, INTER_MILAN_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ITALIAN_LEAGUE_ID, rapidSearchSeason, AC_MILAN_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ITALIAN_LEAGUE_ID, rapidSearchSeason, NAPOLI_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(ITALIAN_LEAGUE_ID, rapidSearchSeason, JUVENTUS_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(SPANISH_LEAGUE_ID, rapidSearchSeason, ATLETICO_MADRID_ID).getSearchTeamInputParamsMap(),
-//                new SearchTeam(SPANISH_LEAGUE_ID, rapidSearchSeason, REAL_MADRID_ID).getSearchTeamInputParamsMap(),
-                new SearchTeam(GERMAN_LEAGUE_ID, rapidSearchSeason, BAYERN_ID).getSearchTeamInputParamsMap()
-//                new SearchTeam(FRENCH_LEAGUE_ID, rapidSearchSeason, PARIS_ID).getSearchTeamInputParamsMap()
+                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, CHELSEA_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(SPANISH_LEAGUE_ID, rapidSearchSeason, BARCELONA_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, MANCITY_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, LIVERPOOL_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, ARSENAL_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, MANUTD_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ENGLISH_LEAGUE_ID, rapidSearchSeason, TOTTENHAM_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ITALIAN_LEAGUE_ID, rapidSearchSeason, INTER_MILAN_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ITALIAN_LEAGUE_ID, rapidSearchSeason, AC_MILAN_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ITALIAN_LEAGUE_ID, rapidSearchSeason, NAPOLI_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(ITALIAN_LEAGUE_ID, rapidSearchSeason, JUVENTUS_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(SPANISH_LEAGUE_ID, rapidSearchSeason, ATLETICO_MADRID_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(SPANISH_LEAGUE_ID, rapidSearchSeason, REAL_MADRID_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(GERMAN_LEAGUE_ID, rapidSearchSeason, BAYERN_ID).getSearchTeamInputParamsMap(),
+                new SearchTeam(FRENCH_LEAGUE_ID, rapidSearchSeason, PARIS_ID).getSearchTeamInputParamsMap()
         );
     }
 }

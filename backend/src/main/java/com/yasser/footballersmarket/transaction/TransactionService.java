@@ -99,7 +99,7 @@ public class TransactionService {
 
     public TransactionResponse applyBuyOrSell(Long userId, TransactionRequest req, PlayerDetailsResDto playerDto) {
         final int BUY = 1;
-        final int MAX_BUY_SIZE = 7;
+        final int MAX_BUY_SIZE = 4;
 
         User user = userService.findByIdForUpdate(userId);
 
