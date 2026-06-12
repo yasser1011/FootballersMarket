@@ -22,6 +22,12 @@ public class PlayerDetailsResDto {
     private Boolean areClubStatsUpdated;
     private PlayerLeagueStats leagueStats;
     private Integer price;
+    // world cup pricing inputs, carried so the dto can be repriced after its stats
+    // mutate; null for non-participants. not exposed in the api response
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Double worldCupBaseRating;
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Double worldCupRating;
 
     private String photoUrl;
     private String clubPhotoUrl;
@@ -72,33 +78,30 @@ public class PlayerDetailsResDto {
         return totalAssists;
     }
 
+    // computed by the active PriceStrategy and set during dto conversion;
+    // the dto no longer knows any pricing formula
     public Integer getPrice() {
-        final int offsetValue = 100;
-//        double ageWeight = 0.25;
-//        double ratingWeight = 0.45;
-        double ageWeight = 0.35;
-        double ratingWeight = 0.65;
-        double goalsWeight = 0.2;
-        double assistsWeight = 0.1;
+        return price;
+    }
 
-        int age = getAge();
-        if (age < 23 || age > 33) {
-            ageWeight = 0.55;
-            ratingWeight = 0.45;
-        }
+    public void setPrice(Integer price) {
+        this.price = price;
+    }
 
-        double avgRating = getAvgRating();
-        int totalGoals = getTotalGoals();
-        int totalAssists = getTotalAssists();
+    public Double getWorldCupBaseRating() {
+        return worldCupBaseRating;
+    }
 
-        double ageComponent = Math.pow(1.0 / age, 3) * ageWeight * 100_000 * offsetValue;
-        double ratingComponent = Math.pow(avgRating, 1.1) * ratingWeight * offsetValue;
-        double goalsComponent = Math.pow(totalGoals, 0.8) * goalsWeight * offsetValue;
-        double assistsComponent = Math.pow(totalAssists, 0.8) * assistsWeight * offsetValue;
-//        double totalValue = ageComponent + ratingComponent + goalsComponent + assistsComponent;
-        double totalValue = ageComponent + ratingComponent;
+    public void setWorldCupBaseRating(Double worldCupBaseRating) {
+        this.worldCupBaseRating = worldCupBaseRating;
+    }
 
-        return (int) Math.round(totalValue);
+    public Double getWorldCupRating() {
+        return worldCupRating;
+    }
+
+    public void setWorldCupRating(Double worldCupRating) {
+        this.worldCupRating = worldCupRating;
     }
 
     public Boolean getAreClubStatsUpdated() {
@@ -164,11 +167,6 @@ public class PlayerDetailsResDto {
             }
         }
         return true;
-    }
-
-    private int getAge(){
-        LocalDate currentDate = new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        return Period.between(dateOfBirth, currentDate).getYears();
     }
 
     public Long getId() {

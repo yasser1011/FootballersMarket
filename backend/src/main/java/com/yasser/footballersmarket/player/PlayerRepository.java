@@ -50,7 +50,9 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     Player findPlayerById(Long id);
 
-    @Query("SELECT p FROM Player p join p.leagueStats ls")
+    // left join fetch world cup stats so the pricing strategy reads them without an n+1 per player
+    @Query(value = "SELECT p FROM Player p join p.leagueStats ls left join fetch p.worldCupStats wcs",
+            countQuery = "SELECT count(p) FROM Player p join p.leagueStats ls")
     Page<Player> getHomePagePlayers(Pageable pageable);
 
     @Modifying
@@ -58,6 +60,8 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     void updatePlayerUpdatedByStatusToSofascore(Long playerId);
 
     Player findFirstBySofascoreId(Integer sofascoreId);
+
+    List<Player> findBySofascoreIdIn(List<Integer> sofascoreIds);
 
     Player findOneByIdAndSofascoreId(Long playerId, Integer sofascoreId);
 

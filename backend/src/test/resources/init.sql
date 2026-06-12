@@ -32,3 +32,24 @@ CREATE FUNCTION fn_get_price(age integer, rating numeric, goals integer, assists
 	end;
 
 $$ LANGUAGE plpgsql;
+
+-- world cup pricing, mirror of WorldCupPriceCalculator.java / WorldCupConstants.java.
+-- kept in sync by FnGetWcPriceParityTest
+CREATE OR REPLACE FUNCTION fn_get_wc_price(base_rating numeric, wc_rating numeric)
+RETURNS numeric AS $$
+declare
+	base integer;
+	multiplier numeric;
+begin
+	if base_rating is null then base := 250;
+	elsif base_rating >= 7.2 then base := 1000;
+	elsif base_rating >= 6.8 then base := 500;
+	else base := 250;
+	end if;
+
+	multiplier := power(1.8, coalesce(wc_rating, 6.5) - 6.5);
+	multiplier := greatest(0.5, least(4.0, multiplier));
+
+	return round(base * multiplier);
+end;
+$$ LANGUAGE plpgsql IMMUTABLE;

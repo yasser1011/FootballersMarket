@@ -2,6 +2,7 @@ package com.yasser.footballersmarket.player;
 
 import com.yasser.footballersmarket.playerstats.PlayerChampionsLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
@@ -45,6 +46,11 @@ public class Player {
     @OneToOne(mappedBy = "player", cascade = CascadeType.ALL)
     @PrimaryKeyJoinColumn
     private PlayerChampionsLeagueStats championsLeagueStats;
+
+    // tournament stats; null for players not in the world cup. read by the pricing strategy
+    @OneToOne(mappedBy = "player")
+    @PrimaryKeyJoinColumn
+    private PlayerWorldCupStats worldCupStats;
 //
 //    @Transient
 //    private Integer price;
@@ -186,6 +192,10 @@ public class Player {
     public void setLeagueStats(PlayerLeagueStats leagueStats) {
         this.leagueStats = leagueStats;
         this.leagueStats.setPlayer(this);
+    }
+
+    public PlayerWorldCupStats getWorldCupStats() {
+        return worldCupStats;
     }
 
     public PlayerChampionsLeagueStats getChampionsLeagueStats() {

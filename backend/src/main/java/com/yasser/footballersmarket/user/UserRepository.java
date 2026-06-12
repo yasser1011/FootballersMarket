@@ -76,5 +76,37 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query(nativeQuery = true, value = usersScoreQuery)
     List<Object[]> getAllUsersScore();
 
+    // world cup mode variants: portfolio valued by fn_get_wc_price.
+    // participants use their frozen base_rating + live tournament rating;
+    // non participants fall back to their league rating (flat base price).
+    // the case guard keeps users without any bought player at null price (not a 250 phantom)
+    String wcTopRankedUsersQuery = "select x.user_id, max(x.username) as username,\n" +
+            "\tcoalesce(sum(x.price), 0) + max(x.points) as score from (\n" +
+            "\tselect u.id as user_id, u.username, u.points,\n" +
+            "\tcase when pu.player_id is null then null\n" +
+            "\telse fn_get_wc_price(cast(coalesce(wcs.base_rating, pl.rating) as numeric), cast(wcs.rating as numeric)) end as price\n" +
+            "\t\tfrom usr u\n" +
+            "\t\tleft join player_user_current_bought pu on u.id = pu.user_id\n" +
+            "\t\tleft join player p on pu.player_id = p.id\n" +
+            "\t\tleft join player_world_cup_stats wcs on wcs.player_id = p.id\n" +
+            "\t\tleft join player_league_stats pl on pl.player_id = p.id\n" +
+            ") x group by x.user_id\n" +
+            "order by sum(x.price) desc\n" +
+            "limit 5";
+    @Query(nativeQuery = true, value = wcTopRankedUsersQuery)
+    List<Object[]> getTopRankedUsersWorldCup();
+
+    String wcUsersScoreQuery = "select pu.player_id, u.id as user_id, u.username, u.points,\n" +
+            "\tp.sofascore_id, p.updated_by, p.sofascore_club, p.rapid_api_club,\n" +
+            "\tcase when pu.player_id is null then null\n" +
+            "\telse fn_get_wc_price(cast(coalesce(wcs.base_rating, pl.rating) as numeric), cast(wcs.rating as numeric)) end as price\n" +
+            "\t\tfrom usr u\n" +
+            "\t\tleft join player_user_current_bought pu on u.id = pu.user_id\n" +
+            "\t\tleft join player p on pu.player_id = p.id\n" +
+            "\t\tleft join player_world_cup_stats wcs on wcs.player_id = p.id\n" +
+            "\t\tleft join player_league_stats pl on pl.player_id = p.id";
+    @Query(nativeQuery = true, value = wcUsersScoreQuery)
+    List<Object[]> getAllUsersScoreWorldCup();
+
     Optional<User> findById(Long id);
 }

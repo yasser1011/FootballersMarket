@@ -1,11 +1,14 @@
 package com.yasser.footballersmarket.player;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.yasser.footballersmarket.pricing.PlayerPricingData;
+import com.yasser.footballersmarket.pricing.PriceStrategy;
 import com.yasser.footballersmarket.player.dto.PlayerBasic;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.player.dto.PlayerExternalServiceBasicDetails;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStatsService;
+import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
 import com.yasser.footballersmarket.scores365.ScoresService;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
 import com.yasser.footballersmarket.sofascore.dto.PlayerLeagueStatsDetails;
@@ -26,12 +29,15 @@ import java.util.List;
 public class PlayerService {
     private final PlayerRepository playerRepository;
     private final PlayerLeagueStatsService playerLeagueStatsService;
+    private final PriceStrategy priceStrategy;
     private final Logger logger = LoggerFactory.getLogger(PlayerService.class);
 
     public PlayerService(PlayerRepository playerRepository,
-                         PlayerLeagueStatsService playerLeagueStatsService) {
+                         PlayerLeagueStatsService playerLeagueStatsService,
+                         PriceStrategy priceStrategy) {
         this.playerRepository = playerRepository;
         this.playerLeagueStatsService = playerLeagueStatsService;
+        this.priceStrategy = priceStrategy;
     }
 
     public PlayerDetailsResDto getPlayerDetailsByInternalId(Long rapidApiId) {
@@ -131,8 +137,20 @@ public class PlayerService {
         playerDto.setPhotoUrl(playerEntity.getPhotoUrl());
         playerDto.setClubPhotoUrl(playerEntity.getClubPhotoUrl());
         playerDto.setUpdatedBy(playerEntity.getUpdatedBy());
+        PlayerWorldCupStats wcStats = playerEntity.getWorldCupStats();
+        playerDto.setWorldCupBaseRating(wcStats == null ? null : wcStats.getBaseRating());
+        playerDto.setWorldCupRating(wcStats == null ? null : wcStats.getRating());
+        priceDto(playerDto);
 
         return playerDto;
+    }
+
+    // single pricing entry point: reads the dto's current state (incl. world cup inputs)
+    // and sets its price via the active strategy. call again after mutating a dto's stats
+    public void priceDto(PlayerDetailsResDto dto) {
+        dto.setPrice(priceStrategy.calculatePrice(new PlayerPricingData(
+                dto.getDateOfBirth(), dto.getAvgRating(),
+                dto.getWorldCupBaseRating(), dto.getWorldCupRating())));
     }
 
     public Player convertPlayerDtoToPlayerEntity(PlayerDetailsResDto playerDto){

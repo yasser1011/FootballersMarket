@@ -17,9 +17,12 @@ public class WorldCupFixture {
     private Long awayTeamId;
     private Integer homeGoals;
     private Integer awayGoals;
+    // the team that won / advanced (rapid 'winner' flag); null = draw. drives prediction settlement
+    // and handles knockouts decided on penalties, where goals alone would read as a draw
+    private Long winnerTeamId;
     private String status;
     // minutes after kickoff to poll the api for the final result;
-    // bumped (+30/60) each time the match is found still unfinished
+    // increase(+30 or 60) each time the match is found still unfinished
     private Integer checkAgainMinutes = 120;
 
     public WorldCupFixture() {}
@@ -60,6 +63,14 @@ public class WorldCupFixture {
 
     public Integer getAwayGoals() {
         return awayGoals;
+    }
+
+    public Long getWinnerTeamId() {
+        return winnerTeamId;
+    }
+
+    public void setWinnerTeamId(Long winnerTeamId) {
+        this.winnerTeamId = winnerTeamId;
     }
 
     public String getStatus() {

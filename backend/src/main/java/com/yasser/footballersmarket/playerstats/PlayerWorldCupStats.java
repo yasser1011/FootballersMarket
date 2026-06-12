@@ -14,9 +14,13 @@ public class PlayerWorldCupStats {
     private Long playerId;
     // rapid api world cup team id (world_cup_team.id)
     private Long teamId;
+    // last season league rating snapshot, frozen at seed time;
+    // base price is computed from it in code and must never drift mid-tournament
+    private Double baseRating;
     private Integer goals;
     private Integer assists;
     private Integer totalNumOfGames;
+    // world cup performance rating, starts at 6.5 and drives price movement
     private Double rating;
     @OneToOne
     // to have same primary key as player primary key
@@ -31,8 +35,10 @@ public class PlayerWorldCupStats {
 
     public PlayerWorldCupStats(){}
 
-    public PlayerWorldCupStats(Long teamId, Integer goals, Integer assists, Integer totalNumOfGames, Double rating, Player player) {
+    public PlayerWorldCupStats(Long teamId, Double baseRating, Integer goals, Integer assists,
+                               Integer totalNumOfGames, Double rating, Player player) {
         this.teamId = teamId;
+        this.baseRating = baseRating;
         this.goals = goals;
         this.assists = assists;
         this.totalNumOfGames = totalNumOfGames;
@@ -46,6 +52,14 @@ public class PlayerWorldCupStats {
 
     public Long getTeamId() {
         return teamId;
+    }
+
+    public Double getBaseRating() {
+        return baseRating;
+    }
+
+    public void setBaseRating(Double baseRating) {
+        this.baseRating = baseRating;
     }
 
     public Integer getGoals() {

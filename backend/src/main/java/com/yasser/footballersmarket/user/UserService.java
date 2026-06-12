@@ -5,6 +5,7 @@ import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+import com.yasser.footballersmarket.pricing.PriceStrategy;
 import com.yasser.footballersmarket.scores365.ScoresService;
 import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
@@ -30,15 +31,18 @@ public class UserService implements UserDetailsService {
     private final SofascoreService sofascoreService;
     private final ScoresService scoresService;
     private final PlayerService playerService;
+    private final PriceStrategy priceStrategy;
     //private final AuthenticationManager authenticationManager;
     Logger logger = LoggerFactory.getLogger(UserService.class);
 
     public UserService(UserRepository userRepository, SofascoreService sofascoreService,
-                       PlayerService playerService, ScoresService scoresService) {
+                       PlayerService playerService, ScoresService scoresService,
+                       PriceStrategy priceStrategy) {
         this.userRepository = userRepository;
         this.sofascoreService = sofascoreService;
         this.scoresService = scoresService;
         this.playerService = playerService;
+        this.priceStrategy = priceStrategy;
       //  this.authenticationManager = authenticationManager;
     }
 
@@ -47,7 +51,9 @@ public class UserService implements UserDetailsService {
 
         HashMap<Long, UserResponse> usersScoreMap = new HashMap<>();
 
-        List<Object[]> allUsersScore = userRepository.getAllUsersScore();
+        List<Object[]> allUsersScore = priceStrategy.isWorldCupMode()
+                ? userRepository.getAllUsersScoreWorldCup()
+                : userRepository.getAllUsersScore();
 
         for (Object[] userPlayerRecord: allUsersScore){
             Long userId = ((BigInteger) userPlayerRecord[1]).longValue();
@@ -67,7 +73,10 @@ public class UserService implements UserDetailsService {
             Player pl = new Player(playerId, playerSchedulerClub, playerSofascoreCLub);
             PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(pl);
             Integer playerPrice;
-            if(!playerDetailsResDto.getAreClubStatsUpdated() || (updatedBy != null && updatedBy.contains("sofascore"))){
+            // world cup mode: the sql price (fn_get_wc_price) is authoritative for every player,
+            // league-stats freshness doesn't matter and must not trigger external refreshes
+            if(!priceStrategy.isWorldCupMode()
+                    && (!playerDetailsResDto.getAreClubStatsUpdated() || (updatedBy != null && updatedBy.contains("sofascore")))){
                 PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerSofascoreId);
                 PlayerLeagueStats leagueStatsDto = scoresService.createLeagueStatsDto(playerDetailsDto.getLeagueStats());
                 playerService.updatePlayerLeagueStatsDetails(playerId, leagueStatsDto);
@@ -114,7 +123,9 @@ public class UserService implements UserDetailsService {
     }
 
     public List<UserResponse> getTopRankedUsers(){
-        List<Object[]> topRankedUsersObj = userRepository.getTopRankedUsers();
+        List<Object[]> topRankedUsersObj = priceStrategy.isWorldCupMode()
+                ? userRepository.getTopRankedUsersWorldCup()
+                : userRepository.getTopRankedUsers();
 
         List<UserResponse> topUsersResList = new ArrayList<>();
 

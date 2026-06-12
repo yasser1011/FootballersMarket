@@ -37,6 +37,8 @@ public abstract class BaseIntegrationTest {
 
         registry.add("spring.jpa.show-sql", () -> "true");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+        // tests must not depend on the developer's .env flags (seeder fills the shared db)
+        registry.add("worldcup.seed", () -> "false");
         registry.add("logging.level.org.hibernate.SQL", () -> "DEBUG");
         registry.add("logging.level.org.hibernate.type.descriptor.sql.BasicBinder", () -> "TRACE");
     }

@@ -197,10 +197,10 @@ class UserControllerTest extends BaseIntegrationTest {
 
         UserResponse user1ResObj = user1Res.get();
         UserResponse user2ResObj = user2Res.get();
+        // world cup pricing mode (@Primary strategy): prices come from fn_get_wc_price for
+        // every player, no external refresh happens, so player1 is valued like the others
         assertThat(user1ResObj.getPoints()).isEqualTo(
-                user1.getPoints() + price2 +
-//                        mockedPlayerDetails.getPrice());
-                        playerDetailsResDto.getPrice());
+                user1.getPoints() + price2 + price1);
         assertThat(user2ResObj.getPoints()).isEqualTo(
                 user2.getPoints() + price3);
 

@@ -63,15 +63,8 @@ public class ScoresService {
         // new player not found in db
         if(playerDetailsByExternalId == null){
             logger.info("new player not found in database external id {}", playerId);
-            PlayerDetailsResDto playerDetailsResDto = convertDtoToPlayerDetailsDto(playerId, playerDetailsResponseByExternalId, playerDetailsResponseByExternalId.getRecentMatches());
-            // if response from external service returned improper result return default data
-            if(playerDetailsResDto.getLeagueStats() == null) {
-                com.yasser.footballersmarket.playerstats.PlayerLeagueStats playerEntityLeagueStats =
-                        new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(0,
-                                0, 0, 6.5);
-                playerDetailsResDto.setLeagueStats(playerEntityLeagueStats);
-            }
-            return playerDetailsResDto;
+            // converter already defaults missing league stats to 6.5 and prices accordingly
+            return convertDtoToPlayerDetailsDto(playerId, playerDetailsResponseByExternalId, playerDetailsResponseByExternalId.getRecentMatches());
         }
         logger.info("player found in database external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
         playerDetailsByExternalId.setRecentMatches(playerDetailsResponseByExternalId.getRecentMatches());
@@ -82,6 +75,9 @@ public class ScoresService {
                 playerDetailsByExternalId.setLeagueStats(createLeagueStatsDto(playerDetailsResponseByExternalId.getLeagueStats()));
                 playerService.updatePlayerLeagueStatsDetails(playerDetailsByExternalId.getId(),
                         createLeagueStatsDto(playerDetailsResponseByExternalId.getLeagueStats()));
+                // league rating just changed: reprice. world cup participants keep their wc price
+                // (the dto's frozen wc inputs are untouched); others reflect the new rating
+                playerService.priceDto(playerDetailsByExternalId);
             }
         }
         logger.info("player club stats updated in db external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
@@ -258,7 +254,8 @@ public class ScoresService {
 
         com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats leagueStats = playerStatDetailsDto.getLeagueStats();
         if(leagueStats == null){
-            playerDto.setLeagueStats(null);
+            // external service has no stats for this player: default rating so he still prices sanely
+            playerDto.setLeagueStats(new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(0, 0, 0, 6.5));
         }else{
             com.yasser.footballersmarket.playerstats.PlayerLeagueStats playerEntityLeagueStats =
                     new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(leagueStats.getGoals(),
@@ -268,6 +265,9 @@ public class ScoresService {
 
 
         playerDto.setRecentMatches(recentMatches);
+
+        // not-in-db player: no world cup stats, priced from his league rating
+        playerService.priceDto(playerDto);
 
         return playerDto;
     }
