@@ -55,6 +55,14 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
             countQuery = "SELECT count(p) FROM Player p join p.leagueStats ls")
     Page<Player> getHomePagePlayers(Pageable pageable);
 
+    // world-cup-only page: inner join fetch drops non-WC players; leagueStats left-joined so WC
+    // players without a domestic stats row are still included. optional national-team filter by teamId.
+    @Query(value = "SELECT p FROM Player p left join p.leagueStats ls join fetch p.worldCupStats wcs "
+            + "where (:teamId is null or wcs.teamId = :teamId)",
+            countQuery = "SELECT count(p) FROM Player p join p.worldCupStats wcs "
+            + "where (:teamId is null or wcs.teamId = :teamId)")
+    Page<Player> getWorldCupHomePagePlayers(@Param("teamId") Long teamId, Pageable pageable);
+
     @Modifying
     @Query("UPDATE Player p SET p.updatedBy = 'sofascore' where p.id = ?1")
     void updatePlayerUpdatedByStatusToSofascore(Long playerId);

@@ -27,9 +27,12 @@ public class PlayerController {
 
     // home page players with pagination
     @GetMapping()
-    public ResponseEntity getHomePagePlayers(@RequestParam(name = "page", defaultValue = "0") Integer page){
+    public ResponseEntity getHomePagePlayers(@RequestParam(name = "page", defaultValue = "0") Integer page,
+                                             @RequestParam(name = "worldCup", defaultValue = "false") boolean worldCup,
+                                             @RequestParam(name = "teamId", required = false) Long teamId){
         try {
-            Page<PlayerDetailsResDto> homePagePlayerData = playerService.getHomePagePlayerData(page);
+            // teamId is ignored unless worldCup is true
+            Page<PlayerDetailsResDto> homePagePlayerData = playerService.getHomePagePlayerData(page, worldCup, teamId);
             return ResponseEntity.ok(homePagePlayerData);
         }catch (Exception e){
             logger.error("home page table error {}", e.getMessage());

@@ -163,7 +163,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
         assertThat(userReturned.getPoints()).isEqualTo(user1.getPoints() - playerDetailsResDto.getPrice());
 
         // verify new player is saved
-        Page<PlayerDetailsResDto> playersPageInDb = playerService.getHomePagePlayerData(0);
+        Page<PlayerDetailsResDto> playersPageInDb = playerService.getHomePagePlayerData(0, false, null);
         assertThat(playersPageInDb.getTotalElements()).isEqualTo(1);
         PlayerDetailsResDto playerAdded = playersPageInDb.getContent().get(0);
         assertThat(playerAdded.getExternalServicePlayerId()).isEqualTo(playerDetailsResDto.getExternalServicePlayerId());

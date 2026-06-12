@@ -94,8 +94,14 @@ public class PlayerService {
         playerRepository.save(playerEntity);
     }
 
-    public Page<PlayerDetailsResDto> getHomePagePlayerData(int pageNum){
+    public Page<PlayerDetailsResDto> getHomePagePlayerData(int pageNum, boolean worldCup, Long teamId){
         // page num starts with 0
+        if (worldCup) {
+            // world cup page: sort by tournament rating; teamId optionally filters by national team
+            Pageable wcPageData = PageRequest.of(pageNum, 50, Sort.by("wcs.rating").descending().and(Sort.by("id").ascending()));
+            return playerRepository.getWorldCupHomePagePlayers(teamId, wcPageData)
+                    .map(this::convertPlayerEntityToPlayerDto);
+        }
         Pageable pageData = PageRequest.of(pageNum, 50, Sort.by("ls.rating").descending().and(Sort.by("id").ascending()));
         Page<Player> homePagePlayers = playerRepository.getHomePagePlayers(pageData);
         Page<PlayerDetailsResDto> map = homePagePlayers.map(this::convertPlayerEntityToPlayerDto);
