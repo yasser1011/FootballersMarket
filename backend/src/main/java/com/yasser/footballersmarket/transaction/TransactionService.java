@@ -2,6 +2,7 @@ package com.yasser.footballersmarket.transaction;
 
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
+import com.yasser.footballersmarket.pricing.PriceStrategy;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
@@ -11,6 +12,7 @@ import com.yasser.footballersmarket.sofascore.SofascoreService;
 import com.yasser.footballersmarket.transaction.dto.*;
 import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserService;
+import com.yasser.footballersmarket.worldcup.WorldCupLiveMatchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -34,19 +36,29 @@ public class TransactionService {
     private final ScoresService scoresService;
     private final PlayerUserCurrentBoughtService playerUserCurrentBoughtService;
     private final UserService userService;
+    private final WorldCupLiveMatchService worldCupLiveMatchService;
+    private final PriceStrategy priceStrategy;
+
+    // a freshly bought player can't be sold until this many hours pass, so a player can't be
+    // bought right before his match and dumped right after to harvest the in-match price spike
+    private static final long SELL_LOCK_HOURS = 48;
 
     Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     public TransactionService(TransactionRepository transactionRepository, PlayerService playerService,
                               SofascoreService sofascoreService,
                               PlayerUserCurrentBoughtService playerUserCurrentBoughtService,
-                              UserService userService, ScoresService scoresService) {
+                              UserService userService, ScoresService scoresService,
+                              WorldCupLiveMatchService worldCupLiveMatchService,
+                              PriceStrategy priceStrategy) {
         this.transactionRepository = transactionRepository;
         this.playerService = playerService;
         this.sofascoreService = sofascoreService;
         this.scoresService = scoresService;
         this.playerUserCurrentBoughtService = playerUserCurrentBoughtService;
         this.userService = userService;
+        this.worldCupLiveMatchService = worldCupLiveMatchService;
+        this.priceStrategy = priceStrategy;
     }
 
     public List<Transaction> getPlayerTransactions(Integer playerSofascoreId){
@@ -102,6 +114,7 @@ public class TransactionService {
         final int MAX_BUY_SIZE = 4;
 
         User user = userService.findByIdForUpdate(userId);
+        boolean worldCupMode = priceStrategy.isWorldCupMode();
 
         List<PlayerUserCurrentBought> ownedPlayers = playerUserCurrentBoughtService.getUserBasicCurrBoughtPlayers(userId);
         boolean alreadyOwned = ownedPlayers.stream()
@@ -111,6 +124,9 @@ public class TransactionService {
             if (ownedPlayers.size() >= MAX_BUY_SIZE) throw new TransactionException(TransactionFailure.MAX_BUY_REACHED);
             if (alreadyOwned)                        throw new TransactionException(TransactionFailure.ALREADY_OWNED);
             if (user.getPoints() < req.price())      throw new TransactionException(TransactionFailure.INSUFFICIENT_POINTS);
+            // can't buy a player whose world cup match is being played right now (price mid-swing)
+            if (worldCupMode && worldCupLiveMatchService.isPlayerInLiveMatch(playerDto.getId()))
+                throw new TransactionException(TransactionFailure.PLAYER_IN_LIVE_MATCH);
 
             // Persist player only after validations pass so a failed buy doesn't leave an orphan row.
             // Joins this transaction -> rolls back together if anything below throws.
@@ -126,10 +142,17 @@ public class TransactionService {
             }
 
             user.setPoints(user.getPoints() - req.price());
-            playerUserCurrentBoughtService.savePlayerUserCurrBoughtTransaction(
-                    new PlayerUserCurrentBought(userId, playerDto.getId(), req.price()));
+            PlayerUserCurrentBought holding = new PlayerUserCurrentBought(userId, playerDto.getId(), req.price());
+            holding.setBoughtAt(LocalDateTime.now());
+            playerUserCurrentBoughtService.savePlayerUserCurrBoughtTransaction(holding);
         } else {
             if (!alreadyOwned) throw new TransactionException(TransactionFailure.NOT_OWNED);
+            // a player can't be sold within the lock window after buying him
+            if (worldCupMode) {
+                LocalDateTime boughtAt = playerUserCurrentBoughtService.getBoughtAt(userId, playerDto.getId());
+                if (boughtAt != null && LocalDateTime.now().isBefore(boughtAt.plusHours(SELL_LOCK_HOURS)))
+                    throw new TransactionException(TransactionFailure.SELL_TOO_SOON);
+            }
             user.setPoints(user.getPoints() + req.price());
             playerUserCurrentBoughtService.deletePlayerUserCurrBoughtTransaction(userId, playerDto.getId());
         }

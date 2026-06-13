@@ -4,6 +4,7 @@ import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.user.User;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 public class PlayerUserCurrentBought {
@@ -12,6 +13,10 @@ public class PlayerUserCurrentBought {
     private Long id;
 
     private Integer buyPrice;
+
+    // when this holding was bought; drives the 48h sell lock. nullable: rows created before
+    // this column existed (and in tests that build the entity directly) carry no lock.
+    private LocalDateTime boughtAt;
 
     @Column(name = "user_id")
     private Long userId;
@@ -62,6 +67,15 @@ public class PlayerUserCurrentBought {
         this.player = player;
     }
 
+    public PlayerUserCurrentBought(Long id, Integer buyPrice, Long userId, Long playerId, Player player, LocalDateTime boughtAt) {
+        this.id = id;
+        this.buyPrice = buyPrice;
+        this.userId = userId;
+        this.playerId = playerId;
+        this.player = player;
+        this.boughtAt = boughtAt;
+    }
+
     public void setUserId(Long userId) {
         this.userId = userId;
     }
@@ -108,5 +122,13 @@ public class PlayerUserCurrentBought {
 
     public void setBuyPrice(Integer buyPrice) {
         this.buyPrice = buyPrice;
+    }
+
+    public LocalDateTime getBoughtAt() {
+        return boughtAt;
+    }
+
+    public void setBoughtAt(LocalDateTime boughtAt) {
+        this.boughtAt = boughtAt;
     }
 }

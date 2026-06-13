@@ -50,6 +50,10 @@ public class PlayerUserCurrentBoughtService {
         return playerUserCurrentBoughtRepository.getBasicUserCurrBoughtPlayers(userId);
     }
 
+    public java.time.LocalDateTime getBoughtAt(Long userId, Long playerId){
+        return playerUserCurrentBoughtRepository.getBoughtAt(userId, playerId);
+    }
+
     public List<PlayerUserCurrentBoughtDto> getUserBoughtPlayers(Long userId) throws InterruptedException {
         logger.info("getting user id {} bought players", userId);
 
@@ -79,7 +83,8 @@ public class PlayerUserCurrentBoughtService {
                     playerDetailsResDto.getNationality(), playerDetailsResDto.getDateOfBirth(), playerDetailsResDto.getPosition(),
                     playerDetailsResDto.getUpdatedBy(), playerDetailsResDto.getTotalGoals(), playerDetailsResDto.getTotalAssists(),
                     playerDetailsResDto.getAvgRating(), player.getBuyPrice(), playerDetailsResDto.getPrice(),
-                    playerDetailsResDto.getAreClubStatsUpdated(), playerDetailsResDto.getLeagueStats());
+                    playerDetailsResDto.getAreClubStatsUpdated(), playerDetailsResDto.getLeagueStats(),
+                    player.getBoughtAt());
             userPlayersList.add(playerResponse);
         }
         // sort list based on price desc

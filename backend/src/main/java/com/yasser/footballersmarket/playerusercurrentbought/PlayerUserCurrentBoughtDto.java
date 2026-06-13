@@ -3,6 +3,7 @@ package com.yasser.footballersmarket.playerusercurrentbought;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class PlayerUserCurrentBoughtDto {
     private Long id;
@@ -22,10 +23,13 @@ public class PlayerUserCurrentBoughtDto {
     private Integer price;
     private Boolean areClubStatsUpdated;
     private PlayerLeagueStats leagueStats;
+    // when the player was bought; the sell lock unlocks 48h after this (world cup mode only).
+    // null for holdings bought before the column existed.
+    private LocalDateTime boughtAt;
 
     public PlayerUserCurrentBoughtDto(){}
 
-    public PlayerUserCurrentBoughtDto(Long playerId, Integer externalServicePlayerId, String playerName, String playerPhotoUrl, String externalServicePlayerClub, String clubPhotoUrl, String nationality, LocalDate dateOfBirth, String position, String updatedBy, Integer goals, Integer assists, Double rating, Integer buyPrice, Integer price, Boolean areClubStatsUpdated, PlayerLeagueStats playerLeagueStats) {
+    public PlayerUserCurrentBoughtDto(Long playerId, Integer externalServicePlayerId, String playerName, String playerPhotoUrl, String externalServicePlayerClub, String clubPhotoUrl, String nationality, LocalDate dateOfBirth, String position, String updatedBy, Integer goals, Integer assists, Double rating, Integer buyPrice, Integer price, Boolean areClubStatsUpdated, PlayerLeagueStats playerLeagueStats, LocalDateTime boughtAt) {
         this.id = playerId;
         this.externalServicePlayerId = externalServicePlayerId;
         this.externalServicePlayerClub = externalServicePlayerClub;
@@ -43,6 +47,7 @@ public class PlayerUserCurrentBoughtDto {
         this.photoUrl = playerPhotoUrl;
         this.areClubStatsUpdated = areClubStatsUpdated;
         this.leagueStats = playerLeagueStats;
+        this.boughtAt = boughtAt;
     }
 
     public Long getId() {
@@ -111,5 +116,9 @@ public class PlayerUserCurrentBoughtDto {
 
     public PlayerLeagueStats getLeagueStats() {
         return leagueStats;
+    }
+
+    public LocalDateTime getBoughtAt() {
+        return boughtAt;
     }
 }

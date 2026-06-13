@@ -4,9 +4,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.yasser.footballersmarket.player.Player;
+import com.yasser.footballersmarket.player.PlayerRepository;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
+import com.yasser.footballersmarket.playerstats.PlayerWorldCupStatsRepository;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
 import com.yasser.footballersmarket.scores365.ScoresService;
@@ -17,6 +20,8 @@ import com.yasser.footballersmarket.transaction.dto.TransactionRequest;
 import com.yasser.footballersmarket.transaction.dto.TransactionResponse;
 import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserService;
+import com.yasser.footballersmarket.worldcup.WorldCupFixture;
+import com.yasser.footballersmarket.worldcup.WorldCupFixtureRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +32,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -56,6 +65,14 @@ class TransactionControllerTest extends BaseIntegrationTest {
     private TransactionService transactionService;
     @Autowired
     private PlayerUserCurrentBoughtService playerUserCurrentBoughtService;
+    @Autowired
+    private PlayerWorldCupStatsRepository playerWorldCupStatsRepository;
+    @Autowired
+    private WorldCupFixtureRepository worldCupFixtureRepository;
+    @Autowired
+    private PlayerRepository playerRepository;
+    @Autowired
+    private PlatformTransactionManager txManager;
 
     @Autowired
     private MockMvc mockMvc;
@@ -66,7 +83,11 @@ class TransactionControllerTest extends BaseIntegrationTest {
     void setUp() {
         playerUserCurrentBoughtService.deleteAll();
         transactionService.deleteAll();
+        worldCupFixtureRepository.deleteAll();
         userService.deleteAll();
+        // clear world cup stats before players: the stats row's FK to player would otherwise
+        // block the player delete
+        playerWorldCupStatsRepository.deleteAll();
         playerService.deleteAll();
     }
 
@@ -384,5 +405,118 @@ class TransactionControllerTest extends BaseIntegrationTest {
         // verify user points
         User userReturned = userService.findUserById(user1.getId());
         assertThat(userReturned.getPoints()).isEqualTo(user1.getPoints());
+    }
+
+    @Test
+    void buyTransactionWhenPlayerIsInLiveMatchReturnsFailure() throws Exception {
+        LocalDate dob = LocalDate.of(1998, 1, 8);
+        Player player1 = new Player(1L, 818244, "player1", dob, "club1", "club1", null);
+        player1.setLeagueStats(new PlayerLeagueStats(10, 2, 7.8));
+        User user1 = new User("user1", "pass1");
+        user1.setPoints(10000);
+
+        userService.saveUsersList(List.of(user1));
+        // seed player + world cup stats in one tx; the @MapsId stats must reference the managed
+        // player copy (save() merges an assigned-id entity) or hibernate re-inserts the player
+        new TransactionTemplate(txManager).executeWithoutResult(s -> {
+            Player managed = playerRepository.save(player1);
+            playerWorldCupStatsRepository.save(new PlayerWorldCupStats(100L, 6.5, 0, 0, 0, 6.5, managed));
+        });
+        // team 100 kicked off 30 min ago and isn't finished -> within the live window
+        worldCupFixtureRepository.save(new WorldCupFixture(5000L,
+                Instant.now().minus(30, ChronoUnit.MINUTES), "Group A", 100L, 200L, "1H"));
+
+        // price is computed by the world cup strategy; read it back so the request matches
+        Integer livePrice = playerService.getPlayerDetailsByInternalId(player1.getId()).getPrice();
+        TransactionRequest transactionRequest = new TransactionRequest(player1.getId(), player1.getSofascoreId(),
+                1, livePrice);
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/transactions")
+                        .with(user(user1))
+                        .content(objectMapper.writeValueAsString(transactionRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        TransactionResponse transactionResponse = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(), new TypeReference<>() {});
+        assertThat(transactionResponse.getStatus()).isEqualTo(-1);
+        assertThat(transactionResponse.getError().getErrorType()).isEqualTo("live_match");
+
+        // nothing was bought
+        List<PlayerUserCurrentBought> userPlayers = playerUserCurrentBoughtService.getUserBasicCurrBoughtPlayers(user1.getId());
+        assertThat(userPlayers.size()).isEqualTo(0);
+        assertThat(transactionService.getTransactions(0).getTotalElements()).isEqualTo(0);
+        assertThat(userService.findUserById(user1.getId()).getPoints()).isEqualTo(user1.getPoints());
+    }
+
+    @Test
+    void sellTransactionWithinSellLockWindowReturnsFailure() throws Exception {
+        LocalDate dob = LocalDate.of(1998, 1, 8);
+        Player player1 = new Player(1L, 818244, "player1", dob, "club1", "club1", null);
+        player1.setLeagueStats(new PlayerLeagueStats(10, 2, 7.8));
+        PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(player1);
+        User user1 = new User("user1", "pass1");
+        user1.setPoints(10000);
+
+        userService.saveUsersList(List.of(user1));
+        playerService.savePlayer(player1);
+
+        // bought 1 hour ago -> still inside the 48h lock
+        PlayerUserCurrentBought holding = new PlayerUserCurrentBought(user1.getId(), player1.getId(), 500);
+        holding.setBoughtAt(LocalDateTime.now().minusHours(1));
+        playerUserCurrentBoughtService.savePlayerUserCurrBoughtTransaction(holding);
+
+        TransactionRequest transactionRequest = new TransactionRequest(player1.getId(), player1.getSofascoreId(),
+                2, playerDetailsResDto.getPrice());
+
+        MvcResult mvcResult = mockMvc.perform(post("/api/transactions")
+                        .with(user(user1))
+                        .content(objectMapper.writeValueAsString(transactionRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+        TransactionResponse transactionResponse = objectMapper.readValue(
+                mvcResult.getResponse().getContentAsString(), new TypeReference<>() {});
+        assertThat(transactionResponse.getStatus()).isEqualTo(-1);
+        assertThat(transactionResponse.getError().getErrorType()).isEqualTo("sell_locked");
+
+        // still owned, no sell transaction, points unchanged
+        assertThat(playerUserCurrentBoughtService.getUserBasicCurrBoughtPlayers(user1.getId()).size()).isEqualTo(1);
+        assertThat(transactionService.getTransactions(0).getTotalElements()).isEqualTo(0);
+        assertThat(userService.findUserById(user1.getId()).getPoints()).isEqualTo(user1.getPoints());
+    }
+
+    @Test
+    void sellTransactionAfterSellLockWindowReturnsSuccess() throws Exception {
+        LocalDate dob = LocalDate.of(1998, 1, 8);
+        Player player1 = new Player(1L, 818244, "player1", dob, "club1", "club1", null);
+        player1.setLeagueStats(new PlayerLeagueStats(10, 2, 7.8));
+        PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(player1);
+        User user1 = new User("user1", "pass1");
+        user1.setPoints(10000);
+
+        userService.saveUsersList(List.of(user1));
+        playerService.savePlayer(player1);
+
+        // bought 49 hours ago -> past the 48h lock
+        PlayerUserCurrentBought holding = new PlayerUserCurrentBought(user1.getId(), player1.getId(), 500);
+        holding.setBoughtAt(LocalDateTime.now().minusHours(49));
+        playerUserCurrentBoughtService.savePlayerUserCurrBoughtTransaction(holding);
+
+        TransactionRequest transactionRequest = new TransactionRequest(player1.getId(), player1.getSofascoreId(),
+                2, playerDetailsResDto.getPrice());
+
+        mockMvc.perform(post("/api/transactions")
+                        .with(user(user1))
+                        .content(objectMapper.writeValueAsString(transactionRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        // sold: holding gone, points credited
+        assertThat(playerUserCurrentBoughtService.getUserBasicCurrBoughtPlayers(user1.getId()).size()).isEqualTo(0);
+        assertThat(userService.findUserById(user1.getId()).getPoints())
+                .isEqualTo(user1.getPoints() + playerDetailsResDto.getPrice());
     }
 }

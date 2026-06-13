@@ -17,8 +17,11 @@ public interface PlayerUserCurrentBoughtRepository extends JpaRepository<PlayerU
     @Query("select pu from PlayerUserCurrentBought pu join pu.player p where p.sofascoreId = ?1")
     List<PlayerUserCurrentBought> getPlayerCurrBoughtTransactions(Integer playerSofascoreId);
 
-    @Query("select new com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought(pu.id, pu.buyPrice, pu.userId, pu.playerId, pu.player) from PlayerUserCurrentBought pu where pu.userId = ?1")
+    @Query("select new com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought(pu.id, pu.buyPrice, pu.userId, pu.playerId, pu.player, pu.boughtAt) from PlayerUserCurrentBought pu where pu.userId = ?1")
     List<PlayerUserCurrentBought> getUserCurrBoughtPlayers(Long userId);
+
+    @Query("select pu.boughtAt from PlayerUserCurrentBought pu where pu.userId = ?1 and pu.playerId = ?2")
+    java.time.LocalDateTime getBoughtAt(Long userId, Long playerId);
 
     @Query("select new com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought(pu.id, pu.userId, pu.playerId, pu.buyPrice) from PlayerUserCurrentBought pu where pu.userId = ?1")
     List<PlayerUserCurrentBought> getBasicUserCurrBoughtPlayers(Long userId);

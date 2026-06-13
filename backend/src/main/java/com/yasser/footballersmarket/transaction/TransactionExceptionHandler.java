@@ -2,7 +2,6 @@ package com.yasser.footballersmarket.transaction;
 
 import com.yasser.footballersmarket.transaction.dto.TransactionError;
 import com.yasser.footballersmarket.transaction.dto.TransactionException;
-import com.yasser.footballersmarket.transaction.dto.TransactionFailure;
 import com.yasser.footballersmarket.transaction.dto.TransactionResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +21,7 @@ public class TransactionExceptionHandler {
     @ExceptionHandler(TransactionException.class)
     public ResponseEntity<TransactionResponse> handleTransaction(TransactionException e) {
         logger.warn("transaction rejected: {}", e.getTransactionFailure());
-        String type = e.getTransactionFailure() == TransactionFailure.PRICE_MISMATCH ? "price" : "generic";
-        TransactionError err = new TransactionError(type, e.getMessage(), e.getPlayerPrice());
+        TransactionError err = new TransactionError(e.getTransactionFailure().type, e.getMessage(), e.getPlayerPrice());
         return ResponseEntity.badRequest().body(new TransactionResponse(-1, err));
     }
 
