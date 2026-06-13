@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -23,9 +24,12 @@ public class FeaturedPlayerController {
     }
 
     @GetMapping
-    public ResponseEntity getFeaturedPlayerService() {
+    public ResponseEntity getFeaturedPlayerService(
+            @RequestParam(name = "worldCup", defaultValue = "false") boolean worldCup) {
         try{
-            FeaturedPlayersResponse featuredPlayersResponse = featuredPlayerService.getFeaturedPlayers();
+            FeaturedPlayersResponse featuredPlayersResponse = worldCup
+                    ? featuredPlayerService.getWorldCupFeaturedPlayers()
+                    : featuredPlayerService.getFeaturedPlayers();
             return ResponseEntity.ok(featuredPlayersResponse);
         }catch (Exception e){
             logger.error("featured player error {}", e.getMessage());

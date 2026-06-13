@@ -6,8 +6,11 @@ import javax.persistence.*;
 import java.time.LocalDate;
 
 @Entity
+// uniqueness includes fixture_name so a world cup round's 5 rows don't collide with the daily club 5
+// (which share dates/positions). club rows use fixture_name "" (non-null sentinel, NOT null) so the
+// old per-day (date, position) uniqueness still holds for them — postgres treats nulls as distinct.
 @Table(name = "featured_player", uniqueConstraints = {
-        @UniqueConstraint(name = "uc_date_position", columnNames = {"date", "position"})
+        @UniqueConstraint(name = "uc_date_position_fixture", columnNames = {"date", "position", "fixture_name"})
 })
 public class FeaturedPlayer {
     @Id
@@ -25,8 +28,30 @@ public class FeaturedPlayer {
     private Integer position;
     private String homeTeamName;
     private String awayTeamName;
+    // world cup featured rows = per-round running top 5; club rows keep these defaults
+    private Boolean worldCup = false;
+    // the round (e.g. "Group Stage - 1") for WC rows; "" for club rows (keeps the unique sentinel).
+    // column name pinned so it matches the fixture_name referenced in the @UniqueConstraint above
+    @Column(name = "fixture_name")
+    private String fixtureName = "";
 
     public FeaturedPlayer(){}
+
+    // world cup featured row: playerId = internal rapid id, playerTeamId = WC team rapid id,
+    // date = the match where this rating was earned, fixtureName = the round
+    public static FeaturedPlayer worldCupRow(String playerName, Integer playerId, String rating,
+                                             Integer playerTeamId, LocalDate date, Integer position, String round) {
+        FeaturedPlayer fp = new FeaturedPlayer();
+        fp.playerName = playerName;
+        fp.playerId = playerId;
+        fp.rating = rating;
+        fp.playerTeamId = playerTeamId;
+        fp.date = date;
+        fp.position = position;
+        fp.fixtureName = round;
+        fp.worldCup = true;
+        return fp;
+    }
 
     public FeaturedPlayer(String playerName, Integer playerId, String rating, Integer position, Integer playerTeamId, String homeTeamName, String awayTeamName) {
         this.playerName = playerName;
@@ -97,5 +122,17 @@ public class FeaturedPlayer {
 
     public void setPlayerTeamImgUrl(String playerTeamImgUrl) {
         this.playerTeamImgUrl = playerTeamImgUrl;
+    }
+
+    public Integer getPosition() {
+        return position;
+    }
+
+    public Boolean getWorldCup() {
+        return worldCup;
+    }
+
+    public String getFixtureName() {
+        return fixtureName;
     }
 }

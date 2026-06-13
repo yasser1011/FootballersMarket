@@ -36,6 +36,7 @@ class WorldCupResultsServiceTest {
     @Mock private WorldCupFixtureRepository fixtureRepository;
     @Mock private PlayerWorldCupStatsRepository playerWorldCupStatsRepository;
     @Mock private WorldCupSettlementService settlementService;
+    @Mock private WorldCupFeaturedPlayerService featuredPlayerService;
     @InjectMocks private WorldCupResultsService service;
 
     private static final long HOME = 16L, AWAY = 1531L, FIXTURE_ID = 1489369L, P1 = 270774L;
@@ -63,7 +64,7 @@ class WorldCupResultsServiceTest {
     }
 
     private PlayerEntry player(long id, String rating, Integer goals, Integer assists) {
-        return new PlayerEntry(new PlayerRef(id),
+        return new PlayerEntry(new PlayerRef(id, "player " + id),
                 List.of(new Statistics(new Games(rating), new StatGoals(goals, assists))));
     }
 

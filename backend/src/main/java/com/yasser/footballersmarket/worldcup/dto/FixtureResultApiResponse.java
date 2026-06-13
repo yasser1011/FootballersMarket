@@ -43,7 +43,7 @@ public record FixtureResultApiResponse(List<FixtureResult> response) {
 
     // id is the rapid player id, canonical across our system (= player_world_cup_stats.player_id)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record PlayerRef(Long id) {}
+    public record PlayerRef(Long id, String name) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Statistics(Games games, StatGoals goals) {}
