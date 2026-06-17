@@ -35,7 +35,7 @@ public class PlayerController {
             Page<PlayerDetailsResDto> homePagePlayerData = playerService.getHomePagePlayerData(page, worldCup, teamId);
             return ResponseEntity.ok(homePagePlayerData);
         }catch (Exception e){
-            logger.error("home page table error {}", e.getMessage());
+            logger.error("home page table error worldCup={} teamId={}", worldCup, teamId, e);
             return ResponseEntity.internalServerError().body("error occurred");
         }
     }
@@ -50,10 +50,10 @@ public class PlayerController {
             PlayerDetailsResDto playerDbDetails = playerService.getPlayerDetailsByInternalId(playerId);
             return ResponseEntity.ok(playerDbDetails);
         }catch (EntityNotFoundException e){
-            logger.error("player not found player id {}", e.getMessage());
+            logger.warn("player not found id {}: {}", playerId, e.getMessage());
             return ResponseEntity.badRequest().body("player not found");
         }catch (Exception e){
-            logger.error("get player details error {}", e.getMessage());
+            logger.error("get player details error id {}", playerId, e);
             return ResponseEntity.internalServerError().body("error occurred");
         }
     }
@@ -76,7 +76,7 @@ public class PlayerController {
             }
             return ResponseEntity.ok(response);
         }catch (Exception e){
-            logger.error("error in checking player {}", sofascoreId);
+            logger.error("error checking player sofascoreId {}", sofascoreId, e);
             return ResponseEntity.internalServerError().body("error occurred");
         }
     }

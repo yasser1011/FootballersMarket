@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-// public world cup fixtures view: today + tomorrow
+// public world cup fixtures view: yesterday + today + tomorrow
 @RestController
 @RequestMapping("/api/wc/fixtures")
 public class WorldCupFixtureController {
@@ -18,7 +18,7 @@ public class WorldCupFixtureController {
     }
 
     @GetMapping
-    public List<WorldCupFixtureResponse> todayAndTomorrow() {
-        return fixtureService.getTodayAndTomorrowFixtures();
+    public List<WorldCupFixtureResponse> recentAndUpcoming() {
+        return fixtureService.getRecentAndUpcomingFixtures();
     }
 }

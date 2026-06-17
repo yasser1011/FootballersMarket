@@ -57,6 +57,25 @@ class PlayerServiceTest extends BaseIntegrationTest {
     }
 
     @Test
+    void updatePlayerLeagueStatsInsertsRowWhenPlayerHasNone() {
+        // mimics a world-cup-seeded player: exists in db but has NO league_stats row.
+        // regression: PlayerLeagueStats derives its @Id from the @MapsId player relationship, so an
+        // insert with only playerId set (player null) used to fail. the search/details + my squad
+        // refresh paths hit this -> 500.
+        LocalDate dob = LocalDate.of(1998, 1, 8);
+        Player player = new Player(1L, 10, "wc player", dob, "club1", "club1", "sofascore");
+        playerService.savePlayer(player); // intentionally no leagueStats
+
+        playerService.updatePlayerLeagueStatsDetails(player.getId(),
+                new PlayerLeagueStats(3, 1, 10, 7.4)); // goals, assists, games, rating
+
+        PlayerDetailsResDto res = playerService.getPlayerDetailsByInternalId(player.getId());
+        assertThat(res.getLeagueStats()).isNotNull();
+        assertThat(res.getLeagueStats().getRating()).isEqualTo(7.4);
+        assertThat(res.getLeagueStats().getGoals()).isEqualTo(3);
+    }
+
+    @Test
     void shouldReturnPlayerFromDbByExternalServicePlayerId() {
         LocalDate dob = LocalDate.of(1998, 1, 8);
         Player player1 = new Player(1L, 10, "player1", dob, "club1", "club1", null);

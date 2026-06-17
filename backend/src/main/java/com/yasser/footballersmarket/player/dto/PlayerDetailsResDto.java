@@ -1,5 +1,6 @@
 package com.yasser.footballersmarket.player.dto;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
 import com.yasser.footballersmarket.scores365.dto.PlayerRecentMatch;
 import java.time.LocalDate;
 import java.time.Period;
@@ -28,6 +29,11 @@ public class PlayerDetailsResDto {
     private Double worldCupBaseRating;
     @com.fasterxml.jackson.annotation.JsonIgnore
     private Double worldCupRating;
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Integer worldCupGames;
+    // tournament stats (rating/goals/assists/games + the national team for its flag & name),
+    // exposed like leagueStats; null for non-participants
+    private PlayerWorldCupStats worldCupStats;
 
     private String photoUrl;
     private String clubPhotoUrl;
@@ -102,6 +108,22 @@ public class PlayerDetailsResDto {
 
     public void setWorldCupRating(Double worldCupRating) {
         this.worldCupRating = worldCupRating;
+    }
+
+    public Integer getWorldCupGames() {
+        return worldCupGames;
+    }
+
+    public void setWorldCupGames(Integer worldCupGames) {
+        this.worldCupGames = worldCupGames;
+    }
+
+    public PlayerWorldCupStats getWorldCupStats() {
+        return worldCupStats;
+    }
+
+    public void setWorldCupStats(PlayerWorldCupStats worldCupStats) {
+        this.worldCupStats = worldCupStats;
     }
 
     public Boolean getAreClubStatsUpdated() {

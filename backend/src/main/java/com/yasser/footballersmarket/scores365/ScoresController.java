@@ -35,7 +35,7 @@ public class ScoresController {
             FeaturedMatch footballFeaturedMatch = scoresService.getFootballFeaturedMatch();
             return ResponseEntity.ok(footballFeaturedMatch);
         }catch (Exception e){
-            logger.error("scores service featured match error {}", e.getMessage());
+            logger.error("scores service featured match error", e);
             return ResponseEntity.internalServerError().body("error occurred");
         }
 
@@ -48,7 +48,7 @@ public class ScoresController {
 
             return ResponseEntity.ok(trendingPlayersResponse);
         }catch (Exception e){
-            logger.error("scores trending players error {}", e.getMessage());
+            logger.error("scores trending players error", e);
             return ResponseEntity.internalServerError().body("error occurred");
         }
 
@@ -59,8 +59,10 @@ public class ScoresController {
             PlayerDetailsResDto playerDetailsById = scoresService.getPlayerDetailsById(externalId);
             return ResponseEntity.ok(playerDetailsById);
         }catch (EntityNotFoundException e){
+            logger.warn("scores player details: not found externalId {}: {}", externalId, e.getMessage());
             return ResponseEntity.badRequest().body("player not found");
         }catch (Exception e){
+            logger.error("scores player details error externalId {}", externalId, e);
             return ResponseEntity.internalServerError().body("error occurred");
         }
 
@@ -72,8 +74,10 @@ public class ScoresController {
             List<PlayerRecentMatch> playerRecentMatches = scoresService.fetchPlayerLastRatings(externalId);
             return ResponseEntity.ok(playerRecentMatches);
         }catch (EntityNotFoundException e){
+            logger.warn("scores last-ratings: not found externalId {}: {}", externalId, e.getMessage());
             return ResponseEntity.badRequest().body("player not found");
         }catch (Exception e){
+            logger.error("scores last-ratings error externalId {}", externalId, e);
             return ResponseEntity.internalServerError().body("error occurred");
         }
 
@@ -86,7 +90,7 @@ public class ScoresController {
             List<SearchPlayerEntity> searchPlayerEntities = scoresService.searchByPlayerName(playerName);
             return ResponseEntity.ok(searchPlayerEntities);
         }catch (Exception e){
-            logger.error("scores search player error {}", e.getMessage());
+            logger.error("scores search player error name {}", playerName, e);
             return ResponseEntity.internalServerError().body("error occurred");
         }
 

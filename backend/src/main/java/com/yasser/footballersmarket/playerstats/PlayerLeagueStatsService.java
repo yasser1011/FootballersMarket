@@ -44,6 +44,10 @@ public class PlayerLeagueStatsService {
         playerLeagueStatsRepository.save(playerLeagueStats);
     }
 
+    public boolean leagueStatsExist(Long playerId){
+        return playerLeagueStatsRepository.existsById(playerId);
+    }
+
     public List<Long> getRapidDataPlayerLeagueStatsIds(){
         return playerLeagueStatsRepository.getRapidDataPlayerLeagueStatsIds();
     }

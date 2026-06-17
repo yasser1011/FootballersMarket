@@ -1,6 +1,7 @@
 package com.yasser.footballersmarket.worldcup;
 
 import com.yasser.footballersmarket.user.User;
+import com.yasser.footballersmarket.worldcup.dto.UserPredictionHistoryItem;
 import com.yasser.footballersmarket.worldcup.dto.WorldCupPredictionRequest;
 import com.yasser.footballersmarket.worldcup.dto.WorldCupPredictionResponse;
 import org.slf4j.Logger;
@@ -47,6 +48,12 @@ public class WorldCupPredictionController {
     @GetMapping("/mine")
     public List<WorldCupPredictionResponse> myPredictions(@AuthenticationPrincipal User user) {
         return predictionService.getUserPredictions(user.getId());
+    }
+
+    // public: a user's finished-game prediction history (settled only), with fixture result + points
+    @GetMapping("/user/{userId}")
+    public List<UserPredictionHistoryItem> userHistory(@PathVariable Long userId) {
+        return predictionService.getUserPredictionHistory(userId);
     }
 
     // public feed for a fixture: empty until kickoff, then everyone's picks + awarded points

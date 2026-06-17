@@ -42,7 +42,7 @@ public class SecurityConfig {
         http.cors().and().csrf().disable();
         http.authorizeHttpRequests()
                 //.requestMatchers()
-                .antMatchers("/api/auth/**", "/api/featured-players/**", "/api/ss/**","/api/players/**", "/api/users/top-users", "/api/users/rankings", "/api/wc/predictions/fixture/**", "/api/wc/fixtures/**")
+                .antMatchers("/api/auth/**", "/api/featured-players/**", "/api/ss/**","/api/players/**", "/api/users/top-users", "/api/users/rankings", "/api/wc/predictions/fixture/**", "/api/wc/predictions/user/**", "/api/wc/fixtures/**", "/api/wc/teams/**")
                 // doesn't ignore filters it passes the filter then allows the request
                 .permitAll()
                 .anyRequest()

@@ -58,7 +58,16 @@ public class PlayerService {
 
     public void updatePlayerLeagueStatsDetails(Long rapidId, PlayerLeagueStats updatedLeagueStats){
         logger.info("updating player data in database player id {}", rapidId);
-        updatedLeagueStats.setPlayerId(rapidId);
+        // PlayerLeagueStats derives its @Id from the @MapsId player relationship. existing row ->
+        // set the id so save() merges/updates it. brand-new row (e.g. a world-cup-seeded player who
+        // never had league stats) -> leave the id null and set the player so save() persists and
+        // @MapsId fills the id from it; setting the id here would make save() merge and fail to
+        // derive the identifier ("null identifier").
+        if (playerLeagueStatsService.leagueStatsExist(rapidId)) {
+            updatedLeagueStats.setPlayerId(rapidId);
+        } else {
+            updatedLeagueStats.setPlayer(playerRepository.getReferenceById(rapidId));
+        }
         playerLeagueStatsService.savePlayerLeagueStats(updatedLeagueStats);
         updatePlayerUpdatedByStatusToSofascore(rapidId);
         logger.info("player data updated in database player id {}", rapidId);
@@ -146,6 +155,9 @@ public class PlayerService {
         PlayerWorldCupStats wcStats = playerEntity.getWorldCupStats();
         playerDto.setWorldCupBaseRating(wcStats == null ? null : wcStats.getBaseRating());
         playerDto.setWorldCupRating(wcStats == null ? null : wcStats.getRating());
+        playerDto.setWorldCupGames(wcStats == null ? null : wcStats.getTotalNumOfGames());
+        // exposed tournament stats (incl. the national team via wcStats.team for the flag + name)
+        playerDto.setWorldCupStats(wcStats);
         priceDto(playerDto);
 
         return playerDto;
@@ -156,7 +168,7 @@ public class PlayerService {
     public void priceDto(PlayerDetailsResDto dto) {
         dto.setPrice(priceStrategy.calculatePrice(new PlayerPricingData(
                 dto.getDateOfBirth(), dto.getAvgRating(),
-                dto.getWorldCupBaseRating(), dto.getWorldCupRating())));
+                dto.getWorldCupBaseRating(), dto.getWorldCupRating(), dto.getWorldCupGames())));
     }
 
     public Player convertPlayerDtoToPlayerEntity(PlayerDetailsResDto playerDto){

@@ -4,6 +4,7 @@ import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+import com.yasser.footballersmarket.pricing.PriceStrategy;
 import com.yasser.footballersmarket.scores365.ScoresService;
 import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import org.slf4j.Logger;
@@ -21,14 +22,17 @@ public class PlayerUserCurrentBoughtService {
     private final PlayerUserCurrentBoughtRepository playerUserCurrentBoughtRepository;
     private final PlayerService playerService;
     private final ScoresService scoresService;
+    private final PriceStrategy priceStrategy;
 
     Logger logger = LoggerFactory.getLogger(PlayerUserCurrentBoughtService.class);
 
     public PlayerUserCurrentBoughtService(PlayerUserCurrentBoughtRepository playerUserCurrentBoughtRepository,
-                                          PlayerService playerService, ScoresService scoresService) {
+                                          PlayerService playerService, ScoresService scoresService,
+                                          PriceStrategy priceStrategy) {
         this.playerUserCurrentBoughtRepository = playerUserCurrentBoughtRepository;
         this.playerService = playerService;
         this.scoresService = scoresService;
+        this.priceStrategy = priceStrategy;
     }
 
     public PlayerUserCurrentBoughtResponse isPlayerCurrentlyBoughtByUser(Long userId, Long playerId){
@@ -38,7 +42,7 @@ public class PlayerUserCurrentBoughtService {
          if(playerUserCurrEntity != null){
              logger.info("user id {} has bought player id before {}", userId, playerId);
              return new PlayerUserCurrentBoughtResponse(userId, playerId, true,
-                     playerUserCurrEntity.getBuyPrice());
+                     playerUserCurrEntity.getBuyPrice(), playerUserCurrentBoughtRepository.getBoughtAt(userId, playerId));
          }else{
              logger.info("user id {} has not bought player id before {}", userId, playerId);
              return new PlayerUserCurrentBoughtResponse(userId, playerId, false, null);
@@ -63,18 +67,29 @@ public class PlayerUserCurrentBoughtService {
         for (PlayerUserCurrentBought player : userCurrBoughtPlayers) {
             Player playerEntity = player.getPlayer();
             PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(playerEntity);
-            if (!playerDetailsResDto.getAreClubStatsUpdated() ||
-                    (playerEntity.getUpdatedBy() != null && playerEntity.getUpdatedBy().contains("sofascore"))){
-                // fetch updated stats and update in db
-                // and set current entity league stats instead of creating new entity to avoid
-                // A different object with the same identifier value was already associated with the session
+            // world cup mode prices on tournament stats, not club league stats, so skip the external
+            // club refresh entirely — it's unnecessary AND would NPE for WC-seeded players who have
+            // no league_stats row (mirrors UserService.getAllUsersScores).
+            boolean needsRefresh = !playerDetailsResDto.getAreClubStatsUpdated()
+                    || (playerEntity.getUpdatedBy() != null && playerEntity.getUpdatedBy().contains("sofascore"));
+            if (!priceStrategy.isWorldCupMode() && needsRefresh) {
                 PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerEntity.getSofascoreId());
-                PlayerLeagueStats playerEntityLeagueStats = playerEntity.getLeagueStats();
-                playerEntityLeagueStats.setRating(playerDetailsDto.getLeagueStats().getRating());
-                playerEntityLeagueStats.setGoals(playerDetailsDto.getLeagueStats().getGoals());
-                playerEntityLeagueStats.setAssists(playerDetailsDto.getLeagueStats().getAssists());
-                playerEntityLeagueStats.setTotalNumOfGames(playerDetailsDto.getLeagueStats().getAppearances());
-                playerService.updatePlayerLeagueStatsDetails(playerEntity.getId(), playerEntityLeagueStats);
+                // guard: external service may be down or have no league stats for this player
+                if (playerDetailsDto != null && playerDetailsDto.getLeagueStats() != null) {
+                    PlayerLeagueStats existing = playerEntity.getLeagueStats();
+                    if (existing != null) {
+                        // reuse the managed entity (avoids "different object with same id" in the session)
+                        existing.setRating(playerDetailsDto.getLeagueStats().getRating());
+                        existing.setGoals(playerDetailsDto.getLeagueStats().getGoals());
+                        existing.setAssists(playerDetailsDto.getLeagueStats().getAssists());
+                        existing.setTotalNumOfGames(playerDetailsDto.getLeagueStats().getAppearances());
+                        playerService.updatePlayerLeagueStatsDetails(playerEntity.getId(), existing);
+                    } else {
+                        // no league row yet (e.g. a player who never had one): insert a fresh one
+                        playerService.updatePlayerLeagueStatsDetails(playerEntity.getId(),
+                                scoresService.createLeagueStatsDto(playerDetailsDto.getLeagueStats()));
+                    }
+                }
             }
             playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(playerEntity);
             PlayerUserCurrentBoughtDto playerResponse = new PlayerUserCurrentBoughtDto(playerDetailsResDto.getId(),
@@ -84,7 +99,7 @@ public class PlayerUserCurrentBoughtService {
                     playerDetailsResDto.getUpdatedBy(), playerDetailsResDto.getTotalGoals(), playerDetailsResDto.getTotalAssists(),
                     playerDetailsResDto.getAvgRating(), player.getBuyPrice(), playerDetailsResDto.getPrice(),
                     playerDetailsResDto.getAreClubStatsUpdated(), playerDetailsResDto.getLeagueStats(),
-                    player.getBoughtAt());
+                    player.getBoughtAt(), playerDetailsResDto.getWorldCupStats());
             userPlayersList.add(playerResponse);
         }
         // sort list based on price desc

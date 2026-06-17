@@ -1,6 +1,7 @@
 package com.yasser.footballersmarket.playerusercurrentbought;
 
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
+import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,10 +27,12 @@ public class PlayerUserCurrentBoughtDto {
     // when the player was bought; the sell lock unlocks 48h after this (world cup mode only).
     // null for holdings bought before the column existed.
     private LocalDateTime boughtAt;
+    // tournament stats (incl. the WC rating) for squad players who are WC participants; null otherwise
+    private PlayerWorldCupStats worldCupStats;
 
     public PlayerUserCurrentBoughtDto(){}
 
-    public PlayerUserCurrentBoughtDto(Long playerId, Integer externalServicePlayerId, String playerName, String playerPhotoUrl, String externalServicePlayerClub, String clubPhotoUrl, String nationality, LocalDate dateOfBirth, String position, String updatedBy, Integer goals, Integer assists, Double rating, Integer buyPrice, Integer price, Boolean areClubStatsUpdated, PlayerLeagueStats playerLeagueStats, LocalDateTime boughtAt) {
+    public PlayerUserCurrentBoughtDto(Long playerId, Integer externalServicePlayerId, String playerName, String playerPhotoUrl, String externalServicePlayerClub, String clubPhotoUrl, String nationality, LocalDate dateOfBirth, String position, String updatedBy, Integer goals, Integer assists, Double rating, Integer buyPrice, Integer price, Boolean areClubStatsUpdated, PlayerLeagueStats playerLeagueStats, LocalDateTime boughtAt, PlayerWorldCupStats worldCupStats) {
         this.id = playerId;
         this.externalServicePlayerId = externalServicePlayerId;
         this.externalServicePlayerClub = externalServicePlayerClub;
@@ -48,6 +51,7 @@ public class PlayerUserCurrentBoughtDto {
         this.areClubStatsUpdated = areClubStatsUpdated;
         this.leagueStats = playerLeagueStats;
         this.boughtAt = boughtAt;
+        this.worldCupStats = worldCupStats;
     }
 
     public Long getId() {
@@ -120,5 +124,9 @@ public class PlayerUserCurrentBoughtDto {
 
     public LocalDateTime getBoughtAt() {
         return boughtAt;
+    }
+
+    public PlayerWorldCupStats getWorldCupStats() {
+        return worldCupStats;
     }
 }
