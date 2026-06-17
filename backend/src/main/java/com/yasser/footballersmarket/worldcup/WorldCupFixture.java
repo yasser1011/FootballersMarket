@@ -17,6 +17,8 @@ public class WorldCupFixture {
     private Long awayTeamId;
     private Integer homeGoals;
     private Integer awayGoals;
+    // minutes played, from the api status while the match is in play (null otherwise); for the live UI
+    private Integer elapsed;
     // the team that won / advanced (rapid 'winner' flag); null = draw. drives prediction settlement
     // and handles knockouts decided on penalties, where goals alone would read as a draw
     private Long winnerTeamId;
@@ -91,6 +93,14 @@ public class WorldCupFixture {
 
     public void setAwayGoals(Integer awayGoals) {
         this.awayGoals = awayGoals;
+    }
+
+    public Integer getElapsed() {
+        return elapsed;
+    }
+
+    public void setElapsed(Integer elapsed) {
+        this.elapsed = elapsed;
     }
 
     public void setStatus(String status) {

@@ -20,9 +20,10 @@ public record FixtureResultApiResponse(List<FixtureResult> response) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record League(String round) {}
 
-    // short = the api status code: NS/1H/HT/2H/FT/AET/PEN/PST...; FT/AET/PEN mean the match is done
+    // short = the api status code: NS/1H/HT/2H/FT/AET/PEN/PST...; FT/AET/PEN mean the match is done.
+    // elapsed = minutes played (for the live view)
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Status(@JsonProperty("short") String shortCode) {}
+    public record Status(@JsonProperty("short") String shortCode, Integer elapsed) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Teams(Team home, Team away) {}

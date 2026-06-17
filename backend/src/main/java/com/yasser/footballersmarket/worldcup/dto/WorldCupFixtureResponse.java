@@ -13,7 +13,8 @@ public record WorldCupFixtureResponse(
         TeamInfo away,
         Integer homeGoals,
         Integer awayGoals,
-        Long winnerTeamId
+        Long winnerTeamId,
+        Integer elapsed
 ) {
     public record TeamInfo(Long id, String name, String logoUrl, Integer fifaRank) {}
 }

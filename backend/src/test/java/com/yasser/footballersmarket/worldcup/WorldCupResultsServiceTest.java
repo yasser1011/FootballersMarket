@@ -52,7 +52,7 @@ class WorldCupResultsServiceTest {
     private FixtureResult result(String status, Boolean homeWinner, Boolean awayWinner,
                                  Integer homeGoals, Integer awayGoals, TeamPlayers... players) {
         return new FixtureResult(
-                new Fixture(FIXTURE_ID, null, new Status(status)),
+                new Fixture(FIXTURE_ID, null, new Status(status, null)),
                 null,
                 new Teams(new Team(HOME, homeWinner), new Team(AWAY, awayWinner)),
                 new Goals(homeGoals, awayGoals),
@@ -150,14 +150,16 @@ class WorldCupResultsServiceTest {
     }
 
     @Test
-    void notFinishedBacksOffAndDoesNotSettle() {
-        WorldCupFixture fixture = fixture(); // checkAgainMinutes starts at 120
+    void inPlayRecordsLiveScoreAndDoesNotSettle() {
+        WorldCupFixture fixture = fixture();
 
-        service.processFixtureResult(fixture, result("1H", null, null, 0, 0));
+        service.processFixtureResult(fixture, result("1H", null, null, 0, 1));
 
-        assertThat(fixture.getCheckAgainMinutes()).isEqualTo(180); // 120 + 60
+        // live score + status persisted mid-match, but no winner/settlement yet
+        assertThat(fixture.getStatus()).isEqualTo("1H");
+        assertThat(fixture.getHomeGoals()).isZero();
+        assertThat(fixture.getAwayGoals()).isEqualTo(1);
         assertThat(fixture.getWinnerTeamId()).isNull();
-        assertThat(fixture.getStatus()).isEqualTo("NS"); // result not recorded
         verify(fixtureRepository).save(fixture);
         verify(settlementService, never()).settleFixture(any());
     }

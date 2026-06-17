@@ -7,7 +7,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 // polls api-football for world cup fixtures that have kicked off but aren't finished yet,
@@ -29,19 +28,19 @@ public class WorldCupResultsScheduler {
 
     // every 15 minutes on the clock. cron (not fixedDelay) so it never fires at context startup,
     // which keeps it from making live api calls during the short-lived integration test contexts.
+    // candidates = kicked off (start < now) and not finished-or-dead -> live score/status updates
+    // each tick and settlement when a match reaches a finished status. finished/dead statuses are
+    // excluded so a settled match isn't re-polled (the settlement latch) and a postponed/abandoned
+    // one isn't checked forever. includes yesterday's unfinished matches -> downtime self-heals.
     @Scheduled(cron = "0 */15 * * * *", zone = "Europe/Istanbul")
     public void pollFixtureResults() throws InterruptedException {
         Instant now = Instant.now();
         List<WorldCupFixture> candidates = fixtureRepository
-                .findByStatusNotInAndDateBefore(WorldCupConstants.FINISHED_STATUSES, now);
+                .findByStatusNotInAndDateBefore(WorldCupConstants.EXCLUDED_FROM_RESULTS_POLL, now);
         if (candidates.isEmpty()) return;
 
-        logger.info("world cup results: polling {} candidate fixture(s)", candidates.size());
+        logger.info("world cup results: polling {} in-play fixture(s)", candidates.size());
         for (WorldCupFixture fixture : candidates) {
-            // honor the per-fixture backoff: only poll once kickoff + checkAgainMinutes has elapsed
-            Instant nextCheck = fixture.getDate().plus(fixture.getCheckAgainMinutes(), ChronoUnit.MINUTES);
-            if (now.isBefore(nextCheck)) continue;
-
             try {
                 FixtureResult result = resultsClient.fetchFixtureResult(fixture.getId());
                 if (result != null) {

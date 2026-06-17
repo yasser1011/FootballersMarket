@@ -45,36 +45,43 @@ public class WorldCupResultsService {
 
     @Transactional
     public void processFixtureResult(WorldCupFixture fixture, FixtureResult result) {
-        String shortCode = result.fixture() != null && result.fixture().status() != null
-                ? result.fixture().status().shortCode() : null;
+        var status = result.fixture() != null ? result.fixture().status() : null;
+        String shortCode = status != null ? status.shortCode() : null;
+        Integer elapsed = status != null ? status.elapsed() : null;
 
-        if (!WorldCupConstants.FINISHED_STATUSES.contains(shortCode)) {
-            // still upcoming or in play: poll again later, widening the gap each miss
-            fixture.setCheckAgainMinutes(fixture.getCheckAgainMinutes() + WorldCupConstants.CHECK_AGAIN_BACKOFF_MINUTES);
-            fixtureRepository.save(fixture);
-            logger.info("world cup results: fixture {} not finished (status {}), next check +{} min total {}",
-                    fixture.getId(), shortCode, WorldCupConstants.CHECK_AGAIN_BACKOFF_MINUTES, fixture.getCheckAgainMinutes());
-            return;
-        }
-
-        recordResult(fixture, shortCode, result);
-        List<RatedWcPlayer> ratedPlayers = applyPlayerStats(result);
-        fixtureRepository.save(fixture);
-        settlementService.settleFixture(fixture);
-        // feed the round's running top-5 featured players from this match's ratings
-        LocalDate matchDate = LocalDate.ofInstant(fixture.getDate(), ZONE);
-        featuredPlayerService.updateRoundTopFive(fixture.getRound(), matchDate, ratedPlayers);
-        logger.info("world cup results: fixture {} finished {}-{}, winner team {}",
-                fixture.getId(), fixture.getHomeGoals(), fixture.getAwayGoals(), fixture.getWinnerTeamId());
-    }
-
-    private void recordResult(WorldCupFixture fixture, String shortCode, FixtureResult result) {
+        // live update on every poll: reflect the current score, status and minute even mid-match
         if (result.goals() != null) {
             fixture.setHomeGoals(result.goals().home());
             fixture.setAwayGoals(result.goals().away());
         }
-        fixture.setWinnerTeamId(resolveWinner(fixture, result.teams()));
         fixture.setStatus(shortCode);
+        fixture.setElapsed(elapsed);
+
+        if (!WorldCupConstants.FINISHED_STATUSES.contains(shortCode)) {
+            // not started / in play: persist the live score, settlement waits for full time
+            fixtureRepository.save(fixture);
+            logger.info("world cup results: fixture {} live update status {} score {}-{} min {}",
+                    fixture.getId(), shortCode, fixture.getHomeGoals(), fixture.getAwayGoals(), elapsed);
+            return;
+        }
+
+        // finished: the status flip to FT/AET/PEN is the once-only latch (finished fixtures are
+        // excluded from the poll), so player stats + settlement run exactly once
+        fixture.setWinnerTeamId(resolveWinner(fixture, result.teams()));
+        List<RatedWcPlayer> ratedPlayers = applyPlayerStats(result);
+        fixtureRepository.save(fixture);
+        settlementService.settleFixture(fixture);
+        // feed the round's running top-5 featured players from this match's ratings. best-effort and
+        // in its own transaction (REQUIRES_NEW): a failure here must not undo the result/settlement
+        LocalDate matchDate = LocalDate.ofInstant(fixture.getDate(), ZONE);
+        try {
+            featuredPlayerService.updateRoundTopFive(fixture.getRound(), matchDate, ratedPlayers);
+        } catch (Exception e) {
+            logger.error("world cup featured: update failed for fixture {} (result still settled): {}",
+                    fixture.getId(), e.getMessage());
+        }
+        logger.info("world cup results: fixture {} finished {}-{}, winner team {}",
+                fixture.getId(), fixture.getHomeGoals(), fixture.getAwayGoals(), fixture.getWinnerTeamId());
     }
 
     // the api winner flag is who advanced (true incl. penalty-shootout wins); both null/false = draw

@@ -11,8 +11,8 @@ import java.util.List;
 @Repository
 public interface WorldCupFixtureRepository extends JpaRepository<WorldCupFixture, Long> {
 
-    // poll candidates: kicked off (date in the past) and not yet in a finished state.
-    // the per-fixture checkAgainMinutes backoff window is applied in code by the scheduler.
+    // results-poll candidates: kicked off (date < now) and not in a finished-or-dead status.
+    // pass EXCLUDED_FROM_RESULTS_POLL as statuses.
     List<WorldCupFixture> findByStatusNotInAndDateBefore(Collection<String> statuses, Instant date);
 
     // fixtures whose kickoff falls in [start, end); used by the today+tomorrow fixtures view

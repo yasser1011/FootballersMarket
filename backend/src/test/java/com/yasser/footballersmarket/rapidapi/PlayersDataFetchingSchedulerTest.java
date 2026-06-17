@@ -6,10 +6,7 @@ import com.yasser.footballersmarket.player.PlayerRepository;
 import com.yasser.footballersmarket.playerstats.PlayerChampionsLeagueStatsRepository;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStatsRepository;
-import com.yasser.footballersmarket.rapidapi.dto.PlayerInfo;
-import com.yasser.footballersmarket.rapidapi.dto.PlayerResponse;
-import com.yasser.footballersmarket.rapidapi.dto.PlayerStats;
-import com.yasser.footballersmarket.rapidapi.dto.PlayersApiResponse;
+import com.yasser.footballersmarket.rapidapi.dto.*;
 import com.yasser.footballersmarket.scores365.dto.PleaseSearchResDto;
 import com.yasser.footballersmarket.sofascore.dto.SearchPlayerEntity;
 import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
@@ -26,6 +23,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -54,6 +52,8 @@ class PlayersDataFetchingSchedulerTest extends BaseIntegrationTest {
     private Resource searchQueryResponseJson;
     @Autowired
     private ObjectMapper objectMapper;
+    @MockBean
+    private RapidApiConfig rapidApiConfig;
 
     @BeforeEach
     void setUp() {
@@ -82,6 +82,11 @@ class PlayersDataFetchingSchedulerTest extends BaseIntegrationTest {
         PleaseSearchResDto searchQueryResDto = objectMapper.readValue(searchQueryResponseJson.getInputStream(), PleaseSearchResDto.class);
         when(restTemplate.getForObject(anyString(), eq(PleaseSearchResDto.class)))
                 .thenReturn(searchQueryResDto);
+
+        HashMap<String, String> bayernTeamConfig = new HashMap<>();
+        bayernTeamConfig.put("", "");
+        when(rapidApiConfig.getSchedulerTeamsSearchInput())
+                .thenReturn(List.of(bayernTeamConfig));
 
         playersDataFetchingScheduler.rapidApiSchedulerRunner();
         // List<PlayerLeagueStats> firstRes = playerLeagueStatsRepository.findAll();

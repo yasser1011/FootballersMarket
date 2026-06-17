@@ -5,6 +5,7 @@ import com.yasser.footballersmarket.featuredplayer.FeaturedPlayerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -30,7 +31,10 @@ public class WorldCupFeaturedPlayerService {
     // a tracked WC player's rating in a single match (rating is the api string, e.g. "7.2")
     public record RatedWcPlayer(Long playerId, String name, String rating, Long teamId) {}
 
-    @Transactional
+    // REQUIRES_NEW so this runs in its own transaction: featured players are a secondary,
+    // best-effort view, and a failure here (e.g. a unique-constraint trip) must NOT roll back the
+    // caller's match result + settlement. it commits/fails independently of processFixtureResult.
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void updateRoundTopFive(String round, LocalDate matchDate, List<RatedWcPlayer> ratedPlayers) {
         if (round == null || round.isBlank() || ratedPlayers.isEmpty()) return;
 
