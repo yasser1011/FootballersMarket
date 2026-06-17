@@ -1,0 +1,166 @@
+/* rankings page: rankings list + opposite prediction-history panel, each scrollable */
+.rankings-page {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  align-items: flex-start;
+}
+.rankings-list {
+  flex: 1 1 0;
+  min-width: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 10px;
+}
+.rankings-history {
+  flex: 1 1 0;
+  min-width: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #e3e7ec;
+  border-radius: 10px;
+}
+
+.pred-history-empty,
+.pred-history-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 10rem;
+  color: #6b7686;
+  text-align: center;
+  padding: 20px;
+}
+.pred-history-title {
+  position: sticky;
+  top: 0;
+  background: var(--app-primary);
+  color: #fff;
+  padding: 10px 14px;
+  font-weight: 600;
+}
+.pred-history-list {
+  padding: 8px 12px 12px;
+}
+.pred-history-row {
+  border-bottom: 1px solid #eef1f5;
+  padding: 10px 4px;
+}
+.pred-history-row:last-child {
+  border-bottom: none;
+}
+.pred-history-round {
+  font-size: 0.7rem;
+  color: #6b7686;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+.pred-history-match {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pred-history-team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pred-history-team-right {
+  justify-content: flex-end;
+  text-align: right;
+}
+.pred-history-score {
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.pred-history-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+}
+.pred-history-pick {
+  font-size: 0.8rem;
+  color: #444;
+}
+.pred-history-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* points broken into result / exact / bonus / total */
+.pred-history-points {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 10px;
+}
+.pred-part {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.8rem;
+}
+.pred-part-label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #8a93a0;
+}
+.pred-part-total {
+  padding-left: 8px;
+  border-left: 1px solid #e3e7ec;
+}
+.pred-part-total .pred-part-label {
+  color: #444;
+}
+.pred-points-pending {
+  font-weight: 700;
+  color: #8a93a0;
+}
+.pred-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pred-badge-exact {
+  background: #e6f4ea;
+  color: #1a7f37;
+}
+.pred-badge-bonus {
+  background: #fff3cd;
+  color: #8a6d1b;
+}
+.pred-points-up {
+  color: #1a7f37;
+  font-weight: 700;
+}
+.pred-points-down {
+  color: #d32f2f;
+  font-weight: 700;
+}
+
+@media (max-width: 820px) {
+  .rankings-page {
+    flex-direction: column;
+  }
+  .rankings-list,
+  .rankings-history {
+    width: 100%;
+    max-height: none;
+  }
+}

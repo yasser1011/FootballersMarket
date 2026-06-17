@@ -2,10 +2,19 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 0 18px 24px;
+}
+
+/* rounded, soft-shadowed table card matching the header cards */
+.table-container .MuiTableContainer-root{
+    border-radius: 14px;
+    border: 1px solid #e3e7ec;
+    box-shadow: 0 10px 26px rgba(20, 30, 50, 0.12);
+    overflow: auto;
 }
 
 .main-table-body tr:hover{
-    background-color: #eff2f5;
+    background-color: #f4f7fa;
 }
 
 .table-player-col-style{

@@ -90,7 +90,7 @@
     position: relative;
     transform: translate3d(0px, 0px, 0px);
     background-size: 100% 200%;
-    background-image: linear-gradient(rgb(55, 77, 245) 50%, rgb(55, 77, 245) 50%);
+    background-image: linear-gradient(var(--app-primary) 50%, var(--app-primary) 50%);
     display: flex;
     -webkit-box-align: center;
     align-items: center;
@@ -99,6 +99,7 @@
     -webkit-box-flex: 0;
     height: 24px;
     width: 24px;
+    border-radius: 6px;
     text-align: center;
 }
 .trending-player-match-score-num-span{

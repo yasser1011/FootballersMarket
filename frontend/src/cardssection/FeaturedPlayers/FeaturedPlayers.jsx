@@ -8,7 +8,7 @@ import { CircularProgress } from "@mui/material";
 import { HomePageContext } from "../../Context/HomePageContext";
 import { apiBaseUrl } from "../../config/Config";
 
-const FeaturedPlayers = () => {
+const FeaturedPlayers = ({ worldCup = false }) => {
   const FETCH_STATUS = {
     IDLE: "idle",
     ERROR: "error",
@@ -20,14 +20,13 @@ const FeaturedPlayers = () => {
   // const [featuredPlayers, setFeaturedPlayers] = useState([]);
   const { featuredPlayers, setFeaturedPlayers } = useContext(HomePageContext);
 
-  let ranOnce = false;
-
   const fetchFeaturedPlayers = async () => {
-    if (featuredPlayers != null) return;
-
     setFetchStatus(FETCH_STATUS.LOADING);
     try {
-      const url = `${apiBaseUrl}/featured-players`;
+      // world cup mode pulls the per-round top performers; normal mode the club featured players
+      const url = `${apiBaseUrl}/featured-players${
+        worldCup ? "?worldCup=true" : ""
+      }`;
       const featuredPlayersRes = await axios.get(url);
       if (featuredPlayersRes && featuredPlayersRes.data) {
         setFeaturedPlayers(featuredPlayersRes.data.featuredPlayers);
@@ -38,12 +37,10 @@ const FeaturedPlayers = () => {
     }
   };
 
+  // refetch when the mode changes so the card reflects WC vs club featured players
   useEffect(() => {
-    if (!ranOnce) {
-      fetchFeaturedPlayers();
-      ranOnce = true;
-    }
-  }, []);
+    fetchFeaturedPlayers();
+  }, [worldCup]);
   // let featuredPlayers = [
   //   {
   //     playerImg: "https://api.sofascore.app/api/v1/player/1090716/image",
@@ -133,10 +130,28 @@ const FeaturedPlayers = () => {
         variant="outlined"
       >
         <div className="title-style">Featured Players</div>
-        {featuredPlayers &&
+        {featuredPlayers && featuredPlayers.length > 0 ? (
           featuredPlayers.map((player, idx) => {
             return <FeaturedPlayer key={idx} player={player} id={idx + 1} />;
-          })}
+          })
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              textAlign: "center",
+              color: "#6b7686",
+              fontSize: "0.9rem",
+              height: "70%",
+              padding: "0 18px",
+            }}
+          >
+            {worldCup
+              ? "Top performers will appear here once World Cup matches are played."
+              : "No featured players right now."}
+          </div>
+        )}
       </Card>
     </Box>
   );

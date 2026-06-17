@@ -1,3 +1,10 @@
+:root {
+  /* App primary color — navbar bg, table/card header bg, buttons.
+     Single source of truth (theme.js reads this for MUI components). */
+  --app-primary: #232f3e; /* rgb(35, 47, 62) */
+  /* alt (tried, reverted): #2c3ec4 */
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

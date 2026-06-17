@@ -11,6 +11,8 @@ export const HomePageProvider = (props) => {
     rowsPerPage: 0,
     totalCount: 0,
   });
+  // WC nationality filter — persists across player-details navigation
+  const [wcNationalityTeamId, setWcNationalityTeamId] = useState("");
 
   return (
     <HomePageContext.Provider
@@ -21,6 +23,8 @@ export const HomePageProvider = (props) => {
         setFeaturedPlayers,
         paginationOptions,
         setPaginationOptions,
+        wcNationalityTeamId,
+        setWcNationalityTeamId,
       }}
     >
       {props.children}

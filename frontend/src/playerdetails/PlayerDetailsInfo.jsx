@@ -27,6 +27,11 @@ export const PlayerDetailsInfo = ({
     SelectedHomeTablePlayerContext,
   );
 
+  // the /worldcup url prefix is the single source of truth for WC mode. world cup stats are shown
+  // only under /worldcup/players/:id; a plain /players/:id always renders the normal (club) view,
+  // even for a world cup participant. survives refresh / shareable, unlike the old nav-state flag.
+  const isWorldCupView = pathname.startsWith("/worldcup");
+
   const [playerDetails, setPlayerDetails] = useState();
 
   const transactionTypes = {
@@ -65,17 +70,26 @@ export const PlayerDetailsInfo = ({
         setPlayerLastRatings(playerDetRes.data);
       }
     } catch (error) {
-      setFetchStatus(FETCH_STATUS.ERROR);
-      throw error;
+      // last ratings are non-essential here: the info card is already rendered from the cached
+      // row, so a 365 failure shows an empty ratings panel instead of erroring the whole page
+      setPlayerLastRatings([]);
+      setFetchStatus(FETCH_STATUS.SUCCESS);
     }
   };
 
   const getPlayerDetails = () => {
     // last condition if we're in player's page and we used to search for another player from search bar
     // state would still be having old player data and won't be null so won't fetch newew player's data
+    //
+    // world cup players opened from the WC table also take this cached path: the cached row
+    // already carries their WC stats, and the last-ratings endpoint is null-safe (returns [] on
+    // a 365 miss instead of erroring), unlike the full /ss/players details fetch. so we keep the
+    // recent-match ratings AND avoid the error that the details fetch raised for them. only when
+    // in the WC view though - from the normal table a WC participant goes the normal route.
     if (
       selectedHomeTablePlayer != null &&
-      selectedHomeTablePlayer.areClubStatsUpdated &&
+      (selectedHomeTablePlayer.areClubStatsUpdated ||
+        (isWorldCupView && selectedHomeTablePlayer.worldCupStats)) &&
       String(selectedHomeTablePlayer.externalServicePlayerId) === String(id)
     ) {
       setPlayerDetails(selectedHomeTablePlayer);
@@ -99,10 +113,7 @@ export const PlayerDetailsInfo = ({
     return (
       <div>
         <Box>
-          <Card
-            style={{ width: "52rem", height: "25rem", borderRadius: "17px" }}
-            variant="outlined"
-          >
+          <Card className="player-details-state-card" variant="outlined">
             <CircularProgress />
           </Card>
         </Box>
@@ -114,10 +125,7 @@ export const PlayerDetailsInfo = ({
     return (
       <div>
         <Box>
-          <Card
-            style={{ width: "52rem", height: "25rem", borderRadius: "17px" }}
-            variant="outlined"
-          >
+          <Card className="player-details-state-card" variant="outlined">
             Error Please Try again later
           </Card>
         </Box>
@@ -150,15 +158,22 @@ export const PlayerDetailsInfo = ({
                       {playerDetails.name}
                     </Typography>
                     <div className="player-details-header-content-club-wrapper">
+                      {/* world cup players show their national team instead of their club */}
                       <img
-                        src={playerDetails.clubPhotoUrl}
+                        src={
+                          isWorldCupView && playerDetails.worldCupStats?.team
+                            ? playerDetails.worldCupStats.team.logoUrl
+                            : playerDetails.clubPhotoUrl
+                        }
                         alt=""
                         width={30}
                         height={30}
                         style={{ borderRadius: "50%" }}
                       />
                       <Typography style={{ color: "white" }} variant="h6">
-                        {playerDetails.externalServicePlayerClub}
+                        {isWorldCupView && playerDetails.worldCupStats?.team
+                          ? playerDetails.worldCupStats.team.name
+                          : playerDetails.externalServicePlayerClub}
                       </Typography>
                     </div>
                   </div>
@@ -186,12 +201,43 @@ export const PlayerDetailsInfo = ({
                 <div className="player-details-content-grid-style">
                   <div>
                     <div className="player-details-header-title">Rating</div>
-                    <div>{playerDetails.avgRating}</div>
+                    <div>
+                      {isWorldCupView && playerDetails.worldCupStats
+                        ? playerDetails.worldCupStats.rating?.toFixed(2)
+                        : playerDetails.avgRating}
+                    </div>
                   </div>
                   <div>
                     <div className="player-details-header-title">Price</div>
                     <div>{playerDetails.price}</div>
                   </div>
+                  {transactionType &&
+                    transactionType.name === transactionTypes.sell.name && (
+                      <div>
+                        <div className="player-details-header-title">
+                          Bought Price
+                        </div>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {transactionType.priceBought}
+                          {transactionType.priceBought < playerDetails.price ? (
+                            <ArrowDropUpSharpIcon style={{ color: "#1a7f37" }} />
+                          ) : transactionType.priceBought >
+                            playerDetails.price ? (
+                            <ArrowDropDownSharpIcon
+                              style={{ color: "#d32f2f" }}
+                            />
+                          ) : (
+                            <HorizontalRuleSharpIcon />
+                          )}
+                        </div>
+                      </div>
+                    )}
                   <div>
                     <div className="player-details-header-title">Age</div>
                     <div>{getAge(playerDetails.dateOfBirth)}</div>
@@ -200,7 +246,11 @@ export const PlayerDetailsInfo = ({
                     <div className="player-details-header-title">
                       Nationality
                     </div>
-                    <div>{playerDetails.nationality}</div>
+                    <div>
+                      {isWorldCupView && playerDetails.worldCupStats?.team
+                        ? playerDetails.worldCupStats.team.name
+                        : playerDetails.nationality}
+                    </div>
                   </div>
                   <div>
                     <div className="player-details-header-title">Position</div>
@@ -274,6 +324,34 @@ export const PlayerDetailsInfo = ({
                     )}
                 </div>
               </div>
+              {isWorldCupView && playerDetails.worldCupStats && (
+                <>
+                  <div className="vertical-line"></div>
+                  <div className="player-details-content-section-wrapper">
+                    <div className="player-details-league-stats-title">
+                      World Cup Stats
+                    </div>
+                    <div className="player-details-content-grid-style">
+                      <div>
+                        <div className="player-details-header-title">Games</div>
+                        <div>
+                          {playerDetails.worldCupStats.totalNumOfGames}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="player-details-header-title">Goals</div>
+                        <div>{playerDetails.worldCupStats.goals}</div>
+                      </div>
+                      <div>
+                        <div className="player-details-header-title">
+                          Assists
+                        </div>
+                        <div>{playerDetails.worldCupStats.assists}</div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </Box>

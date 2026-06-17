@@ -10,7 +10,7 @@ import { useOnMountUnsafe } from "../customhooks/useOnMountUnsafe";
 import axios from "axios";
 import { apiBaseUrl } from "../config/Config";
 
-const UserRankingTableBody = () => {
+const UserRankingTableBody = ({ selectedUserId, onSelectUser }) => {
   const FETCH_STATUS = {
     ERROR: "error",
     SUCCESS: "success",
@@ -26,6 +26,14 @@ const UserRankingTableBody = () => {
       if (usersRes && usersRes.data) {
         setUsers(usersRes.data);
         setFetchStatus(FETCH_STATUS.SUCCESS);
+        // arrived with a preselected user (e.g. from the home Top Users card): resolve its
+        // username so the history panel can title it + highlight the row
+        if (selectedUserId && onSelectUser) {
+          const preselected = usersRes.data.find(
+            (u) => String(u.userId) === String(selectedUserId),
+          );
+          if (preselected) onSelectUser(preselected);
+        }
       }
     } catch (error) {
       setFetchStatus(FETCH_STATUS.ERROR);
@@ -66,13 +74,22 @@ const UserRankingTableBody = () => {
   return (
     users.length > 0 && (
       <TableBody>
-        {users.map((user, idx) => (
-          <TableRow key={user.id}>
-            <TableCell>{idx + 1}</TableCell>
-            <TableCell>{user.username}</TableCell>
-            <TableCell>{user.points}</TableCell>
-          </TableRow>
-        ))}
+        {users.map((user, idx) => {
+          const isSelected = String(user.userId) === String(selectedUserId);
+          return (
+            <TableRow
+              key={user.userId}
+              hover
+              selected={isSelected}
+              onClick={() => onSelectUser && onSelectUser(user)}
+              style={{ cursor: "pointer" }}
+            >
+              <TableCell>{idx + 1}</TableCell>
+              <TableCell>{user.username}</TableCell>
+              <TableCell>{user.points}</TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     )
   );

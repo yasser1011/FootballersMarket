@@ -63,6 +63,8 @@ const TransactionButton = ({
           let playerSellTransactionType = transactionTypes.sell;
           playerSellTransactionType.priceBought =
             transactionTypeRes.data.buyPrice;
+          // when it was bought, so the modal can compute the 48h sell-lock countdown
+          playerSellTransactionType.boughtAt = transactionTypeRes.data.boughtAt;
           setTransactionType(playerSellTransactionType);
         } else setTransactionType(transactionTypes.buy);
       }

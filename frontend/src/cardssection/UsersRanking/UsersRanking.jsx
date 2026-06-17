@@ -10,7 +10,7 @@ import { useOnMountUnsafe } from "../../customhooks/useOnMountUnsafe";
 import { useNavigate } from "react-router-dom";
 import { apiBaseUrl } from "../../config/Config";
 
-const UsersRanking = () => {
+const UsersRanking = ({ worldCup = false }) => {
   const FETCH_STATUS = {
     ERROR: "error",
     SUCCESS: "success",
@@ -18,6 +18,8 @@ const UsersRanking = () => {
   };
 
   const navigate = useNavigate();
+  // keep WC mode when navigating to rankings (route prefix is the source of truth for WC mode)
+  const rankingsPath = worldCup ? "/worldcup/rankings" : "/rankings";
 
   const [users, setUsers] = useState([]);
   const [fetchStatus, setFetchStatus] = useState(FETCH_STATUS.SUCCESS);
@@ -35,7 +37,7 @@ const UsersRanking = () => {
   };
 
   const navigateToUsersRanking = () => {
-    return navigate(`/rankings`, {});
+    return navigate(rankingsPath, {});
   };
 
   useOnMountUnsafe(() => {
@@ -83,7 +85,7 @@ const UsersRanking = () => {
           variant="outlined"
         >
           <div className="title-style">Top Users</div>
-          <div style={{ height: "73%" }}>
+          <div>
             <table className="top-users-table">
               <thead className="top-users-table-header">
                 <tr style={{ backgroundColor: "rgba(229, 233, 239, 0.4)" }}>
@@ -100,7 +102,16 @@ const UsersRanking = () => {
 
               <tbody>
                 {users.map((user, idx) => {
-                  return <UserRankingRow key={idx} user={user} id={idx + 1} />;
+                  return (
+                    <UserRankingRow
+                      key={idx}
+                      user={user}
+                      id={idx + 1}
+                      onClick={() =>
+                        navigate(`${rankingsPath}?userId=${user.userId}`)
+                      }
+                    />
+                  );
                 })}
               </tbody>
             </table>

@@ -29,7 +29,7 @@ export const TransactionConfirmModal = ({
     left: "50%",
     transform: "translate(-50%, -50%)",
     width: useMediaQuery("(min-width:600px)") ? 500 : 380,
-    height: 100,
+    minHeight: 100,
     bgcolor: "background.paper",
     border: "2px solid #000",
     boxShadow: 24,
@@ -56,36 +56,65 @@ export const TransactionConfirmModal = ({
     TRANSACTION_STATUSES.IDLE
   );
 
+  const SELL_LOCK_HOURS = 48; // mirrors backend TransactionService.SELL_LOCK_HOURS
+
+  // how long until a freshly bought player can be sold, derived from boughtAt
+  const sellWaitText = (boughtAt) => {
+    if (!boughtAt) return "48 hours after buying";
+    const unlockMs =
+      new Date(boughtAt).getTime() + SELL_LOCK_HOURS * 60 * 60 * 1000;
+    const msLeft = unlockMs - Date.now();
+    if (msLeft <= 0) return "now";
+    const hours = Math.floor(msLeft / (60 * 60 * 1000));
+    const minutes = Math.floor((msLeft % (60 * 60 * 1000)) / (60 * 1000));
+    return `${hours}h ${minutes}m`;
+  };
+
+  // human message for each backend transaction error type (TransactionError.errorType)
+  const messageForError = (err) => {
+    switch (err.errorType) {
+      case "max_buy":
+        return "Your squad is full — you can hold at most 4 players. Sell one first.";
+      case "sell_locked":
+        return `You can't sell this player yet — try again in ${sellWaitText(
+          transactionType.boughtAt
+        )}.`;
+      case "live_match":
+        return "This player is in a live match right now — you can buy him after it ends.";
+      case "already_owned":
+        return "You already own this player.";
+      case "insufficient_points":
+        return "You don't have enough points for this player.";
+      case "not_owned":
+        return "You don't own this player.";
+      default:
+        return "Error Please try again later";
+    }
+  };
+
   const handleTransactionErr = (transactionResponse) => {
     setTransactionStatus(TRANSACTION_STATUSES.ERROR);
     setTimeout(() => {
       setTransactionStatus(TRANSACTION_STATUSES.IDLE);
       setConfirmTransactionBtnDisabled(false);
       handleClose();
-      if (transactionResponse && transactionResponse.error) {
-        let err = transactionResponse.error;
-        if (err.errorType === "price") {
-          let playerNewPrice = err.playerPrice;
-          setPlayerDetails((prevState) => {
-            return {
-              ...prevState,
-              price: playerNewPrice,
-            };
-          });
-          setOuterTransactionConfirmNotificationOpen({
-            isOpen: true,
-            msg: "Sorry Price was updated",
-          });
-        } else {
-          setOuterTransactionConfirmNotificationOpen({
-            isOpen: true,
-            msg: "Error Please try again later",
-          });
-        }
+      const err =
+        transactionResponse && transactionResponse.error
+          ? transactionResponse.error
+          : null;
+      if (err && err.errorType === "price") {
+        setPlayerDetails((prevState) => ({
+          ...prevState,
+          price: err.playerPrice,
+        }));
+        setOuterTransactionConfirmNotificationOpen({
+          isOpen: true,
+          msg: "Sorry Price was updated",
+        });
       } else {
         setOuterTransactionConfirmNotificationOpen({
           isOpen: true,
-          msg: "Error Please try again later",
+          msg: err ? messageForError(err) : "Error Please try again later",
         });
       }
     }, 2000);
@@ -231,6 +260,14 @@ export const TransactionConfirmModal = ({
               Are you sure you want to {transactionType.name}{" "}
               {playerDetails.name} for {playerDetails.price}
             </Typography>
+            {transactionType.name === transactionTypes.buy.name && (
+              <Typography
+                style={{ fontSize: "0.8rem", color: "#666", marginTop: "6px" }}
+              >
+                Note: you can hold at most 4 players, and a player can't be sold
+                until 48 hours after you buy him.
+              </Typography>
+            )}
             <div
               style={{
                 display: "flex",

@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useState } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiBaseUrl } from "../config/Config";
 
 const SearchPlayer = ({
@@ -25,6 +25,9 @@ const SearchPlayer = ({
   const [fetchStatus, setFetchStatus] = useState(FETCH_STATUS.IDLE);
 
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  // searching while in WC mode keeps you in WC mode for the opened player
+  const worldCupMode = pathname.startsWith("/worldcup");
 
   const checkSearchPlayerStatus = async () => {
     //check player in db by his sofascore id
@@ -64,9 +67,7 @@ const SearchPlayer = ({
     <div
       className="search-player-row-div"
       onClick={() =>
-        navigate(`/players/${searchPlayer.id}`, {
-          state: null,
-        })
+        navigate(`${worldCupMode ? "/worldcup" : ""}/players/${searchPlayer.id}`)
       }
     >
       <img

@@ -1,0 +1,275 @@
+/* ============================================================
+   World Cup mode — light page, navy accents (NO dark mode).
+   Approved design: theme-previews/14-navy-darkheads.png
+   ============================================================ */
+
+/* ---- Navbar: World Cup toggle pill (sits left, next to app name) ---- */
+.wc-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px; /* sits just after the app name */
+  cursor: pointer;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.18s ease;
+}
+.wc-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.wc-toggle-logo {
+  height: 22px;
+  width: auto;
+  background: #fff;
+  border-radius: 4px;
+  padding: 1px 3px;
+}
+.wc-toggle-label {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ---- Compact centered FIFA World Cup 2026 header (WC page only) ----
+   Near-black banner (darker than navbar), transparent gold-trophy logo, no chip. */
+.wc-head-row {
+  display: flex;
+  justify-content: center;
+  margin: 22px 0 4px;
+  padding: 0 16px;
+}
+.wc-head {
+  display: inline-flex;
+  align-items: center; /* text vertically centered on the trophy */
+  gap: 24px;
+  max-width: 100%;
+  background: linear-gradient(135deg, #2a3850, #1d2735 70%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 20px 46px;
+  box-shadow: 0 12px 30px rgba(20, 30, 50, 0.3);
+}
+.wc-head-logo {
+  height: 96px;
+  width: auto;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 10px;
+  padding: 5px 10px;
+}
+.wc-head-text {
+  text-align: left;
+  font-family: "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+.wc-head-title {
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+.wc-head-tagline {
+  color: #aeb8c6;
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 10px;
+  white-space: nowrap;
+}
+
+/* ---- World Cup fixtures + predictions card (home header, WC mode only) ---- */
+.wc-fixtures-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #6b7686;
+  height: 70%;
+  padding: 0 18px;
+  font-size: 0.9rem;
+}
+.wc-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px 0;
+  height: calc(100% - 3.6rem);
+}
+.wc-carousel-match {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+.wc-carousel-status {
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: #5a667e;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.wc-carousel-teams {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+.wc-carousel-team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.wc-carousel-team span {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #1a1d23;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  letter-spacing: 0.01em;
+}
+.wc-carousel-center {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4rem;
+  padding-top: 8px;
+}
+.wc-carousel-time {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #5a667e;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.wc-carousel-score {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1a1d23;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.03em;
+}
+.wc-carousel-pred {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+.wc-pred-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.wc-pred-score .MuiTextField-root {
+  width: 3rem;
+}
+.wc-pred-error {
+  color: #d32f2f;
+  font-size: 0.72rem;
+  text-align: center;
+}
+.wc-pred-summary {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #2a3040;
+  text-align: center;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 6px;
+}
+.wc-pred-result-plus {
+  color: #1a7f37;
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.wc-pred-result-minus {
+  color: #d32f2f;
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.wc-pred-hint {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #5a667e;
+}
+/* settled points split into result / exact / bonus / total */
+.wc-pred-breakdown {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 8px;
+}
+.wc-pred-part {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+.wc-pred-part-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #8a93a0;
+}
+.wc-pred-part-total {
+  padding-left: 6px;
+  border-left: 1px solid #d7dce3;
+}
+.wc-pred-part-total .wc-pred-part-label {
+  color: #444;
+}
+.wc-carousel-counter {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #6b7686;
+  padding-bottom: 6px;
+}
+
+/* small screens: let everything wrap so nothing overflows */
+@media (max-width: 820px) {
+  .wc-head {
+    display: flex;
+  }
+  .wc-head-title,
+  .wc-head-tagline {
+    white-space: normal;
+  }
+}
+@media (max-width: 600px) {
+  .wc-head {
+    gap: 16px;
+    padding: 14px 20px;
+  }
+  .wc-head-logo {
+    height: 80px;
+  }
+  .wc-head-title {
+    font-size: 24px;
+  }
+  .wc-head-tagline {
+    font-size: 13px;
+  }
+}

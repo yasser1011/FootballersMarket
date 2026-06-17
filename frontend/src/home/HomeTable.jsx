@@ -12,7 +12,7 @@ import { Button, CircularProgress, TableCell } from "@mui/material";
 import { useState } from "react";
 import { StyledTableCell } from "./Home";
 import { BorderBottom } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useEffect } from "react";
 import { useOnMountUnsafe } from "../customhooks/useOnMountUnsafe";
@@ -35,6 +35,7 @@ export const getAge = (birthDate) =>
 
 export default function HomeTable({
   fetchPlayersUrl,
+  worldCup = false,
   setPaginationOptions,
   paginationOptions,
 }) {
@@ -55,6 +56,7 @@ export default function HomeTable({
   const [fetchStatus, setFetchStatus] = useState(FETCH_STATUS.LOADING);
 
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const fetchPlayers = async () => {
     setFetchStatus(FETCH_STATUS.LOADING);
@@ -93,7 +95,10 @@ export default function HomeTable({
 
   const navigatePlayerDetails = (player) => {
     setSelectedHomeTablePlayer(player);
-    return navigate(`/players/${player.externalServicePlayerId}`);
+    // keep WC mode based on the CURRENT route (covers the WC home table AND /worldcup/myteam),
+    // not just the worldCup prop — so opening a player from the squad page in WC mode stays WC
+    const prefix = pathname.startsWith("/worldcup") ? "/worldcup" : "";
+    return navigate(`${prefix}/players/${player.externalServicePlayerId}`);
   };
 
   useEffect(() => {
@@ -159,28 +164,43 @@ export default function HomeTable({
                   </span>
                 </div>
               </StyledTableCell>
-              <StyledTableCell
-              // className="table-player-col-name-style"
-              // align="center"
-              >
-                <div className="table-player-col-style">
-                  <img
-                    src={player.clubPhotoUrl}
-                    width={40}
-                    height={40}
-                    style={{ borderRadius: "30%" }}
-                    alt=""
-                  />
-                  <span className="table-player-col-name-style">
-                    {player.externalServicePlayerClub}
-                  </span>
-                </div>
-              </StyledTableCell>
+              {/* club column is hidden in world cup mode */}
+              {!worldCup && (
+                <StyledTableCell>
+                  <div className="table-player-col-style">
+                    <img
+                      src={player.clubPhotoUrl}
+                      width={40}
+                      height={40}
+                      style={{ borderRadius: "30%" }}
+                      alt=""
+                    />
+                    <span className="table-player-col-name-style">
+                      {player.externalServicePlayerClub}
+                    </span>
+                  </div>
+                </StyledTableCell>
+              )}
               <StyledTableCell
                 className="table-player-col-name-style"
                 align="center"
               >
-                {player.nationality}
+                {worldCup && player.worldCupStats?.team ? (
+                  <div className="table-player-col-style">
+                    <img
+                      src={player.worldCupStats.team.logoUrl}
+                      width={40}
+                      height={40}
+                      style={{ borderRadius: "30%" }}
+                      alt=""
+                    />
+                    <span className="table-player-col-name-style">
+                      {player.worldCupStats.team.name}
+                    </span>
+                  </div>
+                ) : (
+                  player.nationality
+                )}
               </StyledTableCell>
               <StyledTableCell
                 className="table-player-col-name-style"
@@ -198,19 +218,21 @@ export default function HomeTable({
                 className="table-player-col-name-style"
                 align="center"
               >
-                {player.avgRating}
+                {worldCup
+                  ? player.worldCupStats?.rating?.toFixed(2)
+                  : player.avgRating}
               </StyledTableCell>
               <StyledTableCell
                 className="table-player-col-name-style"
                 align="center"
               >
-                {player.totalGoals}
+                {worldCup ? player.worldCupStats?.goals : player.totalGoals}
               </StyledTableCell>
               <StyledTableCell
                 className="table-player-col-name-style"
                 align="center"
               >
-                {player.totalAssists}
+                {worldCup ? player.worldCupStats?.assists : player.totalAssists}
               </StyledTableCell>
               {fetchPlayersUrl.includes("myteam") && (
                 <StyledTableCell

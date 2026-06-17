@@ -9,13 +9,19 @@ import {
 import React, { useContext, useState } from "react";
 import { UserContext } from "../Context/UserContext";
 import AuthModal from "../auth/AuthModal";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useRef } from "react";
 
 const NavUserData = () => {
   const navUserLinksRef = useRef(null);
 
   const { userData, setUserData, userLoading } = useContext(UserContext);
+
+  // keep WC mode across the nav links (the /worldcup prefix is the source of truth)
+  const { pathname } = useLocation();
+  const wcPrefix = pathname.startsWith("/worldcup") ? "/worldcup" : "";
+  const rankingsPath = `${wcPrefix}/rankings`;
+  const myTeamPath = `${wcPrefix}/myteam`;
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalType, setAuthModalType] = useState(null);
@@ -61,10 +67,10 @@ const NavUserData = () => {
               textDecoration: "none",
               color: "white",
             }}
-            to="/myteam"
+            to={myTeamPath}
             className="hover-pointer"
           >
-            <Typography>MyTeam</Typography>
+            <Typography>My Squad</Typography>
           </Link>
 
           <Link
@@ -72,7 +78,7 @@ const NavUserData = () => {
               textDecoration: "none",
               color: "white",
             }}
-            to="/rankings"
+            to={rankingsPath}
             className="hover-pointer"
           >
             <Typography>Rankings</Typography>
@@ -118,7 +124,7 @@ const NavUserData = () => {
             textDecoration: "none",
             color: "white",
           }}
-          to="/rankings"
+          to={rankingsPath}
           className="hover-pointer"
         >
           <Typography>Rankings</Typography>

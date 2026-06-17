@@ -26,8 +26,9 @@
 .top-users-table-header-th{
     font-weight: initial;
     text-align: initial;
-    padding: 0px 16px;
-    border: 1px solid rgba(34, 34, 38, 0.15);
+    padding: 6px 16px;
+    border: none;
+    border-bottom: 2px solid var(--app-primary);
 }
 .top-users-table-header-username{
     color: #222226;
@@ -41,42 +42,61 @@
 }
 
 
-.top-users-row{
+.top-users-row {
     display: flex;
-    -webkit-box-align: center;
     align-items: center;
     height: 100%;
-    padding-left: 10px;
-    padding-right: 16px;
-    /* background-color: red; */
+    padding: 0 16px 0 10px;
+}
+
+.top-users-data-row {
+    background-color: white;
+    color: #232f3e; 
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+
+.top-users-data-row:hover {
+    background-color: #e0e0e0; 
+    color: #232f3e;          
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); 
+}
+
+
+.top-users-data-row:active {
+    background-color: #85888b; 
+    color: #ffffff;            
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.3); 
 }
 
 .top-user-rank-number{
-    color: black;
+    color: var(--app-primary);
     align-self: left;
     text-align: left;
     /* background-color: black; */
     margin-right: 5px;
-    font: 700 14px / 24px "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    font: 800 14px / 24px "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
 }
 .top-user-rank-username{
-    color: #222226;
-    /* background-color: green; */
+    color: #1a1d23;
     text-align: left;
-    font: 400 14px / 24px "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    font: 500 14.5px / 24px "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    letter-spacing: 0.01em;
 }
 .top-user-rank-score-wrapper{
     display: flex;
     -webkit-box-align: center;
     align-items: center;
-    -webkit-box-pack: center;
-    justify-content: center;
-    height: 32px;
+    -webkit-box-pack: end;
+    justify-content: flex-end;
+    height: 34px;
     padding-left: 16px;
     padding-right: 16px;
 }
 .top-user-rank-score-number{
-color: #222226;
-    text-align: center;
-    font: 400 14px / 16px "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    color: #232f3e;
+    text-align: right;
+    font: 700 15px / 16px "Sofascore Sans", -apple-system, system-ui, BlinkMacSystemFont, Dubai, "Segoe UI", Tahoma, "Noto Sans Arabic UI", "Dejavu Sans", Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
 }

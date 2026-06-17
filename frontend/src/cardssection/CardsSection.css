@@ -2,29 +2,74 @@
     display: flex;
     justify-content: center;
     align-items: center;
-  }
-  
-  .cards-container > * {
-    margin: 20px 20px 20px 20px;
-  }
-  
-  .cards-container{
+    padding: 0 18px;
+}
+
+/* full-width row, aligned with the players table below */
+.cards-container{
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    gap: 18px;
     width: 100%;
-  }
+    margin: 18px auto;
+}
 
-  .cards-style{
-    border-radius: 10px;
-    width: 25rem;
-    height: 18rem;
-    background-color: red;
-  }
+/* each card fills its third equally; display:flex lets the inner Card stretch to full height */
+.cards-container > *{
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+    display: flex;
+}
 
+/* shared card frame: white body, soft border + shadow, navy title strip.
+   flex:1 makes every card the same height (the tallest one). */
+.cards-container .MuiCard-root{
+    width: 100% !important;
+    flex: 1;
+    min-height: 310px;
+    border: 1px solid #e3e7ec !important;
+    border-radius: 14px !important;
+    box-shadow: 0 8px 22px rgba(20, 30, 50, 0.10) !important;
+    overflow: hidden;
+    display: flex !important;
+    flex-direction: column;
+}
 
-  @media (max-width: 1200px) {
+/* pin "Show More" (Top Users) to the bottom-left of the card */
+.cards-container .MuiCardActions-root{
+    margin-top: auto;
+    justify-content: flex-start;
+    padding: 8px 16px 14px;
+}
+
+.cards-container .title-style{
+    background: var(--app-primary);
+    color: #ffffff !important;
+    margin: 0 0 12px !important;
+    padding: 12px 16px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+/* FeaturedGame used fixed % heights tuned for a fixed-height card; let it flex-fill now */
+.cards-container .center{
+    height: auto !important;
+    flex: 1;
+}
+.cards-container .featured-game-container{
+    height: auto !important;
+    margin: 8px;
+}
+.cards-container .featured-game-div{
+    padding: 22px 12px;
+}
+
+@media (max-width: 1000px) {
     .cards-container{
-      flex-direction: column;
+        flex-direction: column;
+    }
+    .cards-container > *{
+        width: 100%;
     }
 }

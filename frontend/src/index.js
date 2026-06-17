@@ -6,17 +6,21 @@ import reportWebVitals from "./reportWebVitals";
 import { UserProvider } from "./Context/UserContext";
 import { HomePageProvider } from "./Context/HomePageContext";
 import { SelectedHomeTablePlayerProvider } from "./Context/SelectedHomeTablePlayerContext";
+import { ThemeProvider } from "@mui/material/styles";
+import { appTheme } from "./theme";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <UserProvider>
-      <HomePageProvider>
-        <SelectedHomeTablePlayerProvider>
-          <App />
-        </SelectedHomeTablePlayerProvider>
-      </HomePageProvider>
-    </UserProvider>
+    <ThemeProvider theme={appTheme}>
+      <UserProvider>
+        <HomePageProvider>
+          <SelectedHomeTablePlayerProvider>
+            <App />
+          </SelectedHomeTablePlayerProvider>
+        </HomePageProvider>
+      </UserProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );
 

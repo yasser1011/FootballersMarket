@@ -25,8 +25,11 @@ const FeaturedPlayer = ({ player, id }) => {
         <div className="trending-player-name-match">
           <span className="trending-player-name">{player.playerName}</span>
           <span className="trending-player-match">
-            {player.homeTeamName} {player.homeTeamName === "" ? "" : "vs"}{" "}
-            {player.awayTeamName}
+            {player.worldCup
+              ? player.fixtureName
+              : player.homeTeamName
+                ? `${player.homeTeamName} vs ${player.awayTeamName}`
+                : player.awayTeamName}
           </span>
         </div>
         <div className="trending-player-match-score-container">
