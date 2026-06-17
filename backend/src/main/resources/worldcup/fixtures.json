@@ -1,0 +1,722 @@
+[
+    {
+        "id":  1489369,
+        "date":  "2026-06-11T19:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Estadio Azteca",
+        "venueCity":  "Mexico City",
+        "homeTeamId":  16,
+        "awayTeamId":  1531,
+        "status":  "NS"
+    },
+    {
+        "id":  1538999,
+        "date":  "2026-06-12T02:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Estadio Akron",
+        "venueCity":  "Guadalajara",
+        "homeTeamId":  17,
+        "awayTeamId":  770,
+        "status":  "NS"
+    },
+    {
+        "id":  1539000,
+        "date":  "2026-06-12T19:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "BMO Field",
+        "venueCity":  "Toronto",
+        "homeTeamId":  5529,
+        "awayTeamId":  1113,
+        "status":  "NS"
+    },
+    {
+        "id":  1489370,
+        "date":  "2026-06-13T01:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "SoFi Stadium",
+        "venueCity":  "Los Angeles",
+        "homeTeamId":  2384,
+        "awayTeamId":  2380,
+        "status":  "NS"
+    },
+    {
+        "id":  1489373,
+        "date":  "2026-06-13T19:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Levi\u0027s Stadium",
+        "venueCity":  "San Francisco Bay Area",
+        "homeTeamId":  1569,
+        "awayTeamId":  15,
+        "status":  "NS"
+    },
+    {
+        "id":  1489371,
+        "date":  "2026-06-13T22:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "MetLife Stadium",
+        "venueCity":  "New York New Jersey",
+        "homeTeamId":  6,
+        "awayTeamId":  31,
+        "status":  "NS"
+    },
+    {
+        "id":  1489372,
+        "date":  "2026-06-14T01:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Gillette Stadium",
+        "venueCity":  "Boston",
+        "homeTeamId":  2386,
+        "awayTeamId":  1108,
+        "status":  "NS"
+    },
+    {
+        "id":  1539001,
+        "date":  "2026-06-14T04:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "BC Place",
+        "venueCity":  "Vancouver",
+        "homeTeamId":  20,
+        "awayTeamId":  777,
+        "status":  "NS"
+    },
+    {
+        "id":  1489374,
+        "date":  "2026-06-14T17:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "NRG Stadium",
+        "venueCity":  "Houston",
+        "homeTeamId":  25,
+        "awayTeamId":  5530,
+        "status":  "NS"
+    },
+    {
+        "id":  1489376,
+        "date":  "2026-06-14T20:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "AT\u0026T Stadium",
+        "venueCity":  "Dallas",
+        "homeTeamId":  1118,
+        "awayTeamId":  12,
+        "status":  "NS"
+    },
+    {
+        "id":  1489375,
+        "date":  "2026-06-14T23:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Lincoln Financial Field",
+        "venueCity":  "Philadelphia",
+        "homeTeamId":  1501,
+        "awayTeamId":  2382,
+        "status":  "NS"
+    },
+    {
+        "id":  1539002,
+        "date":  "2026-06-15T02:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Estadio BBVA",
+        "venueCity":  "Monterrey",
+        "homeTeamId":  5,
+        "awayTeamId":  28,
+        "status":  "NS"
+    },
+    {
+        "id":  1489380,
+        "date":  "2026-06-15T16:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Mercedes-Benz Stadium",
+        "venueCity":  "Atlanta",
+        "homeTeamId":  9,
+        "awayTeamId":  1533,
+        "status":  "NS"
+    },
+    {
+        "id":  1489377,
+        "date":  "2026-06-15T19:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Lumen Field",
+        "venueCity":  "Seattle",
+        "homeTeamId":  1,
+        "awayTeamId":  32,
+        "status":  "NS"
+    },
+    {
+        "id":  1489379,
+        "date":  "2026-06-15T22:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Hard Rock Stadium",
+        "venueCity":  "Miami",
+        "homeTeamId":  23,
+        "awayTeamId":  7,
+        "status":  "NS"
+    },
+    {
+        "id":  1489378,
+        "date":  "2026-06-16T01:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "SoFi Stadium",
+        "venueCity":  "Los Angeles",
+        "homeTeamId":  22,
+        "awayTeamId":  4673,
+        "status":  "NS"
+    },
+    {
+        "id":  1489383,
+        "date":  "2026-06-16T19:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "MetLife Stadium",
+        "venueCity":  "New York New Jersey",
+        "homeTeamId":  2,
+        "awayTeamId":  13,
+        "status":  "NS"
+    },
+    {
+        "id":  1539016,
+        "date":  "2026-06-16T22:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Gillette Stadium",
+        "venueCity":  "Boston",
+        "homeTeamId":  1567,
+        "awayTeamId":  1090,
+        "status":  "NS"
+    },
+    {
+        "id":  1489381,
+        "date":  "2026-06-17T01:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Arrowhead Stadium",
+        "venueCity":  "Kansas City",
+        "homeTeamId":  26,
+        "awayTeamId":  1532,
+        "status":  "NS"
+    },
+    {
+        "id":  1489382,
+        "date":  "2026-06-17T04:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Levi\u0027s Stadium",
+        "venueCity":  "San Francisco Bay Area",
+        "homeTeamId":  775,
+        "awayTeamId":  1548,
+        "status":  "NS"
+    },
+    {
+        "id":  1539003,
+        "date":  "2026-06-17T17:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "NRG Stadium",
+        "venueCity":  "Houston",
+        "homeTeamId":  27,
+        "awayTeamId":  1508,
+        "status":  "NS"
+    },
+    {
+        "id":  1489384,
+        "date":  "2026-06-17T20:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "AT\u0026T Stadium",
+        "venueCity":  "Dallas",
+        "homeTeamId":  10,
+        "awayTeamId":  3,
+        "status":  "NS"
+    },
+    {
+        "id":  1489385,
+        "date":  "2026-06-17T23:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "BMO Field",
+        "venueCity":  "Toronto",
+        "homeTeamId":  1504,
+        "awayTeamId":  11,
+        "status":  "NS"
+    },
+    {
+        "id":  1489386,
+        "date":  "2026-06-18T02:00:00+00:00",
+        "round":  "Group Stage - 1",
+        "venueName":  "Estadio Azteca",
+        "venueCity":  "Mexico City",
+        "homeTeamId":  1568,
+        "awayTeamId":  8,
+        "status":  "NS"
+    },
+    {
+        "id":  1539004,
+        "date":  "2026-06-18T16:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Mercedes-Benz Stadium",
+        "venueCity":  "Atlanta",
+        "homeTeamId":  770,
+        "awayTeamId":  1531,
+        "status":  "NS"
+    },
+    {
+        "id":  1539005,
+        "date":  "2026-06-18T19:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "SoFi Stadium",
+        "venueCity":  "Los Angeles",
+        "homeTeamId":  15,
+        "awayTeamId":  1113,
+        "status":  "NS"
+    },
+    {
+        "id":  1489387,
+        "date":  "2026-06-18T22:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "BC Place",
+        "venueCity":  "Vancouver",
+        "homeTeamId":  5529,
+        "awayTeamId":  1569,
+        "status":  "NS"
+    },
+    {
+        "id":  1489388,
+        "date":  "2026-06-19T01:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Estadio Akron",
+        "venueCity":  "Guadalajara",
+        "homeTeamId":  16,
+        "awayTeamId":  17,
+        "status":  "NS"
+    },
+    {
+        "id":  1489391,
+        "date":  "2026-06-19T19:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Lumen Field",
+        "venueCity":  "Seattle",
+        "homeTeamId":  2384,
+        "awayTeamId":  20,
+        "status":  "NS"
+    },
+    {
+        "id":  1489390,
+        "date":  "2026-06-19T22:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Gillette Stadium",
+        "venueCity":  "Boston",
+        "homeTeamId":  1108,
+        "awayTeamId":  31,
+        "status":  "NS"
+    },
+    {
+        "id":  1489389,
+        "date":  "2026-06-20T00:30:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Lincoln Financial Field",
+        "venueCity":  "Philadelphia",
+        "homeTeamId":  6,
+        "awayTeamId":  2386,
+        "status":  "NS"
+    },
+    {
+        "id":  1539006,
+        "date":  "2026-06-20T03:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Levi\u0027s Stadium",
+        "venueCity":  "San Francisco Bay Area",
+        "homeTeamId":  777,
+        "awayTeamId":  2380,
+        "status":  "NS"
+    },
+    {
+        "id":  1539007,
+        "date":  "2026-06-20T17:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "NRG Stadium",
+        "venueCity":  "Houston",
+        "homeTeamId":  1118,
+        "awayTeamId":  5,
+        "status":  "NS"
+    },
+    {
+        "id":  1489393,
+        "date":  "2026-06-20T20:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "BMO Field",
+        "venueCity":  "Toronto",
+        "homeTeamId":  25,
+        "awayTeamId":  1501,
+        "status":  "NS"
+    },
+    {
+        "id":  1489392,
+        "date":  "2026-06-21T00:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Arrowhead Stadium",
+        "venueCity":  "Kansas City",
+        "homeTeamId":  2382,
+        "awayTeamId":  5530,
+        "status":  "NS"
+    },
+    {
+        "id":  1489394,
+        "date":  "2026-06-21T04:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Estadio BBVA",
+        "venueCity":  "Monterrey",
+        "homeTeamId":  28,
+        "awayTeamId":  12,
+        "status":  "NS"
+    },
+    {
+        "id":  1489397,
+        "date":  "2026-06-21T16:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Mercedes-Benz Stadium",
+        "venueCity":  "Atlanta",
+        "homeTeamId":  9,
+        "awayTeamId":  23,
+        "status":  "NS"
+    },
+    {
+        "id":  1489395,
+        "date":  "2026-06-21T19:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "SoFi Stadium",
+        "venueCity":  "Los Angeles",
+        "homeTeamId":  1,
+        "awayTeamId":  22,
+        "status":  "NS"
+    },
+    {
+        "id":  1489398,
+        "date":  "2026-06-21T22:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Hard Rock Stadium",
+        "venueCity":  "Miami",
+        "homeTeamId":  7,
+        "awayTeamId":  1533,
+        "status":  "NS"
+    },
+    {
+        "id":  1489396,
+        "date":  "2026-06-22T01:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "BC Place",
+        "venueCity":  "Vancouver",
+        "homeTeamId":  4673,
+        "awayTeamId":  32,
+        "status":  "NS"
+    },
+    {
+        "id":  1489399,
+        "date":  "2026-06-22T17:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "AT\u0026T Stadium",
+        "venueCity":  "Dallas",
+        "homeTeamId":  26,
+        "awayTeamId":  775,
+        "status":  "NS"
+    },
+    {
+        "id":  1539017,
+        "date":  "2026-06-22T21:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Lincoln Financial Field",
+        "venueCity":  "Philadelphia",
+        "homeTeamId":  2,
+        "awayTeamId":  1567,
+        "status":  "NS"
+    },
+    {
+        "id":  1489401,
+        "date":  "2026-06-23T00:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "MetLife Stadium",
+        "venueCity":  "New York New Jersey",
+        "homeTeamId":  1090,
+        "awayTeamId":  13,
+        "status":  "NS"
+    },
+    {
+        "id":  1489400,
+        "date":  "2026-06-23T03:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Levi\u0027s Stadium",
+        "venueCity":  "San Francisco Bay Area",
+        "homeTeamId":  1548,
+        "awayTeamId":  1532,
+        "status":  "NS"
+    },
+    {
+        "id":  1489404,
+        "date":  "2026-06-23T17:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "NRG Stadium",
+        "venueCity":  "Houston",
+        "homeTeamId":  27,
+        "awayTeamId":  1568,
+        "status":  "NS"
+    },
+    {
+        "id":  1489402,
+        "date":  "2026-06-23T20:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Gillette Stadium",
+        "venueCity":  "Boston",
+        "homeTeamId":  10,
+        "awayTeamId":  1504,
+        "status":  "NS"
+    },
+    {
+        "id":  1489403,
+        "date":  "2026-06-23T23:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "BMO Field",
+        "venueCity":  "Toronto",
+        "homeTeamId":  11,
+        "awayTeamId":  3,
+        "status":  "NS"
+    },
+    {
+        "id":  1539008,
+        "date":  "2026-06-24T02:00:00+00:00",
+        "round":  "Group Stage - 2",
+        "venueName":  "Estadio Akron",
+        "venueCity":  "Guadalajara",
+        "homeTeamId":  8,
+        "awayTeamId":  1508,
+        "status":  "NS"
+    },
+    {
+        "id":  1489408,
+        "date":  "2026-06-24T19:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "BC Place",
+        "venueCity":  "Vancouver",
+        "homeTeamId":  15,
+        "awayTeamId":  5529,
+        "status":  "NS"
+    },
+    {
+        "id":  1539009,
+        "date":  "2026-06-24T19:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Lumen Field",
+        "venueCity":  "Seattle",
+        "homeTeamId":  1113,
+        "awayTeamId":  1569,
+        "status":  "NS"
+    },
+    {
+        "id":  1489405,
+        "date":  "2026-06-24T22:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Mercedes-Benz Stadium",
+        "venueCity":  "Atlanta",
+        "homeTeamId":  31,
+        "awayTeamId":  2386,
+        "status":  "NS"
+    },
+    {
+        "id":  1489406,
+        "date":  "2026-06-24T22:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Hard Rock Stadium",
+        "venueCity":  "Miami",
+        "homeTeamId":  1108,
+        "awayTeamId":  6,
+        "status":  "NS"
+    },
+    {
+        "id":  1539010,
+        "date":  "2026-06-25T01:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Estadio Azteca",
+        "venueCity":  "Mexico City",
+        "homeTeamId":  770,
+        "awayTeamId":  16,
+        "status":  "NS"
+    },
+    {
+        "id":  1489407,
+        "date":  "2026-06-25T01:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Estadio BBVA",
+        "venueCity":  "Monterrey",
+        "homeTeamId":  1531,
+        "awayTeamId":  17,
+        "status":  "NS"
+    },
+    {
+        "id":  1489410,
+        "date":  "2026-06-25T20:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "MetLife Stadium",
+        "venueCity":  "New York New Jersey",
+        "homeTeamId":  2382,
+        "awayTeamId":  25,
+        "status":  "NS"
+    },
+    {
+        "id":  1489409,
+        "date":  "2026-06-25T20:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Lincoln Financial Field",
+        "venueCity":  "Philadelphia",
+        "homeTeamId":  5530,
+        "awayTeamId":  1501,
+        "status":  "NS"
+    },
+    {
+        "id":  1539011,
+        "date":  "2026-06-25T23:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "AT\u0026T Stadium",
+        "venueCity":  "Dallas",
+        "homeTeamId":  12,
+        "awayTeamId":  5,
+        "status":  "NS"
+    },
+    {
+        "id":  1489412,
+        "date":  "2026-06-25T23:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Arrowhead Stadium",
+        "venueCity":  "Kansas City",
+        "homeTeamId":  28,
+        "awayTeamId":  1118,
+        "status":  "NS"
+    },
+    {
+        "id":  1539012,
+        "date":  "2026-06-26T02:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "SoFi Stadium",
+        "venueCity":  "Los Angeles",
+        "homeTeamId":  777,
+        "awayTeamId":  2384,
+        "status":  "NS"
+    },
+    {
+        "id":  1489411,
+        "date":  "2026-06-26T02:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Levi\u0027s Stadium",
+        "venueCity":  "San Francisco Bay Area",
+        "homeTeamId":  2380,
+        "awayTeamId":  20,
+        "status":  "NS"
+    },
+    {
+        "id":  1539074,
+        "date":  "2026-06-26T19:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "BMO Field",
+        "venueCity":  "Toronto",
+        "homeTeamId":  13,
+        "awayTeamId":  1567,
+        "status":  "NS"
+    },
+    {
+        "id":  1489416,
+        "date":  "2026-06-26T19:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Gillette Stadium",
+        "venueCity":  "Boston",
+        "homeTeamId":  1090,
+        "awayTeamId":  2,
+        "status":  "NS"
+    },
+    {
+        "id":  1489417,
+        "date":  "2026-06-27T00:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Estadio Akron",
+        "venueCity":  "Guadalajara",
+        "homeTeamId":  7,
+        "awayTeamId":  9,
+        "status":  "NS"
+    },
+    {
+        "id":  1489413,
+        "date":  "2026-06-27T00:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "NRG Stadium",
+        "venueCity":  "Houston",
+        "homeTeamId":  1533,
+        "awayTeamId":  23,
+        "status":  "NS"
+    },
+    {
+        "id":  1489414,
+        "date":  "2026-06-27T03:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Lumen Field",
+        "venueCity":  "Seattle",
+        "homeTeamId":  32,
+        "awayTeamId":  22,
+        "status":  "NS"
+    },
+    {
+        "id":  1489415,
+        "date":  "2026-06-27T03:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "BC Place",
+        "venueCity":  "Vancouver",
+        "homeTeamId":  4673,
+        "awayTeamId":  1,
+        "status":  "NS"
+    },
+    {
+        "id":  1489420,
+        "date":  "2026-06-27T21:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Lincoln Financial Field",
+        "venueCity":  "Philadelphia",
+        "homeTeamId":  3,
+        "awayTeamId":  1504,
+        "status":  "NS"
+    },
+    {
+        "id":  1489422,
+        "date":  "2026-06-27T21:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "MetLife Stadium",
+        "venueCity":  "New York New Jersey",
+        "homeTeamId":  11,
+        "awayTeamId":  10,
+        "status":  "NS"
+    },
+    {
+        "id":  1489419,
+        "date":  "2026-06-27T23:30:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Hard Rock Stadium",
+        "venueCity":  "Miami",
+        "homeTeamId":  8,
+        "awayTeamId":  27,
+        "status":  "NS"
+    },
+    {
+        "id":  1539013,
+        "date":  "2026-06-27T23:30:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Mercedes-Benz Stadium",
+        "venueCity":  "Atlanta",
+        "homeTeamId":  1508,
+        "awayTeamId":  1568,
+        "status":  "NS"
+    },
+    {
+        "id":  1489418,
+        "date":  "2026-06-28T02:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "Arrowhead Stadium",
+        "venueCity":  "Kansas City",
+        "homeTeamId":  1532,
+        "awayTeamId":  775,
+        "status":  "NS"
+    },
+    {
+        "id":  1489421,
+        "date":  "2026-06-28T02:00:00+00:00",
+        "round":  "Group Stage - 3",
+        "venueName":  "AT\u0026T Stadium",
+        "venueCity":  "Dallas",
+        "homeTeamId":  1548,
+        "awayTeamId":  26,
+        "status":  "NS"
+    }
+]

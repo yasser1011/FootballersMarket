@@ -1,0 +1,482 @@
+[
+    {
+        "id":  1,
+        "name":  "Belgium",
+        "code":  "BEL",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1.png",
+        "scores365Id":  2373,
+        "scores365Name":  "Belgium",
+        "fifaRank":  9,
+        "groupName":  "Group G"
+    },
+    {
+        "id":  2,
+        "name":  "France",
+        "code":  "FRA",
+        "logoUrl":  "https://media.api-sports.io/football/teams/2.png",
+        "scores365Id":  5061,
+        "scores365Name":  "France",
+        "fifaRank":  3,
+        "groupName":  "Group I"
+    },
+    {
+        "id":  3,
+        "name":  "Croatia",
+        "code":  "CRO",
+        "logoUrl":  "https://media.api-sports.io/football/teams/3.png",
+        "scores365Id":  5055,
+        "scores365Name":  "Croatia",
+        "fifaRank":  11,
+        "groupName":  "Group L"
+    },
+    {
+        "id":  5,
+        "name":  "Sweden",
+        "code":  "SWE",
+        "logoUrl":  "https://media.api-sports.io/football/teams/5.png",
+        "scores365Id":  2371,
+        "scores365Name":  "Sweden",
+        "fifaRank":  38,
+        "groupName":  "Group F"
+    },
+    {
+        "id":  6,
+        "name":  "Brazil",
+        "code":  "BRA",
+        "logoUrl":  "https://media.api-sports.io/football/teams/6.png",
+        "scores365Id":  2379,
+        "scores365Name":  "Brazil",
+        "fifaRank":  6,
+        "groupName":  "Group C"
+    },
+    {
+        "id":  7,
+        "name":  "Uruguay",
+        "code":  "URU",
+        "logoUrl":  "https://media.api-sports.io/football/teams/7.png",
+        "scores365Id":  5073,
+        "scores365Name":  "Uruguay",
+        "fifaRank":  16,
+        "groupName":  "Group H"
+    },
+    {
+        "id":  8,
+        "name":  "Colombia",
+        "code":  "COL",
+        "logoUrl":  "https://media.api-sports.io/football/teams/8.png",
+        "scores365Id":  5071,
+        "scores365Name":  "Colombia",
+        "fifaRank":  13,
+        "groupName":  "Group K"
+    },
+    {
+        "id":  9,
+        "name":  "Spain",
+        "code":  "ESP",
+        "logoUrl":  "https://media.api-sports.io/football/teams/9.png",
+        "scores365Id":  5050,
+        "scores365Name":  "Spain",
+        "fifaRank":  2,
+        "groupName":  "Group H"
+    },
+    {
+        "id":  10,
+        "name":  "England",
+        "code":  "ENG",
+        "logoUrl":  "https://media.api-sports.io/football/teams/10.png",
+        "scores365Id":  5054,
+        "scores365Name":  "England",
+        "fifaRank":  4,
+        "groupName":  "Group L"
+    },
+    {
+        "id":  11,
+        "name":  "Panama",
+        "code":  "PAN",
+        "logoUrl":  "https://media.api-sports.io/football/teams/11.png",
+        "scores365Id":  5414,
+        "scores365Name":  "Panama",
+        "fifaRank":  34,
+        "groupName":  "Group L"
+    },
+    {
+        "id":  12,
+        "name":  "Japan",
+        "code":  "JPN",
+        "logoUrl":  "https://media.api-sports.io/football/teams/12.png",
+        "scores365Id":  2382,
+        "scores365Name":  "Japan",
+        "fifaRank":  18,
+        "groupName":  "Group F"
+    },
+    {
+        "id":  13,
+        "name":  "Senegal",
+        "code":  "SEN",
+        "logoUrl":  "https://media.api-sports.io/football/teams/13.png",
+        "scores365Id":  5102,
+        "scores365Name":  "Senegal",
+        "fifaRank":  15,
+        "groupName":  "Group I"
+    },
+    {
+        "id":  15,
+        "name":  "Switzerland",
+        "code":  "SUI",
+        "logoUrl":  "https://media.api-sports.io/football/teams/15.png",
+        "scores365Id":  5032,
+        "scores365Name":  "Switzerland",
+        "fifaRank":  19,
+        "groupName":  "Group B"
+    },
+    {
+        "id":  16,
+        "name":  "Mexico",
+        "code":  "MEX",
+        "logoUrl":  "https://media.api-sports.io/football/teams/16.png",
+        "scores365Id":  5106,
+        "scores365Name":  "Mexico",
+        "fifaRank":  14,
+        "groupName":  "Group A"
+    },
+    {
+        "id":  17,
+        "name":  "South Korea",
+        "code":  "KOR",
+        "logoUrl":  "https://media.api-sports.io/football/teams/17.png",
+        "scores365Id":  2383,
+        "scores365Name":  "South Korea",
+        "fifaRank":  25,
+        "groupName":  "Group A"
+    },
+    {
+        "id":  20,
+        "name":  "Australia",
+        "code":  "AUS",
+        "logoUrl":  "https://media.api-sports.io/football/teams/20.png",
+        "scores365Id":  2380,
+        "scores365Name":  "Australia",
+        "fifaRank":  27,
+        "groupName":  "Group D"
+    },
+    {
+        "id":  22,
+        "name":  "Iran",
+        "code":  "IRN",
+        "logoUrl":  "https://media.api-sports.io/football/teams/22.png",
+        "scores365Id":  5091,
+        "scores365Name":  "Iran",
+        "fifaRank":  20,
+        "groupName":  "Group G"
+    },
+    {
+        "id":  23,
+        "name":  "Saudi Arabia",
+        "code":  "KSA",
+        "logoUrl":  "https://media.api-sports.io/football/teams/23.png",
+        "scores365Id":  5087,
+        "scores365Name":  "Saudi Arabia",
+        "fifaRank":  61,
+        "groupName":  "Group H"
+    },
+    {
+        "id":  25,
+        "name":  "Germany",
+        "code":  "GER",
+        "logoUrl":  "https://media.api-sports.io/football/teams/25.png",
+        "scores365Id":  2372,
+        "scores365Name":  "Germany",
+        "fifaRank":  10,
+        "groupName":  "Group E"
+    },
+    {
+        "id":  26,
+        "name":  "Argentina",
+        "code":  "ARG",
+        "logoUrl":  "https://media.api-sports.io/football/teams/26.png",
+        "scores365Id":  2378,
+        "scores365Name":  "Argentina",
+        "fifaRank":  1,
+        "groupName":  "Group J"
+    },
+    {
+        "id":  27,
+        "name":  "Portugal",
+        "code":  "POR",
+        "logoUrl":  "https://media.api-sports.io/football/teams/27.png",
+        "scores365Id":  5028,
+        "scores365Name":  "Portugal",
+        "fifaRank":  5,
+        "groupName":  "Group K"
+    },
+    {
+        "id":  28,
+        "name":  "Tunisia",
+        "code":  "TUN",
+        "logoUrl":  "https://media.api-sports.io/football/teams/28.png",
+        "scores365Id":  5104,
+        "scores365Name":  "Tunisia",
+        "fifaRank":  46,
+        "groupName":  "Group F"
+    },
+    {
+        "id":  31,
+        "name":  "Morocco",
+        "code":  "MAR",
+        "logoUrl":  "https://media.api-sports.io/football/teams/31.png",
+        "scores365Id":  5093,
+        "scores365Name":  "Morocco",
+        "fifaRank":  7,
+        "groupName":  "Group C"
+    },
+    {
+        "id":  32,
+        "name":  "Egypt",
+        "code":  "EGY",
+        "logoUrl":  "https://media.api-sports.io/football/teams/32.png",
+        "scores365Id":  5100,
+        "scores365Name":  "Egypt",
+        "fifaRank":  29,
+        "groupName":  "Group G"
+    },
+    {
+        "id":  770,
+        "name":  "Czech Republic",
+        "code":  "CZE",
+        "logoUrl":  "https://media.api-sports.io/football/teams/770.png",
+        "scores365Id":  5040,
+        "scores365Name":  "Czechia",
+        "fifaRank":  39,
+        "groupName":  "Group A"
+    },
+    {
+        "id":  775,
+        "name":  "Austria",
+        "code":  "AUT",
+        "logoUrl":  "https://media.api-sports.io/football/teams/775.png",
+        "scores365Id":  5059,
+        "scores365Name":  "Austria",
+        "fifaRank":  24,
+        "groupName":  "Group J"
+    },
+    {
+        "id":  777,
+        "name":  "Türkiye",
+        "code":  "TUR",
+        "logoUrl":  "https://media.api-sports.io/football/teams/777.png",
+        "scores365Id":  5047,
+        "scores365Name":  "Turkiye",
+        "fifaRank":  22,
+        "groupName":  "Group D"
+    },
+    {
+        "id":  1090,
+        "name":  "Norway",
+        "code":  "NOR",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1090.png",
+        "scores365Id":  2376,
+        "scores365Name":  "Norway",
+        "fifaRank":  31,
+        "groupName":  "Group I"
+    },
+    {
+        "id":  1108,
+        "name":  "Scotland",
+        "code":  "SCO",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1108.png",
+        "scores365Id":  5069,
+        "scores365Name":  "Scotland",
+        "fifaRank":  42,
+        "groupName":  "Group C"
+    },
+    {
+        "id":  1113,
+        "name":  "Bosnia \u0026 Herzegovina",
+        "code":  "BIH",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1113.png",
+        "scores365Id":  5048,
+        "scores365Name":  "Bosnia \u0026 Herzegovina",
+        "fifaRank":  64,
+        "groupName":  "Group B"
+    },
+    {
+        "id":  1118,
+        "name":  "Netherlands",
+        "code":  "NED",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1118.png",
+        "scores365Id":  2377,
+        "scores365Name":  "Netherlands",
+        "fifaRank":  8,
+        "groupName":  "Group F"
+    },
+    {
+        "id":  1501,
+        "name":  "Ivory Coast",
+        "code":  "CIV",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1501.png",
+        "scores365Id":  2385,
+        "scores365Name":  "Ivory Coast",
+        "fifaRank":  33,
+        "groupName":  "Group E"
+    },
+    {
+        "id":  1504,
+        "name":  "Ghana",
+        "code":  "GHA",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1504.png",
+        "scores365Id":  5094,
+        "scores365Name":  "Ghana",
+        "fifaRank":  73,
+        "groupName":  "Group L"
+    },
+    {
+        "id":  1508,
+        "name":  "Congo DR",
+        "code":  "CGO",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1508.png",
+        "scores365Id":  14650,
+        "scores365Name":  "DR Congo",
+        "fifaRank":  45,
+        "groupName":  "Group K"
+    },
+    {
+        "id":  1531,
+        "name":  "South Africa",
+        "code":  "RSA",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1531.png",
+        "scores365Id":  5103,
+        "scores365Name":  "South Africa",
+        "fifaRank":  60,
+        "groupName":  "Group A"
+    },
+    {
+        "id":  1532,
+        "name":  "Algeria",
+        "code":  "ALG",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1532.png",
+        "scores365Id":  5109,
+        "scores365Name":  "Algeria",
+        "fifaRank":  28,
+        "groupName":  "Group J"
+    },
+    {
+        "id":  1533,
+        "name":  "Cape Verde Islands",
+        "code":  "CPV",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1533.png",
+        "scores365Id":  5411,
+        "scores365Name":  "Cabo Verde",
+        "fifaRank":  67,
+        "groupName":  "Group H"
+    },
+    {
+        "id":  1548,
+        "name":  "Jordan",
+        "code":  "JOR",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1548.png",
+        "scores365Id":  5083,
+        "scores365Name":  "Jordan",
+        "fifaRank":  63,
+        "groupName":  "Group J"
+    },
+    {
+        "id":  1567,
+        "name":  "Iraq",
+        "code":  "IRQ",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1567.png",
+        "scores365Id":  5078,
+        "scores365Name":  "Iraq",
+        "fifaRank":  56,
+        "groupName":  "Group I"
+    },
+    {
+        "id":  1568,
+        "name":  "Uzbekistan",
+        "code":  "UZB",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1568.png",
+        "scores365Id":  5085,
+        "scores365Name":  "Uzbekistan",
+        "fifaRank":  50,
+        "groupName":  "Group K"
+    },
+    {
+        "id":  1569,
+        "name":  "Qatar",
+        "code":  "QAT",
+        "logoUrl":  "https://media.api-sports.io/football/teams/1569.png",
+        "scores365Id":  5079,
+        "scores365Name":  "Qatar",
+        "fifaRank":  57,
+        "groupName":  "Group B"
+    },
+    {
+        "id":  2380,
+        "name":  "Paraguay",
+        "code":  "PAR",
+        "logoUrl":  "https://media.api-sports.io/football/teams/2380.png",
+        "scores365Id":  5070,
+        "scores365Name":  "Paraguay",
+        "fifaRank":  40,
+        "groupName":  "Group D"
+    },
+    {
+        "id":  2382,
+        "name":  "Ecuador",
+        "code":  "ECU",
+        "logoUrl":  "https://media.api-sports.io/football/teams/2382.png",
+        "scores365Id":  5075,
+        "scores365Name":  "Ecuador",
+        "fifaRank":  23,
+        "groupName":  "Group E"
+    },
+    {
+        "id":  2384,
+        "name":  "USA",
+        "code":  "USA",
+        "logoUrl":  "https://media.api-sports.io/football/teams/2384.png",
+        "scores365Id":  2389,
+        "scores365Name":  "USA",
+        "fifaRank":  17,
+        "groupName":  "Group D"
+    },
+    {
+        "id":  2386,
+        "name":  "Haiti",
+        "code":  "HAI",
+        "logoUrl":  "https://media.api-sports.io/football/teams/2386.png",
+        "scores365Id":  5422,
+        "scores365Name":  "Haiti",
+        "fifaRank":  83,
+        "groupName":  "Group C"
+    },
+    {
+        "id":  4673,
+        "name":  "New Zealand",
+        "code":  "NZL",
+        "logoUrl":  "https://media.api-sports.io/football/teams/4673.png",
+        "scores365Id":  2391,
+        "scores365Name":  "New Zealand",
+        "fifaRank":  85,
+        "groupName":  "Group G"
+    },
+    {
+        "id":  5529,
+        "name":  "Canada",
+        "code":  "CAN",
+        "logoUrl":  "https://media.api-sports.io/football/teams/5529.png",
+        "scores365Id":  2388,
+        "scores365Name":  "Canada",
+        "fifaRank":  30,
+        "groupName":  "Group B"
+    },
+    {
+        "id":  5530,
+        "name":  "Curaçao",
+        "code":  "CUR",
+        "logoUrl":  "https://media.api-sports.io/football/teams/5530.png",
+        "scores365Id":  24397,
+        "scores365Name":  "Curacao",
+        "fifaRank":  82,
+        "groupName":  "Group E"
+    }
+]

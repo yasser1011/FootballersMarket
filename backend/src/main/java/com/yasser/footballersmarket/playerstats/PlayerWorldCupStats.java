@@ -2,6 +2,9 @@ package com.yasser.footballersmarket.playerstats;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.yasser.footballersmarket.player.Player;
+import com.yasser.footballersmarket.worldcup.WorldCupTeam;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -12,7 +15,9 @@ public class PlayerWorldCupStats {
     @Id
     @Column(name = "player_id")
     private Long playerId;
-    // rapid api world cup team id (world_cup_team.id)
+    // rapid api world cup team id (world_cup_team.id). @Column matches the team relation's
+    // join column logical name so both can share the physical team_id column
+    @Column(name = "team_id")
     private Long teamId;
     // last season league rating snapshot, frozen at seed time;
     // base price is computed from it in code and must never drift mid-tournament
@@ -32,6 +37,14 @@ public class PlayerWorldCupStats {
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Player player;
+
+    // the player's national team, for the world cup view's nationality flag + name. read-only
+    // (teamId is the writable column); @NotFound(IGNORE) keeps it FK-constraint-free and null
+    // when no team row exists (e.g. tests), so it never blocks saving a stats row
+    @ManyToOne
+    @JoinColumn(name = "team_id", insertable = false, updatable = false)
+    @NotFound(action = NotFoundAction.IGNORE)
+    private WorldCupTeam team;
 
     public PlayerWorldCupStats(){}
 
@@ -100,5 +113,9 @@ public class PlayerWorldCupStats {
 
     public void setPlayer(Player player) {
         this.player = player;
+    }
+
+    public WorldCupTeam getTeam() {
+        return team;
     }
 }
