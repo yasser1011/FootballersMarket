@@ -47,7 +47,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "\t) ps\n" +
             ") x group by x.user_id\n" +
             "\n" +
-            "order by sum(x.price) desc\n" +
+            "order by coalesce(sum(x.price), 0) + max(x.points) desc\n" +
             "limit 5";
     @Query(nativeQuery = true, value = topRankedUsersQuery)
     List<Object[]> getTopRankedUsers();
@@ -91,7 +91,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "\t\tleft join player_world_cup_stats wcs on wcs.player_id = p.id\n" +
             "\t\tleft join player_league_stats pl on pl.player_id = p.id\n" +
             ") x group by x.user_id\n" +
-            "order by sum(x.price) desc\n" +
+            "order by coalesce(sum(x.price), 0) + max(x.points) desc\n" +
             "limit 5";
     @Query(nativeQuery = true, value = wcTopRankedUsersQuery)
     List<Object[]> getTopRankedUsersWorldCup();

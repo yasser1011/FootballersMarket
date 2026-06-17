@@ -24,12 +24,15 @@ const UserRankingTableBody = ({ selectedUserId, onSelectUser }) => {
     try {
       let usersRes = await axios.get(`${apiBaseUrl}/users/rankings`);
       if (usersRes && usersRes.data) {
-        setUsers(usersRes.data);
+        // the endpoint returns users unsorted; rank them by score (points) descending so the
+        // row number reflects the actual ranking
+        const ranked = [...usersRes.data].sort((a, b) => b.points - a.points);
+        setUsers(ranked);
         setFetchStatus(FETCH_STATUS.SUCCESS);
         // arrived with a preselected user (e.g. from the home Top Users card): resolve its
         // username so the history panel can title it + highlight the row
         if (selectedUserId && onSelectUser) {
-          const preselected = usersRes.data.find(
+          const preselected = ranked.find(
             (u) => String(u.userId) === String(selectedUserId),
           );
           if (preselected) onSelectUser(preselected);
