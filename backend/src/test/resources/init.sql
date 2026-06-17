@@ -35,21 +35,21 @@ $$ LANGUAGE plpgsql;
 
 -- world cup pricing, mirror of WorldCupPriceCalculator.java / WorldCupConstants.java.
 -- kept in sync by FnGetWcPriceParityTest
-CREATE OR REPLACE FUNCTION fn_get_wc_price(base_rating numeric, wc_rating numeric)
+CREATE OR REPLACE FUNCTION fn_get_wc_price(base_rating numeric, wc_rating numeric, games_played integer)
 RETURNS numeric AS $$
 declare
 	base integer;
-	multiplier numeric;
+	delta numeric;
 begin
-	if base_rating is null then base := 250;
-	elsif base_rating >= 7.2 then base := 1000;
-	elsif base_rating >= 6.8 then base := 500;
-	else base := 250;
+	if base_rating is null then base := 300;
+	elsif base_rating >= 7.2 then base := 600;
+	elsif base_rating >= 6.8 then base := 450;
+	else base := 300;
 	end if;
 
-	multiplier := power(1.8, coalesce(wc_rating, 6.5) - 6.5);
-	multiplier := greatest(0.5, least(4.0, multiplier));
+	-- form bonus: clamp(wcRating - 6.5, -1.5, +3.0) * 300 ; games bonus: gamesPlayed * 200
+	delta := greatest(-1.5, least(3.0, coalesce(wc_rating, 6.5) - 6.5));
 
-	return round(base * multiplier);
+	return greatest(100, round(base + delta * 300 + coalesce(games_played, 0) * 200));
 end;
 $$ LANGUAGE plpgsql IMMUTABLE;

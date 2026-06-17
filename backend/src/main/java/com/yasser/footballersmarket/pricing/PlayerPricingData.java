@@ -6,5 +6,6 @@ import java.time.LocalDate;
 // (or an external dto). worldCup* are null for non-participants. each strategy uses
 // only its own fields, so no strategy needs database access.
 public record PlayerPricingData(LocalDate dateOfBirth, Double leagueRating,
-                                Double worldCupBaseRating, Double worldCupRating) {
+                                Double worldCupBaseRating, Double worldCupRating,
+                                Integer worldCupGames) {
 }

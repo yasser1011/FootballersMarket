@@ -1,5 +1,6 @@
 package com.yasser.footballersmarket.worldcup;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public final class WorldCupConstants {
@@ -9,26 +10,43 @@ public final class WorldCupConstants {
     public static final String WC_RAPID_LEAGUE_ID = "1";
     public static final String WC_RAPID_SEASON = "2026";
 
-    // --- results polling (api status short codes that mean the match is over) ---
+    // --- results polling (api status short codes) ---
+    // statuses meaning the match is over -> settle on these
     public static final Set<String> FINISHED_STATUSES = Set.of("FT", "AET", "PEN");
-    // added to a fixture's checkAgainMinutes each time it is polled and found not yet finished
-    public static final int CHECK_AGAIN_BACKOFF_MINUTES = 60;
+    // statuses meaning the match won't produce a normal live result (postponed/abandoned/technical)
+    // -> hard-stopped: excluded from polling so they aren't re-checked forever
+    public static final Set<String> DEAD_STATUSES = Set.of("PST", "CANC", "ABD", "SUSP", "INT", "TBD", "AWD", "WO");
+    // a fixture in any of these is finished-or-dead -> the results poll skips it. everything else
+    // (incl. in-play 1H/HT/2H/ET/BT/P and not-started NS) stays in the poll until it reaches one.
+    public static final Set<String> EXCLUDED_FROM_RESULTS_POLL = buildExcludedFromResultsPoll();
     // pause between consecutive rapid api calls in a polling batch, to stay under the rate limit
     public static final long RESULTS_RATE_LIMIT_MS = 10_000L;
 
-    // --- pricing categories, derived from baseRating (last season league rating snapshot) ---
+    private static Set<String> buildExcludedFromResultsPoll() {
+        HashSet<String> excluded = new HashSet<>(FINISHED_STATUSES);
+        excluded.addAll(DEAD_STATUSES);
+        return Set.copyOf(excluded);
+    }
+
+    // --- pricing: base = OPENING price by category, from baseRating (last-season rating snapshot) ---
     public static final double ELITE_RATING_THRESHOLD = 7.2;
     public static final double MEDIUM_RATING_THRESHOLD = 6.8;
-    public static final int ELITE_BASE_PRICE = 1000;
-    public static final int MEDIUM_BASE_PRICE = 500;
-    public static final int LOW_BASE_PRICE = 250;
+    public static final int ELITE_BASE_PRICE = 600;
+    public static final int MEDIUM_BASE_PRICE = 450;
+    public static final int LOW_BASE_PRICE = 300;
 
-    // --- price movement on world cup rating ---
-    // rating every player starts the tournament with (multiplier 1.0 -> price = base)
+    // --- price = base + form bonus + games bonus (ADDITIVE; base only sets the opening price,
+    //     then world cup form and tournament longevity drive the price) ---
+    // rating every player starts the tournament with (form bonus 0 -> price = base)
     public static final double DEFAULT_RATING = 6.5;
-    public static final double PRICE_MOVEMENT_BASE = 1.8;
-    public static final double PRICE_FLOOR_MULTIPLIER = 0.5;
-    public static final double PRICE_CAP_MULTIPLIER = 4.0;
+    // form bonus = clamp(wcRating - 6.5, MIN_DELTA, MAX_DELTA) * RATING_BONUS_PER_POINT
+    public static final int RATING_BONUS_PER_POINT = 300;
+    public static final double RATING_BONUS_MIN_DELTA = -1.5;
+    public static final double RATING_BONUS_MAX_DELTA = 3.0;
+    // games bonus = gamesPlayed * GAME_BONUS (rewards deep runs; more games = advanced further)
+    public static final int GAME_BONUS = 200;
+    // absolute price floor
+    public static final int PRICE_FLOOR = 100;
 
     // --- predictions (g = fifa rank gap between the two teams; favorite = better/lower rank) ---
     public static final int PREDICTION_BASE_POINTS = 120; // W

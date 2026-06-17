@@ -15,9 +15,11 @@ public class WorldCupPriceStrategy implements PriceStrategy {
     @Override
     public Integer calculatePrice(PlayerPricingData data) {
         if (data.worldCupBaseRating() != null) {
-            return WorldCupPriceCalculator.currentPrice(data.worldCupBaseRating(), data.worldCupRating());
+            return WorldCupPriceCalculator.currentPrice(
+                    data.worldCupBaseRating(), data.worldCupRating(), data.worldCupGames());
         }
-        return WorldCupPriceCalculator.currentPrice(data.leagueRating(), null);
+        // non-participant: flat at base from his league rating (no tournament form or games)
+        return WorldCupPriceCalculator.currentPrice(data.leagueRating(), null, 0);
     }
 
     @Override

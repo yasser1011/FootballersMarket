@@ -84,7 +84,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "\tcoalesce(sum(x.price), 0) + max(x.points) as score from (\n" +
             "\tselect u.id as user_id, u.username, u.points,\n" +
             "\tcase when pu.player_id is null then null\n" +
-            "\telse fn_get_wc_price(cast(coalesce(wcs.base_rating, pl.rating) as numeric), cast(wcs.rating as numeric)) end as price\n" +
+            "\telse fn_get_wc_price(cast(coalesce(wcs.base_rating, pl.rating) as numeric), cast(wcs.rating as numeric), cast(coalesce(wcs.total_num_of_games, 0) as integer)) end as price\n" +
             "\t\tfrom usr u\n" +
             "\t\tleft join player_user_current_bought pu on u.id = pu.user_id\n" +
             "\t\tleft join player p on pu.player_id = p.id\n" +
@@ -99,7 +99,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     String wcUsersScoreQuery = "select pu.player_id, u.id as user_id, u.username, u.points,\n" +
             "\tp.sofascore_id, p.updated_by, p.sofascore_club, p.rapid_api_club,\n" +
             "\tcase when pu.player_id is null then null\n" +
-            "\telse fn_get_wc_price(cast(coalesce(wcs.base_rating, pl.rating) as numeric), cast(wcs.rating as numeric)) end as price\n" +
+            "\telse fn_get_wc_price(cast(coalesce(wcs.base_rating, pl.rating) as numeric), cast(wcs.rating as numeric), cast(coalesce(wcs.total_num_of_games, 0) as integer)) end as price\n" +
             "\t\tfrom usr u\n" +
             "\t\tleft join player_user_current_bought pu on u.id = pu.user_id\n" +
             "\t\tleft join player p on pu.player_id = p.id\n" +

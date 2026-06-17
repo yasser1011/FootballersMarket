@@ -2,6 +2,7 @@ package com.yasser.footballersmarket.worldcup;
 
 import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserRepository;
+import com.yasser.footballersmarket.worldcup.dto.UserPredictionHistoryItem;
 import com.yasser.footballersmarket.worldcup.dto.WorldCupPredictionRequest;
 import com.yasser.footballersmarket.worldcup.dto.WorldCupPredictionResponse;
 import org.springframework.stereotype.Service;
@@ -10,23 +11,28 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class WorldCupPredictionService {
     private final WorldCupPredictionRepository predictionRepository;
     private final WorldCupFixtureRepository fixtureRepository;
+    private final WorldCupTeamRepository teamRepository;
     private final UserRepository userRepository;
 
     public WorldCupPredictionService(WorldCupPredictionRepository predictionRepository,
                                      WorldCupFixtureRepository fixtureRepository,
+                                     WorldCupTeamRepository teamRepository,
                                      UserRepository userRepository) {
         this.predictionRepository = predictionRepository;
         this.fixtureRepository = fixtureRepository;
+        this.teamRepository = teamRepository;
         this.userRepository = userRepository;
     }
 
@@ -88,15 +94,72 @@ public class WorldCupPredictionService {
         return toResponses(predictionRepository.findByFixtureId(fixtureId));
     }
 
+    // a user's finished-game prediction history (settled only), each joined with its fixture result
+    // and teams, newest first. public — finished predictions are already public.
+    @Transactional(readOnly = true)
+    public List<UserPredictionHistoryItem> getUserPredictionHistory(Long userId) {
+        List<WorldCupPrediction> predictions = predictionRepository.findByUserIdAndSettledTrue(userId);
+        if (predictions.isEmpty()) return Collections.emptyList();
+
+        Set<Long> fixtureIds = predictions.stream()
+                .map(WorldCupPrediction::getFixtureId).collect(Collectors.toSet());
+        Map<Long, WorldCupFixture> fixtures = fixtureRepository.findAllById(fixtureIds).stream()
+                .collect(Collectors.toMap(WorldCupFixture::getId, f -> f));
+
+        Set<Long> teamIds = fixtures.values().stream()
+                .flatMap(f -> Stream.of(f.getHomeTeamId(), f.getAwayTeamId()))
+                .filter(Objects::nonNull).collect(Collectors.toSet());
+        Map<Long, WorldCupTeam> teams = teamRepository.findAllById(teamIds).stream()
+                .collect(Collectors.toMap(WorldCupTeam::getId, t -> t));
+
+        return predictions.stream()
+                .map(p -> toHistoryItem(p, fixtures.get(p.getFixtureId()), teams))
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparing(UserPredictionHistoryItem::date,
+                        Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private UserPredictionHistoryItem toHistoryItem(WorldCupPrediction p, WorldCupFixture f,
+                                                    Map<Long, WorldCupTeam> teams) {
+        if (f == null) return null; // fixture row gone; skip
+        boolean exactScore = isExactScore(p, f);
+        return new UserPredictionHistoryItem(
+                f.getId(), f.getRound(), f.getDate(),
+                teamInfo(teams.get(f.getHomeTeamId())), teamInfo(teams.get(f.getAwayTeamId())),
+                f.getHomeGoals(), f.getAwayGoals(), f.getWinnerTeamId(),
+                p.getPredictedWinnerTeamId(), p.getPredictedHomeGoals(), p.getPredictedAwayGoals(),
+                p.getAwardedPoints(), p.getBonusPoints(), exactScore);
+    }
+
+    private UserPredictionHistoryItem.TeamInfo teamInfo(WorldCupTeam team) {
+        return team == null ? null
+                : new UserPredictionHistoryItem.TeamInfo(team.getId(), team.getName(), team.getLogoUrl());
+    }
+
     private List<WorldCupPredictionResponse> toResponses(List<WorldCupPrediction> predictions) {
         Set<Long> userIds = predictions.stream().map(WorldCupPrediction::getUserId).collect(Collectors.toSet());
         Map<Long, String> usernames = userRepository.findAllById(userIds).stream()
                 .collect(Collectors.toMap(User::getId, User::getUsername));
+
+        // fixtures are needed only to flag exact-score predictions (compare predicted vs actual goals)
+        Set<Long> fixtureIds = predictions.stream()
+                .map(WorldCupPrediction::getFixtureId).collect(Collectors.toSet());
+        Map<Long, WorldCupFixture> fixtures = fixtureRepository.findAllById(fixtureIds).stream()
+                .collect(Collectors.toMap(WorldCupFixture::getId, f -> f));
+
         return predictions.stream()
                 .map(p -> new WorldCupPredictionResponse(p.getFixtureId(), p.getUserId(),
                         usernames.get(p.getUserId()), p.getPredictedWinnerTeamId(),
                         p.getPredictedHomeGoals(), p.getPredictedAwayGoals(),
-                        p.getAwardedPoints(), p.isSettled()))
+                        p.getAwardedPoints(), p.getBonusPoints(),
+                        isExactScore(p, fixtures.get(p.getFixtureId())), p.isSettled()))
                 .collect(Collectors.toList());
+    }
+
+    private boolean isExactScore(WorldCupPrediction p, WorldCupFixture f) {
+        return f != null && p.getPredictedHomeGoals() != null && p.getPredictedAwayGoals() != null
+                && Objects.equals(p.getPredictedHomeGoals(), f.getHomeGoals())
+                && Objects.equals(p.getPredictedAwayGoals(), f.getAwayGoals());
     }
 }

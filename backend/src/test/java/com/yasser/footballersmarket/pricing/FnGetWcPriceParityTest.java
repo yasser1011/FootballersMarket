@@ -22,15 +22,18 @@ class FnGetWcPriceParityTest extends BaseIntegrationTest {
     void sqlFunctionMatchesJavaCalculatorAcrossTheInputSpace() {
         Double[] baseRatings = {null, 5.5, 6.0, 6.5, 6.79, 6.80, 7.0, 7.19, 7.20, 7.5, 8.2};
         Double[] wcRatings = {null, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.9};
+        Integer[] gamesPlayed = {0, 1, 2, 3, 5, 7};
 
         for (Double base : baseRatings) {
             for (Double wc : wcRatings) {
-                BigDecimal sqlPrice = jdbcTemplate.queryForObject(
-                        "select fn_get_wc_price(cast(? as numeric), cast(? as numeric))",
-                        BigDecimal.class, base, wc);
-                assertThat(sqlPrice.intValue())
-                        .as("base %s, wc %s", base, wc)
-                        .isEqualTo(WorldCupPriceCalculator.currentPrice(base, wc));
+                for (Integer games : gamesPlayed) {
+                    BigDecimal sqlPrice = jdbcTemplate.queryForObject(
+                            "select fn_get_wc_price(cast(? as numeric), cast(? as numeric), cast(? as integer))",
+                            BigDecimal.class, base, wc, games);
+                    assertThat(sqlPrice.intValue())
+                            .as("base %s, wc %s, games %s", base, wc, games)
+                            .isEqualTo(WorldCupPriceCalculator.currentPrice(base, wc, games));
+                }
             }
         }
     }

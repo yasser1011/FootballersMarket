@@ -17,6 +17,9 @@ public interface WorldCupPredictionRepository extends JpaRepository<WorldCupPred
     // owner's own predictions (all states)
     List<WorldCupPrediction> findByUserId(Long userId);
 
+    // a user's settled predictions = finished games only; for the public prediction-history view
+    List<WorldCupPrediction> findByUserIdAndSettledTrue(Long userId);
+
     // public feed: every prediction for a fixture (only exposed after kickoff)
     List<WorldCupPrediction> findByFixtureId(Long fixtureId);
 }

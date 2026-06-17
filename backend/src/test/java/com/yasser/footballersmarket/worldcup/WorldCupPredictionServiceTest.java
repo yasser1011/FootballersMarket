@@ -3,6 +3,7 @@ package com.yasser.footballersmarket.worldcup;
 import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserRepository;
+import com.yasser.footballersmarket.worldcup.dto.UserPredictionHistoryItem;
 import com.yasser.footballersmarket.worldcup.dto.WorldCupPredictionRequest;
 import com.yasser.footballersmarket.worldcup.dto.WorldCupPredictionResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +22,7 @@ class WorldCupPredictionServiceTest extends BaseIntegrationTest {
     @Autowired private WorldCupPredictionService predictionService;
     @Autowired private WorldCupPredictionRepository predictionRepository;
     @Autowired private WorldCupFixtureRepository fixtureRepository;
+    @Autowired private WorldCupTeamRepository teamRepository;
     @Autowired private UserRepository userRepository;
 
     private static final long HOME = 16L, AWAY = 1531L;
@@ -30,6 +32,7 @@ class WorldCupPredictionServiceTest extends BaseIntegrationTest {
     void setUp() {
         predictionRepository.deleteAll();
         fixtureRepository.deleteAll();
+        teamRepository.deleteAll();
         userRepository.deleteAll();
         userId = userRepository.save(new User("pred", "pass", 3000)).getId();
     }
@@ -82,6 +85,45 @@ class WorldCupPredictionServiceTest extends BaseIntegrationTest {
         Long fid = upcomingFixture();
         assertThatThrownBy(() -> predictionService.upsert(userId, new WorldCupPredictionRequest(fid, 9999L, null, null)))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void userPredictionHistoryReturnsSettledWithResultAndBadges() {
+        teamRepository.save(new WorldCupTeam(HOME, "Mexico", 14, "logoHome"));
+        teamRepository.save(new WorldCupTeam(AWAY, "South Africa", 60, "logoAway"));
+
+        // finished fixture: Mexico 2-1 (home advanced)
+        WorldCupFixture finished = new WorldCupFixture(2L, Instant.now().minus(2, ChronoUnit.HOURS),
+                "Group Stage - 1", HOME, AWAY, "FT");
+        finished.setHomeGoals(2);
+        finished.setAwayGoals(1);
+        finished.setWinnerTeamId(HOME);
+        fixtureRepository.save(finished);
+
+        // settled prediction that nailed the exact score, with a manual bonus
+        WorldCupPrediction settled = new WorldCupPrediction(userId, 2L, HOME, 2, 1);
+        settled.setAwardedPoints(270);
+        settled.setBonusPoints(50);
+        settled.setSettled(true);
+        predictionRepository.save(settled);
+
+        // an unsettled (not-finished) prediction must NOT appear in history
+        Long upcoming = upcomingFixture();
+        predictionRepository.save(new WorldCupPrediction(userId, upcoming, HOME, null, null));
+
+        List<UserPredictionHistoryItem> history = predictionService.getUserPredictionHistory(userId);
+
+        assertThat(history).hasSize(1);
+        UserPredictionHistoryItem item = history.get(0);
+        assertThat(item.fixtureId()).isEqualTo(2L);
+        assertThat(item.home().name()).isEqualTo("Mexico");
+        assertThat(item.away().name()).isEqualTo("South Africa");
+        assertThat(item.homeGoals()).isEqualTo(2);
+        assertThat(item.awayGoals()).isEqualTo(1);
+        assertThat(item.predictedWinnerTeamId()).isEqualTo(HOME);
+        assertThat(item.awardedPoints()).isEqualTo(270);
+        assertThat(item.bonusPoints()).isEqualTo(50);
+        assertThat(item.exactScore()).isTrue();
     }
 
     @Test
