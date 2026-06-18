@@ -59,9 +59,9 @@ public final class WorldCupConstants {
     public static final double DRAW_REWARD_BASE = 0.6;
     public static final double DRAW_REWARD_GAP_DIVISOR = 40.0;
     public static final int DRAW_REWARD_MAX = 220;
-    // underdog win: W * (1.5 + g/20), capped
+    // underdog win: W * (1.5 + g/30), capped
     public static final double UNDERDOG_REWARD_BASE = 1.5;
-    public static final double UNDERDOG_REWARD_GAP_DIVISOR = 20.0;
+    public static final double UNDERDOG_REWARD_GAP_DIVISOR = 30.0;
     public static final int UNDERDOG_REWARD_MAX = 360;
     // exact score adds on top of a correct outcome (never on a miss)
     public static final int EXACT_SCORE_BONUS = 90;

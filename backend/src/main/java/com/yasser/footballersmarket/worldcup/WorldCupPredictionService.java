@@ -123,13 +123,12 @@ public class WorldCupPredictionService {
     private UserPredictionHistoryItem toHistoryItem(WorldCupPrediction p, WorldCupFixture f,
                                                     Map<Long, WorldCupTeam> teams) {
         if (f == null) return null; // fixture row gone; skip
-        boolean exactScore = isExactScore(p, f);
         return new UserPredictionHistoryItem(
                 f.getId(), f.getRound(), f.getDate(),
                 teamInfo(teams.get(f.getHomeTeamId())), teamInfo(teams.get(f.getAwayTeamId())),
                 f.getHomeGoals(), f.getAwayGoals(), f.getWinnerTeamId(),
                 p.getPredictedWinnerTeamId(), p.getPredictedHomeGoals(), p.getPredictedAwayGoals(),
-                p.getAwardedPoints(), p.getBonusPoints(), exactScore);
+                p.getAwardedPoints(), p.getBonusPoints(), exactScorePoints(p, f));
     }
 
     private UserPredictionHistoryItem.TeamInfo teamInfo(WorldCupTeam team) {
@@ -153,8 +152,14 @@ public class WorldCupPredictionService {
                         usernames.get(p.getUserId()), p.getPredictedWinnerTeamId(),
                         p.getPredictedHomeGoals(), p.getPredictedAwayGoals(),
                         p.getAwardedPoints(), p.getBonusPoints(),
-                        isExactScore(p, fixtures.get(p.getFixtureId())), p.isSettled()))
+                        exactScorePoints(p, fixtures.get(p.getFixtureId())), p.isSettled()))
                 .collect(Collectors.toList());
+    }
+
+    // exact-score bonus actually credited for this prediction (0 if the score wasn't nailed).
+    // computed from the reward constant so the value lives only in the backend
+    private int exactScorePoints(WorldCupPrediction p, WorldCupFixture f) {
+        return isExactScore(p, f) ? WorldCupConstants.EXACT_SCORE_BONUS : 0;
     }
 
     private boolean isExactScore(WorldCupPrediction p, WorldCupFixture f) {

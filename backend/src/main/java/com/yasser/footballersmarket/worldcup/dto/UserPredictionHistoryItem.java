@@ -4,8 +4,8 @@ import java.time.Instant;
 
 // one settled prediction joined with its fixture result, for a user's prediction-history view.
 // awardedPoints is the total points awarded/deducted (already includes bonusPoints); bonusPoints
-// is the manual lever component (shown as a badge when > 0); exactScore = the predicted score
-// exactly matched the actual result.
+// is the manual lever component (shown when > 0); exactScorePoints is the exact-score bonus
+// actually awarded (0 when the score wasn't nailed), so the client can split the total.
 public record UserPredictionHistoryItem(
         Long fixtureId,
         String round,
@@ -20,7 +20,7 @@ public record UserPredictionHistoryItem(
         Integer predictedAwayGoals,
         Integer awardedPoints,
         Integer bonusPoints,
-        boolean exactScore
+        Integer exactScorePoints
 ) {
     public record TeamInfo(Long id, String name, String logoUrl) {}
 }

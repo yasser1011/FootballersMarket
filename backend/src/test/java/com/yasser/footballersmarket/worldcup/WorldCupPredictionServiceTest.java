@@ -123,7 +123,7 @@ class WorldCupPredictionServiceTest extends BaseIntegrationTest {
         assertThat(item.predictedWinnerTeamId()).isEqualTo(HOME);
         assertThat(item.awardedPoints()).isEqualTo(270);
         assertThat(item.bonusPoints()).isEqualTo(50);
-        assertThat(item.exactScore()).isTrue();
+        assertThat(item.exactScorePoints()).isEqualTo(90);
     }
 
     @Test

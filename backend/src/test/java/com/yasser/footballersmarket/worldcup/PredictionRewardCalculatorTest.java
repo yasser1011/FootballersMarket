@@ -18,7 +18,7 @@ class PredictionRewardCalculatorTest {
         assertThat(calculatePoints(4, 10, HOME_WIN, DRAW, false)).isEqualTo(-146);      // favorite miss
         assertThat(calculatePoints(4, 10, DRAW, DRAW, false)).isEqualTo(68);            // draw win
         assertThat(calculatePoints(4, 10, DRAW, HOME_WIN, false)).isEqualTo(-67);       // draw miss
-        assertThat(calculatePoints(4, 10, AWAY_WIN, AWAY_WIN, false)).isEqualTo(162);   // underdog win
+        assertThat(calculatePoints(4, 10, AWAY_WIN, AWAY_WIN, false)).isEqualTo(153);   // underdog win
         assertThat(calculatePoints(4, 10, AWAY_WIN, HOME_WIN, false)).isEqualTo(-85);   // underdog miss
     }
 
@@ -29,7 +29,7 @@ class PredictionRewardCalculatorTest {
         assertThat(calculatePoints(14, 60, HOME_WIN, DRAW, false)).isEqualTo(-158);
         assertThat(calculatePoints(14, 60, DRAW, DRAW, false)).isEqualTo(158);
         assertThat(calculatePoints(14, 60, DRAW, HOME_WIN, false)).isEqualTo(-36);
-        assertThat(calculatePoints(14, 60, AWAY_WIN, AWAY_WIN, false)).isEqualTo(342);
+        assertThat(calculatePoints(14, 60, AWAY_WIN, AWAY_WIN, false)).isEqualTo(273);
         assertThat(calculatePoints(14, 60, AWAY_WIN, HOME_WIN, false)).isEqualTo(-49);
     }
 
