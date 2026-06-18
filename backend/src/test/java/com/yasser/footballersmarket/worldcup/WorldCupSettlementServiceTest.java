@@ -55,11 +55,11 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
 
         settlementService.settleFixture(fixture());
 
-        // favorite win at g=46 -> +65
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 65);
+        // favorite win at g=46 -> +49
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 49);
         WorldCupPrediction settled = predictionRepository.findByUserIdAndFixtureId(userId, FIXTURE_ID).orElseThrow();
         assertThat(settled.isSettled()).isTrue();
-        assertThat(settled.getAwardedPoints()).isEqualTo(65);
+        assertThat(settled.getAwardedPoints()).isEqualTo(49);
     }
 
     @Test
@@ -69,8 +69,8 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
 
         settlementService.settleFixture(fixture());
 
-        // 65 + 150 exact
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 65 + 150);
+        // 49 + 90 exact
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 49 + 90);
     }
 
     @Test
@@ -80,8 +80,8 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
 
         settlementService.settleFixture(fixture());
 
-        // predicted underdog (SA), Mexico won -> underdog miss at g=46 = -65
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 - 65);
+        // predicted underdog (SA), Mexico won -> underdog miss at g=46 = -49
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 - 49);
     }
 
     @Test
@@ -93,16 +93,16 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
 
         settlementService.settleFixture(fixture());
 
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 65 + 500);
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 49 + 500);
     }
 
     @Test
     void penaltyNeverPushesWalletNegative() {
         Long userId = newUser("broke");
         User u = userRepository.findById(userId).orElseThrow();
-        u.setPoints(40);
+        u.setPoints(20);
         userRepository.save(u);
-        // predicted draw, Mexico won -> draw miss at g=46 is -48, but only 40 points -> floored at 0
+        // predicted draw, Mexico won -> draw miss at g=46 is -36, but only 20 points -> floored at 0
         predictionRepository.save(new WorldCupPrediction(userId, FIXTURE_ID, null, null, null));
 
         settlementService.settleFixture(fixture());
@@ -118,6 +118,6 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
         settlementService.settleFixture(fixture());
         settlementService.settleFixture(fixture()); // rerun
 
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 65);
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 49);
     }
 }

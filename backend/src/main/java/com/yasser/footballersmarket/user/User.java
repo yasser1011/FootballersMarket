@@ -29,7 +29,7 @@ public class User implements UserDetails {
     public User(String username, String password) {
         this.username = username;
         this.password = password;
-        this.points = 3000;
+        this.points = 2000;
     }
 
     public User(String username, String password, Integer point) {

@@ -1,5 +1,5 @@
 // must mirror WorldCupConstants.EXACT_SCORE_BONUS on the backend
-export const EXACT_SCORE_BONUS = 150;
+export const EXACT_SCORE_BONUS = 90;
 
 // splits a settled prediction's total awardedPoints into its components:
 //   result = the outcome (win/draw) points, exact = exact-score bonus, bonus = manual lever.

@@ -49,7 +49,7 @@ public final class WorldCupConstants {
     public static final int PRICE_FLOOR = 100;
 
     // --- predictions (g = fifa rank gap between the two teams; favorite = better/lower rank) ---
-    public static final int PREDICTION_BASE_POINTS = 120; // W
+    public static final int PREDICTION_BASE_POINTS = 90; // W
 
     // rewards (correct prediction)
     // favorite win: W * max(0.5, 1 - g/100)
@@ -58,13 +58,13 @@ public final class WorldCupConstants {
     // draw: W * (0.6 + g/40), capped
     public static final double DRAW_REWARD_BASE = 0.6;
     public static final double DRAW_REWARD_GAP_DIVISOR = 40.0;
-    public static final int DRAW_REWARD_MAX = 360;
+    public static final int DRAW_REWARD_MAX = 220;
     // underdog win: W * (1.5 + g/20), capped
     public static final double UNDERDOG_REWARD_BASE = 1.5;
     public static final double UNDERDOG_REWARD_GAP_DIVISOR = 20.0;
-    public static final int UNDERDOG_REWARD_MAX = 720;
+    public static final int UNDERDOG_REWARD_MAX = 360;
     // exact score adds on top of a correct outcome (never on a miss)
-    public static final int EXACT_SCORE_BONUS = 150;
+    public static final int EXACT_SCORE_BONUS = 90;
 
     // penalties (wrong prediction; magnitude grows for the bet you were more expected to land)
     // favorite miss: W * (1.6 + g/300)   -- the dominant pick failing hurts most
