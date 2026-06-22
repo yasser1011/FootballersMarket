@@ -13,6 +13,7 @@ import com.yasser.footballersmarket.scores365.ScoresService;
 import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import com.yasser.footballersmarket.testcotainer.BaseIntegrationTest;
 import com.yasser.footballersmarket.transaction.TransactionService;
+import com.yasser.footballersmarket.worldcup.WorldCupPredictionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -64,12 +65,15 @@ class UserControllerTest extends BaseIntegrationTest {
     private TransactionService transactionService;
     @Autowired
     private ScoresService scoresService;
+    @Autowired
+    private WorldCupPredictionRepository worldCupPredictionRepository;
     @MockBean
     private RestTemplate restTemplate;
 
     @BeforeEach
     void setUp() {
         playerUserCurrentBoughtService.deleteAll();
+        worldCupPredictionRepository.deleteAll(); // predictions FK usr -> clear before deleting users
         userService.deleteAll();
         playerService.deleteAll();
     }

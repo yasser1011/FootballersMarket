@@ -22,6 +22,7 @@ import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserService;
 import com.yasser.footballersmarket.worldcup.WorldCupFixture;
 import com.yasser.footballersmarket.worldcup.WorldCupFixtureRepository;
+import com.yasser.footballersmarket.worldcup.WorldCupPredictionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +71,8 @@ class TransactionControllerTest extends BaseIntegrationTest {
     @Autowired
     private WorldCupFixtureRepository worldCupFixtureRepository;
     @Autowired
+    private WorldCupPredictionRepository worldCupPredictionRepository;
+    @Autowired
     private PlayerRepository playerRepository;
     @Autowired
     private PlatformTransactionManager txManager;
@@ -83,6 +86,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
     void setUp() {
         playerUserCurrentBoughtService.deleteAll();
         transactionService.deleteAll();
+        worldCupPredictionRepository.deleteAll(); // predictions FK usr -> clear before deleting users
         worldCupFixtureRepository.deleteAll();
         userService.deleteAll();
         // clear world cup stats before players: the stats row's FK to player would otherwise

@@ -1,5 +1,7 @@
 package com.yasser.footballersmarket.worldcup;
 
+import com.yasser.footballersmarket.user.User;
+
 import javax.persistence.*;
 
 // one user's prediction for one fixture. editable until kickoff, settled once when the
@@ -15,6 +17,13 @@ public class WorldCupPrediction {
     // explicit column names so the unique constraint above resolves regardless of naming strategy
     @Column(name = "user_id")
     private Long userId;
+    // read-only association on the same column (mirrors PlayerUserCurrentBought): userId stays the
+    // writable scalar the code uses, while this lets Hibernate create the user_id -> usr foreign key.
+    // RESTRICT (no cascade), so deleting a user who still has predictions is blocked. lazy: we never
+    // navigate it, it exists only for the constraint.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    private User user;
     @Column(name = "fixture_id")
     private Long fixtureId;
     // null = predicted a draw; otherwise the team predicted to win
@@ -44,6 +53,10 @@ public class WorldCupPrediction {
 
     public Long getUserId() {
         return userId;
+    }
+
+    public User getUser() {
+        return user;
     }
 
     public Long getFixtureId() {

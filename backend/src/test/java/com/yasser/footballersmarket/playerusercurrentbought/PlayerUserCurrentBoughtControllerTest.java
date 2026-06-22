@@ -71,11 +71,14 @@ class PlayerUserCurrentBoughtControllerTest extends BaseIntegrationTest {
     private PlayerRepository playerRepository;
     @Autowired
     private PlayerLeagueStatsRepository playerLeagueStatsRepository;
+    @Autowired
+    private com.yasser.footballersmarket.worldcup.WorldCupPredictionRepository worldCupPredictionRepository;
 
     @BeforeEach
     void setUp() {
         playerLeagueStatsRepository.deleteAll();
         playerUserCurrentBoughtService.deleteAll();
+        worldCupPredictionRepository.deleteAll(); // predictions FK usr -> clear before deleting users
         playerRepository.deleteAll();
         userService.deleteAll();
 //        playerService.deleteAll();

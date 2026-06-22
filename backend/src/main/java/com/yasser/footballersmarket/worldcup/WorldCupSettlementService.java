@@ -66,11 +66,18 @@ public class WorldCupSettlementService {
             int bonus = prediction.getBonusPoints() == null ? 0 : prediction.getBonusPoints();
             int delta = formulaPoints + bonus;
 
-            // lock the wallet row, apply with zero-floor so a penalty can't push the user negative
-            User user = userRepository.findByIdForUpdate(prediction.getUserId())
-                    .orElseThrow(() -> new EntityNotFoundException("user " + prediction.getUserId()));
-            user.setPoints(Math.max(0, user.getPoints() + delta));
-            userRepository.save(user);
+            // lock the wallet row, apply with zero-floor so a penalty can't push the user negative.
+            // a deleted user (e.g. removed directly in the db) leaves orphan predictions with no
+            // wallet to credit -> skip the credit but still settle the row, so one orphan can't
+            // throw and roll back the whole fixture (which would re-poll and loop forever).
+            User user = userRepository.findByIdForUpdate(prediction.getUserId()).orElse(null);
+            if (user != null) {
+                user.setPoints(Math.max(0, user.getPoints() + delta));
+                userRepository.save(user);
+            } else {
+                logger.warn("world cup settlement: skipping prediction {} for missing user {}",
+                        prediction.getId(), prediction.getUserId());
+            }
 
             // awardedPoints is the nominal result of the prediction (formula + bonus), shown to users;
             // the wallet may have floored at 0, but the prediction's value is recorded as-is
