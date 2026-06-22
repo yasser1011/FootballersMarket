@@ -43,8 +43,9 @@ public final class WorldCupConstants {
     public static final int RATING_BONUS_PER_POINT = 300;
     public static final double RATING_BONUS_MIN_DELTA = -1.5;
     public static final double RATING_BONUS_MAX_DELTA = 3.0;
-    // games bonus = gamesPlayed * GAME_BONUS (rewards deep runs; more games = advanced further)
-    public static final int GAME_BONUS = 200;
+    // games bonus = gamesPlayed * GAME_BONUS (rewards deep runs; more games = advanced further).
+    // kept modest so price is driven more by performance (form) than by attendance.
+    public static final int GAME_BONUS = 75;
     // absolute price floor
     public static final int PRICE_FLOOR = 100;
 
@@ -52,8 +53,8 @@ public final class WorldCupConstants {
     public static final int PREDICTION_BASE_POINTS = 90; // W
 
     // rewards (correct prediction)
-    // favorite win: W * max(0.5, 1 - g/100)
-    public static final double FAVORITE_REWARD_MIN = 0.5;
+    // favorite win: W * max(0.7, 1 - g/100)
+    public static final double FAVORITE_REWARD_MIN = 0.7;
     public static final double FAVORITE_REWARD_GAP_DIVISOR = 100.0;
     // draw: W * (0.6 + g/40), capped
     public static final double DRAW_REWARD_BASE = 0.6;

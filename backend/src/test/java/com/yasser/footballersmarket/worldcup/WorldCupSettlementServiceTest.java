@@ -55,11 +55,11 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
 
         settlementService.settleFixture(fixture());
 
-        // favorite win at g=46 -> +49
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 49);
+        // favorite win at g=46 -> +63 (floor 0.7)
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 63);
         WorldCupPrediction settled = predictionRepository.findByUserIdAndFixtureId(userId, FIXTURE_ID).orElseThrow();
         assertThat(settled.isSettled()).isTrue();
-        assertThat(settled.getAwardedPoints()).isEqualTo(49);
+        assertThat(settled.getAwardedPoints()).isEqualTo(63);
     }
 
     @Test
@@ -69,8 +69,8 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
 
         settlementService.settleFixture(fixture());
 
-        // 49 + 90 exact
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 49 + 90);
+        // 63 + 90 exact
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 63 + 90);
     }
 
     @Test
@@ -93,7 +93,7 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
 
         settlementService.settleFixture(fixture());
 
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 49 + 500);
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 63 + 500);
     }
 
     @Test
@@ -118,6 +118,6 @@ class WorldCupSettlementServiceTest extends BaseIntegrationTest {
         settlementService.settleFixture(fixture());
         settlementService.settleFixture(fixture()); // rerun
 
-        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 49);
+        assertThat(userRepository.findById(userId).orElseThrow().getPoints()).isEqualTo(3000 + 63);
     }
 }

@@ -18,10 +18,10 @@ class WorldCupPriceStrategyTest {
 
     @Test
     void participantGamesAddToPrice() {
-        // same player after a 7-game run -> 600 + 300 + 7*200 = 2300
+        // same player after a 7-game run -> 600 + 300 + 7*75 = 1425
         Integer price = strategy.calculatePrice(
                 new PlayerPricingData(null, 7.0, 7.5, 7.5, 7));
-        assertThat(price).isEqualTo(2300);
+        assertThat(price).isEqualTo(1425);
     }
 
     @Test

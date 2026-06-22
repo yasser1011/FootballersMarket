@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// golden values for the additive model: price = base + clamp(wcRating-6.5,-1.5,+3)*300 + games*200,
+// golden values for the additive model: price = base + clamp(wcRating-6.5,-1.5,+3)*300 + games*75,
 // floored at 100. base is the OPENING price only. any formula/constant change updates these.
 class WorldCupPriceCalculatorTest {
 
@@ -40,13 +40,13 @@ class WorldCupPriceCalculatorTest {
 
     @Test
     void gamesBonusRewardsDeepRuns() {
-        // +200 per game; a long run outvalues a higher-rated short run
-        assertThat(WorldCupPriceCalculator.currentPrice(6.5, 7.5, 7)).isEqualTo(2000); // 300+300+1400
-        assertThat(WorldCupPriceCalculator.currentPrice(6.5, 6.5, 3)).isEqualTo(900);  // 300+0+600
-        assertThat(WorldCupPriceCalculator.currentPrice(7.5, 8.5, 7)).isEqualTo(2600); // 600+600+1400
-        // 7-game lower rating (1910) beats 2-game higher rating (1210)
-        assertThat(WorldCupPriceCalculator.currentPrice(6.5, 7.2, 7)).isEqualTo(1910); // 300+210+1400
-        assertThat(WorldCupPriceCalculator.currentPrice(6.5, 8.2, 2)).isEqualTo(1210); // 300+510+400
+        // +75 per game; a long run outvalues a higher-rated short run
+        assertThat(WorldCupPriceCalculator.currentPrice(6.5, 7.5, 7)).isEqualTo(1125); // 300+300+525
+        assertThat(WorldCupPriceCalculator.currentPrice(6.5, 6.5, 3)).isEqualTo(525);  // 300+0+225
+        assertThat(WorldCupPriceCalculator.currentPrice(7.5, 8.5, 7)).isEqualTo(1725); // 600+600+525
+        // 7-game lower rating (1035) beats 2-game higher rating (960)
+        assertThat(WorldCupPriceCalculator.currentPrice(6.5, 7.2, 7)).isEqualTo(1035); // 300+210+525
+        assertThat(WorldCupPriceCalculator.currentPrice(6.5, 8.2, 2)).isEqualTo(960);  // 300+510+150
     }
 
     @Test

@@ -25,7 +25,7 @@ class PredictionRewardCalculatorTest {
     // Mexico(14) vs South Africa(60), g=46
     @Test
     void mediumGap() {
-        assertThat(calculatePoints(14, 60, HOME_WIN, HOME_WIN, false)).isEqualTo(49);
+        assertThat(calculatePoints(14, 60, HOME_WIN, HOME_WIN, false)).isEqualTo(63);
         assertThat(calculatePoints(14, 60, HOME_WIN, DRAW, false)).isEqualTo(-158);
         assertThat(calculatePoints(14, 60, DRAW, DRAW, false)).isEqualTo(158);
         assertThat(calculatePoints(14, 60, DRAW, HOME_WIN, false)).isEqualTo(-36);
@@ -36,7 +36,7 @@ class PredictionRewardCalculatorTest {
     // Germany(9) vs Curacao(85), g=76 -> use 80 for the headline numbers we quoted
     @Test
     void hugeMismatch() {
-        assertThat(calculatePoints(5, 85, HOME_WIN, HOME_WIN, false)).isEqualTo(45);    // favorite floor 0.5
+        assertThat(calculatePoints(5, 85, HOME_WIN, HOME_WIN, false)).isEqualTo(63);    // favorite floor 0.7
         assertThat(calculatePoints(5, 85, HOME_WIN, DRAW, false)).isEqualTo(-168);      // favorite miss grows
         assertThat(calculatePoints(5, 85, DRAW, DRAW, false)).isEqualTo(220);           // draw reward cap
         assertThat(calculatePoints(5, 85, DRAW, HOME_WIN, false)).isEqualTo(-36);       // draw penalty floor
@@ -47,7 +47,7 @@ class PredictionRewardCalculatorTest {
     @Test
     void exactScoreAddsOnlyOnCorrectOutcome() {
         // correct favorite + exact score
-        assertThat(calculatePoints(14, 60, HOME_WIN, HOME_WIN, true)).isEqualTo(49 + 90);
+        assertThat(calculatePoints(14, 60, HOME_WIN, HOME_WIN, true)).isEqualTo(63 + 90);
         // exact flag ignored on a miss
         assertThat(calculatePoints(14, 60, HOME_WIN, DRAW, true)).isEqualTo(-158);
     }

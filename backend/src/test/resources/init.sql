@@ -47,9 +47,9 @@ begin
 	else base := 300;
 	end if;
 
-	-- form bonus: clamp(wcRating - 6.5, -1.5, +3.0) * 300 ; games bonus: gamesPlayed * 200
+	-- form bonus: clamp(wcRating - 6.5, -1.5, +3.0) * 300 ; games bonus: gamesPlayed * 75
 	delta := greatest(-1.5, least(3.0, coalesce(wc_rating, 6.5) - 6.5));
 
-	return greatest(100, round(base + delta * 300 + coalesce(games_played, 0) * 200));
+	return greatest(100, round(base + delta * 300 + coalesce(games_played, 0) * 75));
 end;
 $$ LANGUAGE plpgsql IMMUTABLE;
