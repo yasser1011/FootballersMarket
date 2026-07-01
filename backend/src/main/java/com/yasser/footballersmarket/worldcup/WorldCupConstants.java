@@ -15,7 +15,7 @@ public final class WorldCupConstants {
     public static final Set<String> FINISHED_STATUSES = Set.of("FT", "AET", "PEN");
     // statuses meaning the match won't produce a normal live result (postponed/abandoned/technical)
     // -> hard-stopped: excluded from polling so they aren't re-checked forever
-    public static final Set<String> DEAD_STATUSES = Set.of("PST", "CANC", "ABD", "SUSP", "TBD", "AWD", "WO");
+    public static final Set<String> DEAD_STATUSES = Set.of("CANC", "ABD", "SUSP", "TBD", "AWD", "WO");
     // a fixture in any of these is finished-or-dead -> the results poll skips it. everything else
     // (incl. in-play 1H/HT/2H/ET/BT/P and not-started NS) stays in the poll until it reaches one.
     public static final Set<String> EXCLUDED_FROM_RESULTS_POLL = buildExcludedFromResultsPoll();
