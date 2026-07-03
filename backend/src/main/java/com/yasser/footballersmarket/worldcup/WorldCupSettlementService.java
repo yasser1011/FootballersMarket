@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Objects;
 
 import static com.yasser.footballersmarket.worldcup.PredictionRewardCalculator.MatchOutcome;
 import static com.yasser.footballersmarket.worldcup.PredictionRewardCalculator.MatchOutcome.AWAY_WIN;
@@ -46,6 +47,8 @@ public class WorldCupSettlementService {
     // pessimistic-lock version below is correct as written.
     @Transactional
     public void settleFixture(WorldCupFixture fixture) {
+        Long EGYPT_AUSTRALIA_FIXTURE_ID = 1565178L;
+
         List<WorldCupPrediction> predictions =
                 predictionRepository.findByFixtureIdAndSettledFalse(fixture.getId());
         if (predictions.isEmpty()) return;
@@ -61,10 +64,19 @@ public class WorldCupSettlementService {
         for (WorldCupPrediction prediction : predictions) {
             MatchOutcome predicted = outcomeFor(prediction.getPredictedWinnerTeamId(), fixture);
             boolean exactScore = isExactScore(prediction, fixture);
-            // if exact score and fixture id equals set bonus
-            if (exactScore && fixture.getId().equals(1565178L)){
-                prediction.setBonusPoints(1000);
+            int bonusPoints = 0;
+            if (fixture.getId().equals(EGYPT_AUSTRALIA_FIXTURE_ID)) {
+                if (exactScore) {
+                    bonusPoints = 1000;
+                } else if (Objects.equals(fixture.getWinnerTeamId(), prediction.getPredictedWinnerTeamId())) { // Prevents NPE on draws
+                    bonusPoints = 500;
+                }
+            } else {
+                bonusPoints = prediction.getBonusPoints() == null ? 0 : prediction.getBonusPoints();
             }
+
+// Ensure the parsed bonus points are persisted to this prediction row
+            prediction.setBonusPoints(bonusPoints);
             int formulaPoints = PredictionRewardCalculator.calculatePoints(
                     homeRank, awayRank, predicted, actual, exactScore);
             int bonus = prediction.getBonusPoints() == null ? 0 : prediction.getBonusPoints();
