@@ -115,11 +115,11 @@ const WorldCupFixturesCard = () => {
     if (!fixture) return;
     if (prediction) {
       setChoice(
-        prediction.predictedWinnerTeamId == null
-          ? "draw"
-          : prediction.predictedWinnerTeamId === fixture.home?.id
-            ? "home"
-            : "away",
+        prediction.predictedWinnerTeamId === fixture.home?.id
+          ? "home"
+          : prediction.predictedWinnerTeamId === fixture.away?.id
+            ? "away"
+            : null
       );
       setHomeGoals(prediction.predictedHomeGoals ?? "");
       setAwayGoals(prediction.predictedAwayGoals ?? "");
@@ -158,34 +158,51 @@ const WorldCupFixturesCard = () => {
       setSaveError("Please sign in to predict.");
       return;
     }
+
     let resolvedChoice = choice;
+    let isDrawScore = false; // <-- Properly declared to prevent ReferenceError
+
+    // Smart auto-override based on score text entries
     if (homeGoals !== "" && awayGoals !== "") {
       const h = parseInt(homeGoals, 10);
       const a = parseInt(awayGoals, 10);
       if (!isNaN(h) && !isNaN(a)) {
-        if (h > a) resolvedChoice = "home";
-        else if (a > h) resolvedChoice = "away";
-        else resolvedChoice = "draw";
-        setChoice(resolvedChoice);
+        if (h > a) {
+          resolvedChoice = "home";
+          setChoice("home"); // Sync UI highlight immediately
+        } else if (a > h) {
+          resolvedChoice = "away";
+          setChoice("away"); // Sync UI highlight immediately
+        } else {
+          isDrawScore = true;
+          // For knockout rounds, they must pick who advances via the toggle buttons
+          // If they already picked home/away, we keep it as the advance selector.
+        }
       }
     }
-    if (!resolvedChoice) {
+
+    if (!resolvedChoice && !isDrawScore) {
       setSaveStatus("error");
-      setSaveError("Pick a result first.");
+      setSaveError("Please pick a winner or enter a score.");
       return;
     }
+
+    if (isDrawScore && !resolvedChoice) {
+      setSaveStatus("error");
+      setSaveError("Match is a draw. Please select who wins the penalty shootout.");
+      return;
+    }
+
     const predictedWinnerTeamId =
-      resolvedChoice === "draw"
-        ? null
-        : resolvedChoice === "home"
-          ? fixture.home?.id
-          : fixture.away?.id;
+      resolvedChoice === "home" ? fixture.home?.id : fixture.away?.id;
+
     const body = {
       fixtureId: fixture.id,
       predictedWinnerTeamId,
       predictedHomeGoals: homeGoals === "" ? null : Number(homeGoals),
       predictedAwayGoals: awayGoals === "" ? null : Number(awayGoals),
     };
+
     setSaveStatus("loading");
     setSaveError("");
     try {
@@ -379,9 +396,7 @@ const WorldCupFixturesCard = () => {
                     <ToggleButton value="home" sx={toggleSx}>
                       {fixture.home?.name}
                     </ToggleButton>
-                    <ToggleButton value="draw" sx={toggleSx}>
-                      Draw
-                    </ToggleButton>
+                    
                     <ToggleButton value="away" sx={toggleSx}>
                       {fixture.away?.name}
                     </ToggleButton>

@@ -71,8 +71,15 @@ public class WorldCupPredictionService {
             }
             Long impliedWinner = home > away ? fixture.getHomeTeamId()
                     : home < away ? fixture.getAwayTeamId() : null;
-            if (!Objects.equals(impliedWinner, winner)) {
+
+            // 1. If someone wins in 90/120 mins, the predicted winner must match them
+            if (impliedWinner != null && !Objects.equals(impliedWinner, winner)) {
                 throw new IllegalArgumentException("predicted score does not match the predicted winner");
+            }
+
+            // 2. If it's a draw, they MUST pick a penalty winner
+            if (impliedWinner == null && winner == null) {
+                throw new IllegalArgumentException("Knockout matches cannot end in a draw; you must pick a team to advance on penalties");
             }
         }
     }
