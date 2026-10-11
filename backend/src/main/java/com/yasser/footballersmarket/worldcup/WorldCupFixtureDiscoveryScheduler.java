@@ -23,7 +23,7 @@ public class WorldCupFixtureDiscoveryScheduler {
 
     // 00:10 every day. cron (not fixedDelay) so it never fires at context startup, keeping it from
     // making live api calls during the short-lived integration test contexts.
-    @Scheduled(cron = "0 10 0 * * *", zone = "Europe/Istanbul")
+//    @Scheduled(cron = "0 10 0 * * *", zone = "Europe/Istanbul")
     public void discoverFixtures() {
         LocalDate today = LocalDate.now(ZONE);
         try {

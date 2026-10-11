@@ -11,6 +11,7 @@ import com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats;
 import me.xuender.unidecode.Unidecode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,15 +29,18 @@ import java.util.stream.Collectors;
 @Service
 public class ScoresService {
     private final RestTemplate restTemplate;
+    // featured players only — see RestTemplateConfig for why that call needs its own instance
+    private final RestTemplate shortTimeoutRestTemplate;
     private final ScoresConfig scoresConfig;
     private final PlayerService playerService;
 
-    private boolean featuredPlayerLeagueFetchingToggle = true;
-
     private final Logger logger = LoggerFactory.getLogger(ScoresService.class);
 
-    public ScoresService(RestTemplate restTemplate, ScoresConfig scoresConfig, PlayerService playerService) {
+    public ScoresService(RestTemplate restTemplate,
+                         @Qualifier("shortTimeoutRestTemplate") RestTemplate shortTimeoutRestTemplate,
+                         ScoresConfig scoresConfig, PlayerService playerService) {
         this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.scoresConfig = scoresConfig;
         this.playerService = playerService;
     }
@@ -175,23 +180,23 @@ public class ScoresService {
     public FeaturedPlayersResponse getFeaturedPlayers(){
         int PREMIER_LEAGUE_COMPETITION_NUM = 7;
         int SPANISH_LEAGUE_COMPETITION_NUM = 11;
-        // to switch between fetching from premier league and spanish league every day
-        int selectedCompetitionNum = featuredPlayerLeagueFetchingToggle ?
+        // alternates league per day, derived from the date rather than kept in a field: every retry
+        // within a day asks for the same url, so an attempt that times out warms the very resource
+        // the next one needs. also survives restarts and can't race between request threads.
+        int selectedCompetitionNum = LocalDate.now().toEpochDay() % 2 == 0 ?
                 PREMIER_LEAGUE_COMPETITION_NUM : SPANISH_LEAGUE_COMPETITION_NUM;
-        featuredPlayerLeagueFetchingToggle = !featuredPlayerLeagueFetchingToggle;
         try {
 
             String url = scoresConfig.getScoresApiBaseUrl() + "/stats/?appTypeId=5&competitions="
                     + selectedCompetitionNum + "&competitors=&withSeasons=false";
             logger.info("getting top players url {}", url);
 
-            FeaturedPlayersResponse featuredPlayersResponse = restTemplate.getForObject(
+            return shortTimeoutRestTemplate.getForObject(
                     url,
                     FeaturedPlayersResponse.class);
 
-            return featuredPlayersResponse;
-
-        }catch (WebClientResponseException.NotFound | HttpClientErrorException.NotFound e){
+        }catch (RestClientException ex) {
+            logger.error("could not fetch featured players in the given timeout window");
             return null;
         }
     }

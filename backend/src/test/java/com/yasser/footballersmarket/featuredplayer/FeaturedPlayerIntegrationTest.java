@@ -21,6 +21,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.web.client.RestClientException;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -29,6 +30,7 @@ import java.util.List;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -46,6 +48,8 @@ class FeaturedPlayerIntegrationTest extends BaseIntegrationTest {
     private MockMvc mockMvc;
     @Autowired
     private FeaturedPlayerRepository featuredPlayerRepository;
+    @Autowired
+    private FeaturedPlayerService featuredPlayerService;
     @MockBean
     private SofascoreService sofascoreService;
     @MockBean
@@ -142,5 +146,26 @@ class FeaturedPlayerIntegrationTest extends BaseIntegrationTest {
         assertThat(player2ResponseRes.getPlayerName()).isEqualTo(featuredPlayer2.getPlayerName());
         assertThat(player3ResponseRes.getPlayerId()).isEqualTo(featuredPlayer3.getPlayerId());
         assertThat(player3ResponseRes.getPlayerName()).isEqualTo(featuredPlayer3.getPlayerName());
+    }
+
+    @Test
+    void shouldReturnLast5RowsFeaturedPlayersFromDbWhenExternalServiceThrows(){
+        FeaturedPlayer featuredPlayer1 = new FeaturedPlayer("player1", 1,
+                "5.5", 1, LocalDate.of(2025, 4, 4), 1, "", "");
+        FeaturedPlayer featuredPlayer2 = new FeaturedPlayer("player2", 2,
+                "5.5", 2, LocalDate.of(2025, 4, 4), 2, "", "");
+        FeaturedPlayer featuredPlayer3 = new FeaturedPlayer("player3", 3,
+                "5.5", 3, LocalDate.of(2025, 4, 2), 1, "", "");
+        featuredPlayerRepository.saveAll(List.of(featuredPlayer1, featuredPlayer2, featuredPlayer3));
+
+//        doThrow(RestClientException.class).when(scoresService).getFeaturedPlayers();
+        when(scoresService.getFeaturedPlayers()).thenReturn(null);
+
+        FeaturedPlayersResponse featuredPlayers = featuredPlayerService.getFeaturedPlayers();
+
+        List<FeaturedPlayer> featuredPlayersResult = featuredPlayers.getFeaturedPlayers();
+        assertThat(featuredPlayersResult).isNotNull();
+        assertThat(featuredPlayersResult.size()).isEqualTo(3);
+
     }
 }

@@ -77,7 +77,14 @@ public class FeaturedPlayerService {
         logger.info("fetching featured players from external service");
 //        FeaturedPlayersResponse trendingPlayers = sofascoreService.getTrendingPlayers();
         FeaturedPlayersResponse trendingPlayers = scoresService.getFeaturedPlayers();
-        if (trendingPlayers == null) return new FeaturedPlayersResponse(new ArrayList<>());
+        if (trendingPlayers == null){
+            // return last 5 in db
+            List<FeaturedPlayer> top5ByOrderByIdDesc = featuredPlayerRepository.findTop5ByWorldCupFalseOrderByDateDescPositionAsc();
+            logger.info("returned last 5 rows from db from database");
+            FeaturedPlayersResponse featuredPlayersResponse = new FeaturedPlayersResponse(top5ByOrderByIdDesc);
+            scoresService.addBaseUrlToTrendingPlayersResponse(featuredPlayersResponse);
+            return featuredPlayersResponse;
+        }
 
         try {
             logger.info("fetched featured players from external service saving to database");

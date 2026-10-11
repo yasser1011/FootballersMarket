@@ -13,6 +13,8 @@ import java.util.List;
 public interface FeaturedPlayerRepository  extends JpaRepository<FeaturedPlayer, Long> {
     List<FeaturedPlayer> findByDate(LocalDate date);
 
+    List<FeaturedPlayer> findTop5ByWorldCupFalseOrderByDateDescPositionAsc();
+
     // world cup featured: a round's current stored top-5 (running best-of-round), loaded to merge
     // the latest match's ratings into before rewriting the round
     List<FeaturedPlayer> findByFixtureNameOrderByPositionAsc(String fixtureName);

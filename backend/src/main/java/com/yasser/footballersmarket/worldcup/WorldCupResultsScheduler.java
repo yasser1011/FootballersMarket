@@ -32,7 +32,7 @@ public class WorldCupResultsScheduler {
     // each tick and settlement when a match reaches a finished status. finished/dead statuses are
     // excluded so a settled match isn't re-polled (the settlement latch) and a postponed/abandoned
     // one isn't checked forever. includes yesterday's unfinished matches -> downtime self-heals.
-    @Scheduled(cron = "0 */15 * * * *", zone = "Europe/Istanbul")
+//    @Scheduled(cron = "0 */15 * * * *", zone = "Europe/Istanbul")
     public void pollFixtureResults() throws InterruptedException {
         Instant now = Instant.now();
         List<WorldCupFixture> candidates = fixtureRepository
