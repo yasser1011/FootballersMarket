@@ -42,7 +42,6 @@ public class WorldCupFixtureService {
         this.resultsClient = resultsClient;
     }
 
-    @Transactional
     public List<WorldCupFixtureResponse> getRecentAndUpcomingFixtures() {
         LocalDate today = LocalDate.now(ZONE);
         LocalDate yesterday = today.minusDays(1);
@@ -61,7 +60,6 @@ public class WorldCupFixtureService {
     // discovery (daily scheduler): insert any fixtures for [from, to] not already in the db.
     // INSERT-ONLY — never overwrites existing rows, so it can't wipe the live score/status/result
     // the results scheduler maintains. returns how many new fixtures were inserted.
-    @Transactional
     public int discoverNewFixtures(LocalDate from, LocalDate to) {
         List<WorldCupFixture> fetched = new ArrayList<>();
         for (FixtureResult fr : resultsClient.fetchFixturesByDateRange(from, to)) {

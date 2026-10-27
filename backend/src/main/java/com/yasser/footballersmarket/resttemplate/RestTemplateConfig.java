@@ -11,11 +11,17 @@ import java.time.Duration;
 @Configuration
 public class RestTemplateConfig {
 
-    // @Primary keeps the consumers that inject RestTemplate by type resolving to this one
+    // @Primary keeps the consumers that inject RestTemplate by type resolving to this one.
+    // generous rather than tight: these callers (player details, search, sofascore, rapid) have no
+    // stale data to fall back on, and the 365scores athlete endpoint was measured at 18s cold
+    // against a ~100ms warm path. the goal here is only that nothing hangs forever.
     @Primary
     @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(40))
+                .build();
     }
 
     // featured players only. timeouts belong to a RestTemplate's request factory, not to a single

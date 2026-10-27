@@ -35,6 +35,12 @@ public class RapidApiConfig {
     @Value("${rapidApiUrl}")
     private String rapidApiUrl;
 
+    @Value("${rapidFixturesEndpoint}")
+    private String rapidApiFixturesEndpoint;
+
+    @Value("${rapidLeagueStandingsEndpoint}")
+    private String rapidApiLeagueStandingsEndpoint;
+
     @Value("${x-rapidapi-host}")
     private String rapidApiHost;
 
@@ -48,6 +54,14 @@ public class RapidApiConfig {
         return rapidApiUrl;
     }
 
+    public String getRapidApiFixturesEndpoint() {
+        return rapidApiFixturesEndpoint;
+    }
+
+    public String getRapidApiLeagueStandingsEndpoint() {
+        return rapidApiLeagueStandingsEndpoint;
+    }
+
     public String getRapidApiHost() {
         return rapidApiHost;
     }
@@ -55,6 +69,12 @@ public class RapidApiConfig {
     public String getRapidApiKey() {
         return rapidApiKey;
     }
+
+    public String getRapidApiSeason() {
+        return rapidSearchSeason;
+    }
+
+
 
 
     public List<HashMap<String, String>> getSchedulerTeamsSearchInput(){

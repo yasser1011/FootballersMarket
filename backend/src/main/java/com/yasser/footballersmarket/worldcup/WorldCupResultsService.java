@@ -71,7 +71,7 @@ public class WorldCupResultsService {
         List<RatedWcPlayer> ratedPlayers = applyPlayerStats(result);
         fixtureRepository.save(fixture);
         settlementService.settleFixture(fixture);
-        // feed the round's running top-5 featured players from this match's ratings. best-effort and
+
         // in its own transaction (REQUIRES_NEW): a failure here must not undo the result/settlement
         LocalDate matchDate = LocalDate.ofInstant(fixture.getDate(), ZONE);
         try {
