@@ -50,13 +50,13 @@ public class TournamentCatalog {
 
     private final List<Tournament> activeTournaments;
 
-    public TournamentCatalog(LeagueStandingsClient leagueStandingsClient){
+    public TournamentCatalog(){
         this.activeTournaments = List.of(
-                new LeagueTournament(SPANISH_LEAGUE_ID, 3, leagueStandingsClient, LEAGUE_TO_TEAMS.get(SPANISH_LEAGUE_ID)),
-                new LeagueTournament(ENGLISH_LEAGUE_ID, 4, leagueStandingsClient, LEAGUE_TO_TEAMS.get(ENGLISH_LEAGUE_ID)),
-                new LeagueTournament(ITALIAN_LEAGUE_ID, 4, leagueStandingsClient, LEAGUE_TO_TEAMS.get(ITALIAN_LEAGUE_ID)),
-                new LeagueTournament(GERMAN_LEAGUE_ID, 3, leagueStandingsClient, LEAGUE_TO_TEAMS.get(GERMAN_LEAGUE_ID)),
-                new LeagueTournament(FRENCH_LEAGUE_ID, 2, leagueStandingsClient, LEAGUE_TO_TEAMS.get(FRENCH_LEAGUE_ID)),
+                new LeagueTournament(SPANISH_LEAGUE_ID, 3, LEAGUE_TO_TEAMS.get(SPANISH_LEAGUE_ID)),
+                new LeagueTournament(ENGLISH_LEAGUE_ID, 4, LEAGUE_TO_TEAMS.get(ENGLISH_LEAGUE_ID)),
+                new LeagueTournament(ITALIAN_LEAGUE_ID, 4, LEAGUE_TO_TEAMS.get(ITALIAN_LEAGUE_ID)),
+                new LeagueTournament(GERMAN_LEAGUE_ID, 3, LEAGUE_TO_TEAMS.get(GERMAN_LEAGUE_ID)),
+                new LeagueTournament(FRENCH_LEAGUE_ID, 2, LEAGUE_TO_TEAMS.get(FRENCH_LEAGUE_ID)),
                 new KnockoutTournament(CHAMPIONS_LEAGUE_ID)
         );
     }

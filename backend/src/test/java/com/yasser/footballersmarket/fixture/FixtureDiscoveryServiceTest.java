@@ -3,15 +3,13 @@ package com.yasser.footballersmarket.fixture;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.yasser.footballersmarket.fixture.tournament.LeagueTeam;
-import com.yasser.footballersmarket.fixture.tournament.LeagueTournament;
-import com.yasser.footballersmarket.fixture.tournament.Tournament;
-import com.yasser.footballersmarket.fixture.tournament.TournamentCatalog;
+import com.yasser.footballersmarket.fixture.tournament.*;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
 import com.yasser.footballersmarket.fixture.dto.LeagueStandingsDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestTemplate;
@@ -21,10 +19,10 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class FixtureDiscoveryServiceTest {
@@ -47,89 +45,84 @@ class FixtureDiscoveryServiceTest {
 
     @BeforeEach
     void setUp(){
-        this.fixtureDiscoveryService = new FixtureDiscoveryService(fixtureDiscoveryClient, tournamentCatalog);
+        this.fixtureDiscoveryService = new FixtureDiscoveryService(fixtureDiscoveryClient, tournamentCatalog, leagueStandingsClient);
     }
 
     @Test
-    void shouldFetchAndFilterImportantFixtures() throws Exception {
-        FixtureResponseDto mockFixtureResponse;
-        LeagueStandingsDto mockEnglishLeagueStandingsResponse;
+    void shouldFetchStandingsInLeagueTournament() throws InterruptedException {
+        final Long SPANISH_LEAGUE_ID = 140L;
+        final Long ATLETICO_MADRID_ID = 530L;
+        final Long BARCELONA_ID = 529L;
+        final Long REAL_MADRID_ID = 541L;
+        // spy because we need real implementation of some methods -> .getId() and .isStanding() in discoverNewFixtures method
+        // and also need to mock the filter method
+        LeagueTournament spanishLeague = spy(new LeagueTournament(SPANISH_LEAGUE_ID, 3,
+                new LeagueTeam.Team[]{
+                        new LeagueTeam.Team(ATLETICO_MADRID_ID),
+                        new LeagueTeam.Team(BARCELONA_ID),
+                        new LeagueTeam.Team(REAL_MADRID_ID)
+                }));
+        List<Tournament> activeTournaments = List.of(
+                spanishLeague
+        );
 
-        try (InputStream input = getClass()
-                .getResourceAsStream("/fixture/fixturesresponse.json")) {
+        when(tournamentCatalog.activeTournaments()).thenReturn(activeTournaments);
+        // only this works with spies
+        FixtureResponseDto fromFilter = new FixtureResponseDto(new FixtureResponseDto.Response[0]);
+        doReturn(fromFilter).when(spanishLeague).filterImportantFixtures(any(), any());
+//        when(spanishLeague.filterImportantFixtures(any(), any())).thenReturn(new FixtureResponseDto(new FixtureResponseDto.Response[0]));
 
-            assertNotNull(input, "Fixture JSON file was not found");
+        // for argument capture assertions
+        List<Long> spanishLeagueStandings = List.of(BARCELONA_ID, REAL_MADRID_ID);
+        when(leagueStandingsClient.fetchOrderedTeamIds(anyLong())).thenReturn(spanishLeagueStandings);
+        FixtureResponseDto fetched = new FixtureResponseDto(new FixtureResponseDto.Response[0]);
+        when(fixtureDiscoveryClient.fetchFixtures(anyLong(), any(), any())).thenReturn(fetched);
 
-            mockFixtureResponse = objectMapper.readValue(
-                    input,
-                    FixtureResponseDto.class
-            );
-        }
-        try (InputStream input = getClass()
-                .getResourceAsStream("/fixture/leaguestandingsresponse.json")) {
+        List<FixtureResponseDto> fixtureResponseDtoResultList = fixtureDiscoveryService.discoverNewFixtures();
 
-            assertNotNull(input, "Standings JSON file was not found");
+        // check fetch was called once
+        verify(fixtureDiscoveryClient, times(1)).fetchFixtures(anyLong(), any(), any());
 
-            mockEnglishLeagueStandingsResponse = objectMapper.readValue(
-                    input,
-                    LeagueStandingsDto.class
-            );
-        }
+        // check fetch standings was called
+        verify(leagueStandingsClient, times(1)).fetchOrderedTeamIds(anyLong());
 
-        Long ENGLISH_LEAGUE_ID = 39L;
-        Long ARSENAL_ID = 42L;
-        Long MANCITY_ID = 50L;
-        Long CHELSEA_ID = 49L;
-        Long MANUTD_ID = 33L;
+        // verify the arguments of tournament.filterImportantFixtures()
+        ArgumentCaptor<LeagueTeam.Team[]> teamsCaptor = ArgumentCaptor.forClass(LeagueTeam.Team[].class);
+        verify(spanishLeague).filterImportantFixtures(eq(fetched), teamsCaptor.capture());
 
-        LeagueTeam.Team[] englishLeagueTeams = new LeagueTeam.Team[]{new LeagueTeam.Team(ARSENAL_ID),
-                new LeagueTeam.Team(MANCITY_ID), new LeagueTeam.Team(MANUTD_ID),new LeagueTeam.Team(CHELSEA_ID)};
-        // mock new RestTemplate() or leagueStandingsClient fetching -> need to add a team that is not in the standard teams
-        when(leagueStandingsClient.fetchLeagueStandings(ENGLISH_LEAGUE_ID)).thenReturn(mockEnglishLeagueStandingsResponse);
+        assertThat(teamsCaptor.getValue())
+                .containsExactly(new LeagueTeam.Team(BARCELONA_ID), new LeagueTeam.Team(REAL_MADRID_ID));
 
-        Tournament englishLeague = new LeagueTournament(ENGLISH_LEAGUE_ID, 4, leagueStandingsClient, englishLeagueTeams);
-        when(fixtureDiscoveryClient.fetchFixtures(anyLong(), any(), any())).thenReturn(mockFixtureResponse);
-        when(tournamentCatalog.activeTournaments()).thenReturn(List.of(englishLeague));
+        // fixturesResult has size 1
+        assertThat(fixtureResponseDtoResultList.size()).isEqualTo(1);
+        assertThat(fixtureResponseDtoResultList).containsExactly(fromFilter);
+    }
+    @Test
+    void shouldNotFetchStandingsInKnockoutTournament() throws InterruptedException {
+        Tournament championsLeague = spy(new KnockoutTournament(2L));
+        List<Tournament> activeTournaments = List.of(championsLeague);
 
+        when(tournamentCatalog.activeTournaments()).thenReturn(activeTournaments);
+        FixtureResponseDto fixtureMocked = new FixtureResponseDto(new FixtureResponseDto.Response[0]);
+        when(fixtureDiscoveryClient.fetchFixtures(anyLong(), any(), any())).thenReturn(fixtureMocked);
+
+        FixtureResponseDto fixtureFilteredMocked = new FixtureResponseDto(new FixtureResponseDto.Response[0]);
+        doReturn(fixtureFilteredMocked).when(championsLeague).filterImportantFixtures(any(), any());
 
         List<FixtureResponseDto> fixtureResponseDtoList = fixtureDiscoveryService.discoverNewFixtures();
-        // make sure it includes the standard teams
-        // id 42 -> arsenal
-        // id 50 -> man city
-        // id 33 -> man utd
-        // id 49 -> Chelsea
-        // make sure it includes the top ranking team
-        // 1- id 50 -> man city
-        // 2- id 42 -> arsenal
-        // 3- id 35 -> Bournemouth
-        // 4- id 49 -> Chelsea
 
-        // fixtures
-        // 35 Bournemouth vs 746 Sunderland, 63 Leeds vs 33 man utd, 65 Nottingham vs 42 arsenal
-        assertThat(fixtureResponseDtoList.size()).isEqualTo(1);
-        assertThat(fixtureResponseDtoList.get(0).response().length).isEqualTo(3);
+        // make sure fetch standings was not called
+        verify(leagueStandingsClient, never()).fetchOrderedTeamIds(any());
 
-        boolean errorIndicator = false;
-        boolean firstFixtureIndicator = false;
-        boolean secondFixtureIndicator = false;
-        boolean thirdFixtureIndicator = false;
-        for(FixtureResponseDto.Response fixture: fixtureResponseDtoList.get(0).response()){
-            Long awayId = fixture.teams().away().id();
-            Long homeId = fixture.teams().home().id();
-            if(homeId == 35L && awayId == 746L){
-                if(firstFixtureIndicator){ errorIndicator = true;break;}
-                firstFixtureIndicator = true;
-            }else if(homeId == 63L && awayId == 33L){
-                if(secondFixtureIndicator){ errorIndicator = true;break;}
-                secondFixtureIndicator = true;
-            }
-            else if(homeId == 65L && awayId == 42L){
-                if(thirdFixtureIndicator){ errorIndicator = true;break;}
-                thirdFixtureIndicator = true;
-            }else{
-                errorIndicator = true; break;
-            }
-        }
-        assertThat(errorIndicator).isFalse();
+        // verify filter method was called with right arguments (fixture mocked and empty array)
+        ArgumentCaptor<LeagueTeam.Team[]> teamsCaptor = ArgumentCaptor.forClass(LeagueTeam.Team[].class);
+        verify(championsLeague).filterImportantFixtures(eq(fixtureMocked), teamsCaptor.capture());
+
+        assertThat(teamsCaptor.getValue()).isEmpty();
+
+
+        // verify fixture result list has the filtered mock object
+        assertThat(fixtureResponseDtoList).containsExactly(fixtureFilteredMocked);
     }
+
 }

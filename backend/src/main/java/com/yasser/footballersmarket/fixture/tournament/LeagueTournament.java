@@ -12,26 +12,29 @@ import java.util.stream.Stream;
 public class LeagueTournament extends Tournament {
 
     private final int topRankedTeamLimit;
-    private final LeagueStandingsClient leagueStandingsClient;
     private final LeagueTeam.Team[] leagueStandardTeams;
     private final Logger logger = LoggerFactory.getLogger(LeagueTournament.class);
 
-    public LeagueTournament(Long leagueId, int topRankedTeamLimit, LeagueStandingsClient leagueStandingsClient,
-                            LeagueTeam.Team[] teams) {
+    public LeagueTournament(Long leagueId, int topRankedTeamLimit,
+                            LeagueTeam.Team[] leagueStandardTeams) {
         super(leagueId);
         this.topRankedTeamLimit = topRankedTeamLimit;
-        this.leagueStandingsClient = leagueStandingsClient;
-        this.leagueStandardTeams = teams;
+        this.leagueStandardTeams = leagueStandardTeams;
     }
 
     @Override
-    public FixtureResponseDto filterImportantFixtures(FixtureResponseDto fixtureResponseDtoList) {
+    public boolean isStanding() {
+        return true;
+    }
+
+    @Override
+    public FixtureResponseDto filterImportantFixtures(FixtureResponseDto fixtureResponseDtoList, LeagueTeam.Team[] topRankedTeams) {
         if (fixtureResponseDtoList.response() == null) {
             return new FixtureResponseDto(new FixtureResponseDto.Response[0]);
         }
 
         LeagueTeam.Team[] mergedTeams = Stream.concat(
-                Arrays.stream(getTopRankedTeams()),
+                Arrays.stream(topRankedTeams).limit(topRankedTeamLimit),
                 Arrays.stream(leagueStandardTeams)
         ).distinct().toArray(LeagueTeam.Team[]::new);
 
@@ -50,30 +53,4 @@ public class LeagueTournament extends Tournament {
                 .anyMatch(team -> team.id().equals(homeId) || team.id().equals(awayId));
     }
 
-    // fetches the top ranked teams from external service. an empty result is not fatal: filtering
-    // falls back to leagueStandardTeams, so a standings outage still yields the usual fixtures
-    private LeagueTeam.Team[] getTopRankedTeams(){
-        LeagueStandingsDto leagueStandingsResponseDto = leagueStandingsClient.fetchLeagueStandings(getId());
-
-        if (leagueStandingsResponseDto.response() == null || leagueStandingsResponseDto.response().length == 0) {
-            logger.warn("standings: empty response for league {}", getId());
-            return new LeagueTeam.Team[0];
-        }
-        LeagueStandingsDto.Response.League league = leagueStandingsResponseDto.response()[0].league();
-        if (league == null || league.standings() == null || league.standings().length == 0) {
-            logger.warn("standings: no table for league {}", getId());
-            return new LeagueTeam.Team[0];
-        }
-        LeagueStandingsDto.Response.League.Standing[] table = league.standings()[0];
-        if (table == null) {
-            logger.warn("standings: null table for league {}", getId());
-            return new LeagueTeam.Team[0];
-        }
-
-        return Arrays.stream(table)
-                .filter(standing -> standing.team() != null && standing.team().id() != null)
-                .limit(topRankedTeamLimit)
-                .map(standing -> new LeagueTeam.Team(standing.team().id()))
-                .toArray(LeagueTeam.Team[]::new);
-    }
 }

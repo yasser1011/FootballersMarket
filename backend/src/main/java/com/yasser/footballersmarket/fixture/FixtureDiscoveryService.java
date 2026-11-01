@@ -1,6 +1,8 @@
 package com.yasser.footballersmarket.fixture;
 
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
+import com.yasser.footballersmarket.fixture.dto.LeagueStandingsDto;
+import com.yasser.footballersmarket.fixture.tournament.LeagueTeam;
 import com.yasser.footballersmarket.fixture.tournament.Tournament;
 import com.yasser.footballersmarket.fixture.tournament.TournamentCatalog;
 import org.slf4j.Logger;
@@ -11,32 +13,38 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Service
 public class FixtureDiscoveryService {
 
     private final FixtureDiscoveryClient fixtureDiscoveryClient;
+    private final LeagueStandingsClient leagueStandingsClient;
     private final TournamentCatalog tournamentCatalog;
     private final Logger logger = LoggerFactory.getLogger(FixtureDiscoveryService.class);
 
     // must match the @Scheduled zone below: at 01:00 Istanbul the UTC date is still the previous
     // day, so taking the window in UTC would fetch yesterday's and today's fixtures
-    private static final ZoneId ZONE = ZoneId.of("Europe/Istanbul");
+    private static final String ZONE_STR =  "Europe/Istanbul";
+    private static final ZoneId ZONE = ZoneId.of(ZONE_STR);
 
     // pause between tournaments so the daily run does not burst the rapid api quota. matches
     // WorldCupConstants.RESULTS_RATE_LIMIT_MS; 6 tournaments means 5 pauses, so ~50s per run
     private static final long DISCOVERY_RATE_LIMIT_MS = 10_000L;
 
-    public FixtureDiscoveryService(FixtureDiscoveryClient fixtureDiscoveryClient, TournamentCatalog tournamentCatalog){
+    public FixtureDiscoveryService(FixtureDiscoveryClient fixtureDiscoveryClient, TournamentCatalog tournamentCatalog,
+                                   LeagueStandingsClient leagueStandingsClient){
         this.fixtureDiscoveryClient = fixtureDiscoveryClient;
         this.tournamentCatalog = tournamentCatalog;
+        this.leagueStandingsClient = leagueStandingsClient;
     }
 
     // find fixtures of today and next day for selected leagues
     // try to find also the top 4 ranked teams of each league
     // English, Spanish, Italian, German, French, Champions League
-    @Scheduled(cron = "0 0 1 * * *", zone = "Europe/Istanbul")
+    @Scheduled(cron = "0 0 1 * * *", zone = ZONE_STR)
     public List<FixtureResponseDto> discoverNewFixtures() throws InterruptedException {
         LocalDate today = LocalDate.now(ZONE);
         LocalDate tomorrow = today.plusDays(1);
@@ -55,7 +63,14 @@ public class FixtureDiscoveryService {
                 FixtureResponseDto fixtureResponseDto =
                         fixtureDiscoveryClient.fetchFixtures(tournament.getId(), today, tomorrow);
 
-                fixturesResult.add(tournament.filterImportantFixtures(fixtureResponseDto));
+                LeagueTeam.Team[] leagueTopTeams = tournament.isStanding() ?
+                        leagueStandingsClient.fetchOrderedTeamIds(tournament.getId())
+                        .stream()
+                        .map(LeagueTeam.Team::new)
+                        .toArray(LeagueTeam.Team[]::new)
+                        : new LeagueTeam.Team[0];
+
+                fixturesResult.add(tournament.filterImportantFixtures(fixtureResponseDto, leagueTopTeams));
             } catch (Exception e) {
                 logger.error("fixture discovery failed for tournament {}: {}",
                         tournament.getId(), e.getMessage());

@@ -2,6 +2,8 @@ package com.yasser.footballersmarket.fixture.tournament;
 
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
 
+import java.util.Set;
+
 public abstract class Tournament {
     private final Long id;
 
@@ -13,5 +15,7 @@ public abstract class Tournament {
         return id;
     }
 
-    public abstract FixtureResponseDto filterImportantFixtures(FixtureResponseDto allTournamentFixtures);
+    public abstract boolean isStanding();
+
+    public abstract FixtureResponseDto filterImportantFixtures(FixtureResponseDto allTournamentFixtures, LeagueTeam.Team[] topRankedTeams);
 }
