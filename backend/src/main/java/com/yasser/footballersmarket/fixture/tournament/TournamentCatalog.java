@@ -1,9 +1,10 @@
 package com.yasser.footballersmarket.fixture.tournament;
 
-import com.yasser.footballersmarket.fixture.LeagueStandingsClient;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Map;
 
 // the tournaments fixture discovery runs over. built once at startup: this is fixed configuration,
@@ -52,16 +53,34 @@ public class TournamentCatalog {
 
     public TournamentCatalog(){
         this.activeTournaments = List.of(
-                new LeagueTournament(SPANISH_LEAGUE_ID, 3, LEAGUE_TO_TEAMS.get(SPANISH_LEAGUE_ID)),
-                new LeagueTournament(ENGLISH_LEAGUE_ID, 4, LEAGUE_TO_TEAMS.get(ENGLISH_LEAGUE_ID)),
-                new LeagueTournament(ITALIAN_LEAGUE_ID, 4, LEAGUE_TO_TEAMS.get(ITALIAN_LEAGUE_ID)),
-                new LeagueTournament(GERMAN_LEAGUE_ID, 3, LEAGUE_TO_TEAMS.get(GERMAN_LEAGUE_ID)),
-                new LeagueTournament(FRENCH_LEAGUE_ID, 2, LEAGUE_TO_TEAMS.get(FRENCH_LEAGUE_ID)),
+                new LeagueTournament(SPANISH_LEAGUE_ID, 3, 20, LEAGUE_TO_TEAMS.get(SPANISH_LEAGUE_ID)),
+                new LeagueTournament(ENGLISH_LEAGUE_ID, 4, 20, LEAGUE_TO_TEAMS.get(ENGLISH_LEAGUE_ID)),
+                new LeagueTournament(ITALIAN_LEAGUE_ID, 3, 20, LEAGUE_TO_TEAMS.get(ITALIAN_LEAGUE_ID)),
+                new LeagueTournament(GERMAN_LEAGUE_ID, 1, 18, LEAGUE_TO_TEAMS.get(GERMAN_LEAGUE_ID)),
+                new LeagueTournament(FRENCH_LEAGUE_ID, 1, 18, LEAGUE_TO_TEAMS.get(FRENCH_LEAGUE_ID)),
                 new KnockoutTournament(CHAMPIONS_LEAGUE_ID)
         );
     }
 
     public List<Tournament> activeTournaments() {
         return activeTournaments;
+    }
+
+    // a club we always treat as important, whatever the table says and whatever competition it is
+    // playing in -- so a tracked side stays tracked in the champions league too
+    public boolean isTrackedTeam(Long teamId) {
+        if (teamId == null) return false;
+        return LEAGUE_TO_TEAMS.values().stream()
+                .flatMap(Arrays::stream)
+                .anyMatch(team -> teamId.equals(team.id()));
+    }
+
+    // clubs in the division, for normalising a position gap. empty for a tournament with no table
+    public OptionalInt leagueSize(Long leagueId) {
+        return activeTournaments.stream()
+                .filter(tournament -> tournament.getId().equals(leagueId))
+                .filter(LeagueTournament.class::isInstance)
+                .mapToInt(tournament -> ((LeagueTournament) tournament).getLeagueSize())
+                .findFirst();
     }
 }

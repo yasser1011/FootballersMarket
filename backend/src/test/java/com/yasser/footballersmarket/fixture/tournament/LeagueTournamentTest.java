@@ -42,7 +42,7 @@ class LeagueTournamentTest {
                 new LeagueTeam.Team(35L),
                 new LeagueTeam.Team(49L)
         };
-        Tournament leagueTournamentTest = new LeagueTournament(35L, 1, standardLeagueTeams);
+        Tournament leagueTournamentTest = new LeagueTournament(35L, 1, 20, standardLeagueTeams);
 
         // 2
         FixtureResponseDto fixtureFilterResult = leagueTournamentTest

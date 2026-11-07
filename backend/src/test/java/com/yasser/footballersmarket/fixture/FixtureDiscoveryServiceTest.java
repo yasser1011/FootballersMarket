@@ -3,24 +3,20 @@ package com.yasser.footballersmarket.fixture;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.yasser.footballersmarket.fixture.client.FixtureDiscoveryClient;
+import com.yasser.footballersmarket.fixture.client.LeagueStandingsClient;
 import com.yasser.footballersmarket.fixture.tournament.*;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
-import com.yasser.footballersmarket.fixture.dto.LeagueStandingsDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -36,6 +32,8 @@ class FixtureDiscoveryServiceTest {
     // instead of providing englishLeague with new RestTemplate() parameter
     @Mock
     private LeagueStandingsClient leagueStandingsClient;
+    @Mock
+    private FixtureSavingService fixtureSavingService;
 
     private final ObjectMapper objectMapper = JsonMapper.builder()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -45,7 +43,7 @@ class FixtureDiscoveryServiceTest {
 
     @BeforeEach
     void setUp(){
-        this.fixtureDiscoveryService = new FixtureDiscoveryService(fixtureDiscoveryClient, tournamentCatalog, leagueStandingsClient);
+        this.fixtureDiscoveryService = new FixtureDiscoveryService(fixtureDiscoveryClient, tournamentCatalog, leagueStandingsClient, fixtureSavingService);
     }
 
     @Test
@@ -56,7 +54,7 @@ class FixtureDiscoveryServiceTest {
         final Long REAL_MADRID_ID = 541L;
         // spy because we need real implementation of some methods -> .getId() and .isStanding() in discoverNewFixtures method
         // and also need to mock the filter method
-        LeagueTournament spanishLeague = spy(new LeagueTournament(SPANISH_LEAGUE_ID, 3,
+        LeagueTournament spanishLeague = spy(new LeagueTournament(SPANISH_LEAGUE_ID, 3, 20,
                 new LeagueTeam.Team[]{
                         new LeagueTeam.Team(ATLETICO_MADRID_ID),
                         new LeagueTeam.Team(BARCELONA_ID),

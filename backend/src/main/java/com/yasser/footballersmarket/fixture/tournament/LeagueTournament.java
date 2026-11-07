@@ -1,8 +1,6 @@
 package com.yasser.footballersmarket.fixture.tournament;
 
-import com.yasser.footballersmarket.fixture.LeagueStandingsClient;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
-import com.yasser.footballersmarket.fixture.dto.LeagueStandingsDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,13 +10,16 @@ import java.util.stream.Stream;
 public class LeagueTournament extends Tournament {
 
     private final int topRankedTeamLimit;
+    // number of clubs in the division, used to normalise a position gap to 0..1
+    private final int leagueSize;
     private final LeagueTeam.Team[] leagueStandardTeams;
     private final Logger logger = LoggerFactory.getLogger(LeagueTournament.class);
 
-    public LeagueTournament(Long leagueId, int topRankedTeamLimit,
+    public LeagueTournament(Long leagueId, int topRankedTeamLimit, int leagueSize,
                             LeagueTeam.Team[] leagueStandardTeams) {
         super(leagueId);
         this.topRankedTeamLimit = topRankedTeamLimit;
+        this.leagueSize = leagueSize;
         this.leagueStandardTeams = leagueStandardTeams;
     }
 
@@ -53,4 +54,8 @@ public class LeagueTournament extends Tournament {
                 .anyMatch(team -> team.id().equals(homeId) || team.id().equals(awayId));
     }
 
+
+    public int getLeagueSize() {
+        return leagueSize;
+    }
 }

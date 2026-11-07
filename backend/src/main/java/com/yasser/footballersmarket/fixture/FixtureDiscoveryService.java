@@ -1,7 +1,8 @@
 package com.yasser.footballersmarket.fixture;
 
+import com.yasser.footballersmarket.fixture.client.FixtureDiscoveryClient;
+import com.yasser.footballersmarket.fixture.client.LeagueStandingsClient;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
-import com.yasser.footballersmarket.fixture.dto.LeagueStandingsDto;
 import com.yasser.footballersmarket.fixture.tournament.LeagueTeam;
 import com.yasser.footballersmarket.fixture.tournament.Tournament;
 import com.yasser.footballersmarket.fixture.tournament.TournamentCatalog;
@@ -13,9 +14,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Stream;
+import java.util.Map;
 
 @Service
 public class FixtureDiscoveryService {
@@ -23,6 +24,7 @@ public class FixtureDiscoveryService {
     private final FixtureDiscoveryClient fixtureDiscoveryClient;
     private final LeagueStandingsClient leagueStandingsClient;
     private final TournamentCatalog tournamentCatalog;
+    private final FixtureSavingService fixtureSavingService;
     private final Logger logger = LoggerFactory.getLogger(FixtureDiscoveryService.class);
 
     // must match the @Scheduled zone below: at 01:00 Istanbul the UTC date is still the previous
@@ -35,10 +37,12 @@ public class FixtureDiscoveryService {
     private static final long DISCOVERY_RATE_LIMIT_MS = 10_000L;
 
     public FixtureDiscoveryService(FixtureDiscoveryClient fixtureDiscoveryClient, TournamentCatalog tournamentCatalog,
-                                   LeagueStandingsClient leagueStandingsClient){
+                                   LeagueStandingsClient leagueStandingsClient,
+                                   FixtureSavingService fixtureSavingService){
         this.fixtureDiscoveryClient = fixtureDiscoveryClient;
         this.tournamentCatalog = tournamentCatalog;
         this.leagueStandingsClient = leagueStandingsClient;
+        this.fixtureSavingService = fixtureSavingService;
     }
 
     // find fixtures of today and next day for selected leagues
@@ -50,6 +54,9 @@ public class FixtureDiscoveryService {
         LocalDate tomorrow = today.plusDays(1);
 
         List<FixtureResponseDto> fixturesResult = new ArrayList<>();
+        // team id -> league position, captured from the standings call we already make. frozen onto
+        // each fixture row so settlement scores against the table as it stood at discovery
+        Map<Long, Integer> positionByTeamId = new HashMap<>();
         List<Tournament> tournaments = tournamentCatalog.activeTournaments();
 
         for(int i = 0; i < tournaments.size(); i++){
@@ -63,12 +70,16 @@ public class FixtureDiscoveryService {
                 FixtureResponseDto fixtureResponseDto =
                         fixtureDiscoveryClient.fetchFixtures(tournament.getId(), today, tomorrow);
 
-                LeagueTeam.Team[] leagueTopTeams = tournament.isStanding() ?
-                        leagueStandingsClient.fetchOrderedTeamIds(tournament.getId())
-                        .stream()
-                        .map(LeagueTeam.Team::new)
-                        .toArray(LeagueTeam.Team[]::new)
-                        : new LeagueTeam.Team[0];
+                LeagueTeam.Team[] leagueTopTeams = new LeagueTeam.Team[0];
+                if (tournament.isStanding()) {
+                    List<Long> orderedTeamIds = leagueStandingsClient.fetchOrderedTeamIds(tournament.getId());
+                    for (int position = 0; position < orderedTeamIds.size(); position++) {
+                        positionByTeamId.put(orderedTeamIds.get(position), position + 1);
+                    }
+                    leagueTopTeams = orderedTeamIds.stream()
+                            .map(LeagueTeam.Team::new)
+                            .toArray(LeagueTeam.Team[]::new);
+                }
 
                 fixturesResult.add(tournament.filterImportantFixtures(fixtureResponseDto, leagueTopTeams));
             } catch (Exception e) {
@@ -76,6 +87,19 @@ public class FixtureDiscoveryService {
                         tournament.getId(), e.getMessage());
             }
         }
+
+        // saved as one batch after the loop: a save failure loses nothing permanently, since the
+        // window overlaps the next run and inserting is skipped for fixtures already stored
+        try {
+            fixtureSavingService.saveNewFixtures(fixturesResult, positionByTeamId);
+        } catch (Exception e) {
+            logger.error("fixture discovery: saving failed: {}", e.getMessage());
+        }
+
         return fixturesResult;
     }
+
+    // fetch fixtures result schedulers
+
+
 }

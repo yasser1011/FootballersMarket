@@ -1,6 +1,5 @@
-package com.yasser.footballersmarket.fixture;
+package com.yasser.footballersmarket.fixture.client;
 
-import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
 import com.yasser.footballersmarket.fixture.dto.LeagueStandingsDto;
 import com.yasser.footballersmarket.rapidapi.RapidApiConfig;
 import org.slf4j.Logger;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
