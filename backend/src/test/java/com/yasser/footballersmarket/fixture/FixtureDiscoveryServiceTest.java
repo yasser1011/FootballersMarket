@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
@@ -76,7 +77,7 @@ class FixtureDiscoveryServiceTest {
         FixtureResponseDto fetched = new FixtureResponseDto(new FixtureResponseDto.Response[0]);
         when(fixtureDiscoveryClient.fetchFixtures(anyLong(), any(), any())).thenReturn(fetched);
 
-        List<FixtureResponseDto> fixtureResponseDtoResultList = fixtureDiscoveryService.discoverNewFixtures();
+        fixtureDiscoveryService.discoverNewFixtures();
 
         // check fetch was called once
         verify(fixtureDiscoveryClient, times(1)).fetchFixtures(anyLong(), any(), any());
@@ -91,9 +92,8 @@ class FixtureDiscoveryServiceTest {
         assertThat(teamsCaptor.getValue())
                 .containsExactly(new LeagueTeam.Team(BARCELONA_ID), new LeagueTeam.Team(REAL_MADRID_ID));
 
-        // fixturesResult has size 1
-        assertThat(fixtureResponseDtoResultList.size()).isEqualTo(1);
-        assertThat(fixtureResponseDtoResultList).containsExactly(fromFilter);
+        // the fetched fixtures go to the saver exactly once, for the one tournament
+        verify(fixtureSavingService).saveNewFixtures(eq(List.of(fetched)), any(), eq(Set.of()));
     }
     @Test
     void shouldNotFetchStandingsInKnockoutTournament() throws InterruptedException {
@@ -107,7 +107,7 @@ class FixtureDiscoveryServiceTest {
         FixtureResponseDto fixtureFilteredMocked = new FixtureResponseDto(new FixtureResponseDto.Response[0]);
         doReturn(fixtureFilteredMocked).when(championsLeague).filterImportantFixtures(any(), any());
 
-        List<FixtureResponseDto> fixtureResponseDtoList = fixtureDiscoveryService.discoverNewFixtures();
+        fixtureDiscoveryService.discoverNewFixtures();
 
         // make sure fetch standings was not called
         verify(leagueStandingsClient, never()).fetchOrderedTeamIds(any());
@@ -118,9 +118,46 @@ class FixtureDiscoveryServiceTest {
 
         assertThat(teamsCaptor.getValue()).isEmpty();
 
-
-        // verify fixture result list has the filtered mock object
-        assertThat(fixtureResponseDtoList).containsExactly(fixtureFilteredMocked);
+        // the knockout fixtures reach the saver
+        verify(fixtureSavingService).saveNewFixtures(eq(List.of(fixtureMocked)), any(), eq(Set.of()));
     }
 
+    @Test
+    void shouldStoreEveryFetchedFixtureAndMarkOnlyTheFilteredOnesImportant() throws InterruptedException {
+        Tournament league = spy(new LeagueTournament(39L, 4, 20, new LeagueTeam.Team[0]));
+        when(tournamentCatalog.activeTournaments()).thenReturn(List.of(league));
+        when(leagueStandingsClient.fetchOrderedTeamIds(anyLong())).thenReturn(List.of());
+
+        FixtureResponseDto.Response arsenalMatch = fixtureResponse(1L);
+        FixtureResponseDto.Response regularMatch = fixtureResponse(2L);
+        FixtureResponseDto fetched = new FixtureResponseDto(new FixtureResponseDto.Response[]{arsenalMatch, regularMatch});
+        FixtureResponseDto filtered = new FixtureResponseDto(new FixtureResponseDto.Response[]{arsenalMatch});
+        when(fixtureDiscoveryClient.fetchFixtures(anyLong(), any(), any())).thenReturn(fetched);
+        doReturn(filtered).when(league).filterImportantFixtures(any(), any());
+
+        fixtureDiscoveryService.discoverNewFixtures();
+
+        // what is stored is the UNfiltered fetch; the filter only decides the important ids
+        verify(fixtureSavingService).saveNewFixtures(eq(List.of(fetched)), any(), eq(Set.of(1L)));
+    }
+
+    @Test
+    void shouldNotStoreATournamentWhoseFilterFailed() throws InterruptedException {
+        // were it stored anyway, its fixtures would be frozen as "not important" for good
+        Tournament league = spy(new LeagueTournament(39L, 4, 20, new LeagueTeam.Team[0]));
+        when(tournamentCatalog.activeTournaments()).thenReturn(List.of(league));
+        when(leagueStandingsClient.fetchOrderedTeamIds(anyLong())).thenReturn(List.of());
+        when(fixtureDiscoveryClient.fetchFixtures(anyLong(), any(), any()))
+                .thenReturn(new FixtureResponseDto(new FixtureResponseDto.Response[]{fixtureResponse(1L)}));
+        doThrow(new RuntimeException("boom")).when(league).filterImportantFixtures(any(), any());
+
+        fixtureDiscoveryService.discoverNewFixtures();
+
+        verify(fixtureSavingService).saveNewFixtures(eq(List.of()), any(), eq(Set.of()));
+    }
+
+    private FixtureResponseDto.Response fixtureResponse(Long id) {
+        return new FixtureResponseDto.Response(
+                new FixtureResponseDto.Response.Fixture(id, null, null, null), null, null, null, null);
+    }
 }

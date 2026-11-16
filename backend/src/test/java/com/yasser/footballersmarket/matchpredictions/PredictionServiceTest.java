@@ -157,6 +157,22 @@ class PredictionServiceTest {
         verify(predictionRepository, never()).save(any());
     }
 
+    @Test
+    void shouldRejectAFixtureThatIsNotOpenForPredictions() {
+        // stored for player stats, but not one of the tracked-team fixtures users predict on
+        Fixture fixture = new Fixture(FIXTURE_ID, Instant.now().plus(Duration.ofHours(2)), 39L,
+                "Regular Season - 12", "NS", HOME_TEAM_ID, AWAY_TEAM_ID, null, null, null);
+        fixture.setImportant(false);
+        when(fixtureRepository.findById(FIXTURE_ID)).thenReturn(Optional.of(fixture));
+
+        assertThatThrownBy(() -> predictionService.savePrediction(USER_ID,
+                new PredictionReqDto(FIXTURE_ID, 1, 0, HOME_TEAM_ID)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not open");
+
+        verify(predictionRepository, never()).save(any());
+    }
+
     private void givenFixtureKickingOffIn(Duration untilKickoff) {
         Fixture fixture = new Fixture(FIXTURE_ID, Instant.now().plus(untilKickoff), 39L,
                 "Regular Season - 12", "NS", HOME_TEAM_ID, AWAY_TEAM_ID, null, null, null);

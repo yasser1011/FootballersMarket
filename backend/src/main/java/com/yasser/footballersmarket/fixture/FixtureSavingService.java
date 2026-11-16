@@ -30,15 +30,18 @@ public class FixtureSavingService {
 
     // two writes that belong together, hence the transaction: teams are upserted so a fixture never
     // references a club we have no row for, and new fixtures are inserted. returns inserted count.
+    // every fixture is stored; importantFixtureIds says which of them users may predict on, frozen
+    // onto the row because insert-only discovery never revisits it
     @Transactional
     public int saveNewFixtures(List<FixtureResponseDto> tournamentResponses,
-                               Map<Long, Integer> positionByTeamId) {
+                               Map<Long, Integer> positionByTeamId,
+                               Set<Long> importantFixtureIds) {
         List<FixtureResponseDto.Response> fixtures = flatten(tournamentResponses);
         if (fixtures.isEmpty()) return 0;
 
         teamRepository.saveAll(teamsReferencedBy(fixtures));
 
-        List<Fixture> toInsert = newFixturesOnly(fixtures, positionByTeamId);
+        List<Fixture> toInsert = newFixturesOnly(fixtures, positionByTeamId, importantFixtureIds);
         if (!toInsert.isEmpty()) fixtureRepository.saveAll(toInsert);
 
         logger.info("fixture saving: {} fetched, {} new inserted", fixtures.size(), toInsert.size());
@@ -80,10 +83,11 @@ public class FixtureSavingService {
     }
 
     private List<Fixture> newFixturesOnly(List<FixtureResponseDto.Response> fixtures,
-                                          Map<Long, Integer> positionByTeamId) {
+                                          Map<Long, Integer> positionByTeamId,
+                                          Set<Long> importantFixtureIds) {
         Map<Long, Fixture> byId = new HashMap<>();
         for (FixtureResponseDto.Response fixture : fixtures) {
-            byId.putIfAbsent(fixture.fixture().id(), toEntity(fixture, positionByTeamId));
+            byId.putIfAbsent(fixture.fixture().id(), toEntity(fixture, positionByTeamId, importantFixtureIds));
         }
 
         Set<Long> existingIds = fixtureRepository.findAllById(byId.keySet()).stream()
@@ -96,7 +100,8 @@ public class FixtureSavingService {
     }
 
     private Fixture toEntity(FixtureResponseDto.Response fixture,
-                             Map<Long, Integer> positionByTeamId) {
+                             Map<Long, Integer> positionByTeamId,
+                             Set<Long> importantFixtureIds) {
         var home = fixture.teams().home();
         var away = fixture.teams().away();
         Instant date = OffsetDateTime.parse(fixture.fixture().date()).toInstant();
@@ -111,6 +116,7 @@ public class FixtureSavingService {
         // null for a club whose table we do not track (champions league sides from other leagues)
         entity.setHomeTeamPosition(positionByTeamId.get(home.id()));
         entity.setAwayTeamPosition(positionByTeamId.get(away.id()));
+        entity.setImportant(importantFixtureIds.contains(fixture.fixture().id()));
         return entity;
     }
 

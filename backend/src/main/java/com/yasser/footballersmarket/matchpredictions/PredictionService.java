@@ -33,6 +33,11 @@ public class PredictionService {
         Fixture fixture = fixtureRepository.findById(predictionReq.fixtureId())
                 .orElseThrow(() -> new EntityNotFoundException("fixture " + predictionReq.fixtureId()));
 
+        // every league fixture is stored for player stats, but only the important ones are predictable
+        if (!fixture.isImportant()) {
+            throw new IllegalArgumentException("predictions are not open for this fixture");
+        }
+
         if (!Instant.now().isBefore(fixture.getDate())) {
             throw new PredictionClosedException("predictions are closed for this fixture");
         }

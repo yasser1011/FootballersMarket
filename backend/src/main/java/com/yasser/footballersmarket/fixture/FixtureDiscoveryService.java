@@ -15,8 +15,10 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Service
 public class FixtureDiscoveryService {
@@ -49,11 +51,14 @@ public class FixtureDiscoveryService {
     // try to find also the top 4 ranked teams of each league
     // English, Spanish, Italian, German, French, Champions League
     @Scheduled(cron = "0 0 1 * * *", zone = ZONE_STR)
-    public List<FixtureResponseDto> discoverNewFixtures() throws InterruptedException {
+    public void discoverNewFixtures() throws InterruptedException {
         LocalDate today = LocalDate.now(ZONE);
         LocalDate tomorrow = today.plusDays(1);
 
-        List<FixtureResponseDto> fixturesResult = new ArrayList<>();
+        // everything fetched is stored (player stats need every league fixture); the filtered list
+        // below says which of them are predictable
+        List<FixtureResponseDto> allFixtures = new ArrayList<>();
+        List<FixtureResponseDto> importantFixtures = new ArrayList<>();
         // team id -> league position, captured from the standings call we already make. frozen onto
         // each fixture row so settlement scores against the table as it stood at discovery
         Map<Long, Integer> positionByTeamId = new HashMap<>();
@@ -81,7 +86,11 @@ public class FixtureDiscoveryService {
                             .toArray(LeagueTeam.Team[]::new);
                 }
 
-                fixturesResult.add(tournament.filterImportantFixtures(fixtureResponseDto, leagueTopTeams));
+                FixtureResponseDto important = tournament.filterImportantFixtures(fixtureResponseDto, leagueTopTeams);
+                // both added only after the filter succeeded: were the filter to throw, the fixtures
+                // must not be stored as "not important", because that flag is frozen on insert
+                allFixtures.add(fixtureResponseDto);
+                importantFixtures.add(important);
             } catch (Exception e) {
                 logger.error("fixture discovery failed for tournament {}: {}",
                         tournament.getId(), e.getMessage());
@@ -91,15 +100,22 @@ public class FixtureDiscoveryService {
         // saved as one batch after the loop: a save failure loses nothing permanently, since the
         // window overlaps the next run and inserting is skipped for fixtures already stored
         try {
-            fixtureSavingService.saveNewFixtures(fixturesResult, positionByTeamId);
+            fixtureSavingService.saveNewFixtures(allFixtures, positionByTeamId, idsOf(importantFixtures));
         } catch (Exception e) {
             logger.error("fixture discovery: saving failed: {}", e.getMessage());
         }
-
-        return fixturesResult;
     }
 
-    // fetch fixtures result schedulers
-
-
+    private Set<Long> idsOf(List<FixtureResponseDto> responses) {
+        Set<Long> ids = new HashSet<>();
+        for (FixtureResponseDto dto : responses) {
+            if (dto == null || dto.response() == null) continue;
+            for (FixtureResponseDto.Response fixture : dto.response()) {
+                if (fixture != null && fixture.fixture() != null && fixture.fixture().id() != null) {
+                    ids.add(fixture.fixture().id());
+                }
+            }
+        }
+        return ids;
+    }
 }

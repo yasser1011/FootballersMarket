@@ -28,6 +28,16 @@ public final class FixtureResultConstants {
     // pause between consecutive rapid api calls in a polling batch
     public static final long RESULTS_RATE_LIMIT_MS = 10_000L;
 
+    // how often the poll runs; also the width of the window used to spot fixtures that just aged out
+    public static final Duration POLL_INTERVAL = Duration.ofMinutes(30);
+
+    // the api accepts at most this many ids in one ?ids= call (verified: 21 is rejected)
+    public static final int MAX_IDS_PER_REQUEST = 20;
+
+    // a player who played (minutes > 0) but has no usable api rating still counts as an appearance,
+    // rated at this neutral value
+    public static final double DEFAULT_MATCH_RATING = 6.5;
+
     private static Set<String> buildExcluded() {
         HashSet<String> excluded = new HashSet<>(FINISHED_STATUSES);
         excluded.addAll(DEAD_STATUSES);

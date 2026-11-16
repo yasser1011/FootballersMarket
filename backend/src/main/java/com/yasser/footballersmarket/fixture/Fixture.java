@@ -38,6 +38,10 @@ public class Fixture {
     // never rewrites an existing row, so a bonus set here survives later discovery runs.
     // null on rows created before the column existed -- settlement must treat null as 0
     private Integer bonusPoints = 0;
+    // whether this is a fixture users can predict on. every league fixture is stored (player stats
+    // need them all) but only the tracked-team ones are predictable. frozen at discovery like the
+    // positions. null on rows created before the column existed -- those were all important
+    private Boolean important;
 
     public Fixture() {}
 
@@ -128,6 +132,14 @@ public class Fixture {
 
     public void setAwayTeamPosition(Integer awayTeamPosition) {
         this.awayTeamPosition = awayTeamPosition;
+    }
+
+    public boolean isImportant() {
+        return important == null || important;
+    }
+
+    public void setImportant(boolean important) {
+        this.important = important;
     }
 
     public Integer getBonusPoints() {
