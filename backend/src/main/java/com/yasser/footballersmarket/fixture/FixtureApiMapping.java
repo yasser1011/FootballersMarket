@@ -3,8 +3,9 @@ package com.yasser.footballersmarket.fixture;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
 
 // shared reads of the api fixture payload. both the discovery save and the results poll write the
-// same columns, so the interpretation lives in one place rather than being duplicated and drifting
-final class FixtureApiMapping {
+// same columns, so the interpretation lives in one place rather than being duplicated and drifting.
+// public only for appeared/matchRating, which the player stats handler in another package needs
+public final class FixtureApiMapping {
     private FixtureApiMapping() {}
 
     // the api winner flag marks who advanced, so it covers penalty wins that goals alone read as a
@@ -33,13 +34,13 @@ final class FixtureApiMapping {
     }
 
     // any minutes at all is an appearance. an unused sub is listed with 0 minutes and does not count
-    static boolean appeared(FixtureResponseDto.Response.Games games) {
+    public static boolean appeared(FixtureResponseDto.Response.Games games) {
         return games != null && games.minutes() != null && games.minutes() > 0;
     }
 
     // the api rating when it parses and is positive, otherwise the neutral default. the api sends
     // the rating as a string and uses "0" or null when it has none
-    static double matchRating(FixtureResponseDto.Response.Games games) {
+    public static double matchRating(FixtureResponseDto.Response.Games games) {
         if (games == null || games.rating() == null) return FixtureResultConstants.DEFAULT_MATCH_RATING;
         try {
             double rating = Double.parseDouble(games.rating());

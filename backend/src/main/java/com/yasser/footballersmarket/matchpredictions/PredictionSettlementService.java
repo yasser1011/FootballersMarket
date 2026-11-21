@@ -2,13 +2,13 @@ package com.yasser.footballersmarket.matchpredictions;
 
 import com.yasser.footballersmarket.fixture.Fixture;
 import com.yasser.footballersmarket.fixture.FixtureFinishedHandler;
+import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
 import com.yasser.footballersmarket.matchpredictions.PredictionRewardCalculator.MatchOutcome;
 import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -31,18 +31,18 @@ public class PredictionSettlementService implements FixtureFinishedHandler {
         this.userRepository = userRepository;
     }
 
-    // REQUIRES_NEW, and the annotation sits HERE rather than on settleFixture: this is the method
-    // the caller invokes through the proxy, and a self-call to settleFixture would bypass the proxy
-    // and silently join the caller's transaction instead.
+    // the annotation sits HERE rather than on settleFixture: this is the method the caller invokes
+    // through the proxy, and a self-call to settleFixture would bypass the proxy and ignore it.
     //
-    // its own transaction is what makes the caller's try/catch work at all. had this joined the
-    // fixture's transaction, throwing would mark that shared transaction rollback-only, and catching
-    // the exception would not clear the flag -- the fixture's own commit would then fail with
-    // UnexpectedRollbackException. isolated here, a settlement failure rolls back only the payout
-    // and the fixture's result still stands.
+    // plain @Transactional: applyResult has no transaction of its own, so this always starts a fresh
+    // one, and a settlement failure rolls back only the payout -- the fixture's result still stands.
+    // if a transaction is ever added to the caller, this must become REQUIRES_NEW: joining it would
+    // mark the shared transaction rollback-only, the caller's catch would not clear that, and the
+    // fixture's own commit would fail with UnexpectedRollbackException (see FixtureFinishedHandler)
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void onFixtureFinished(Fixture fixture) {
+    @Transactional
+    public void onFixtureFinished(Fixture fixture, FixtureResponseDto.Response result) {
+        // settlement scores from the fixture row alone; the per-player payload is not its concern
         settleFixture(fixture);
     }
 

@@ -75,6 +75,12 @@ public class TournamentCatalog {
                 .anyMatch(team -> teamId.equals(team.id()));
     }
 
+    // champions league fixtures write a player's CL stats row instead of his league row, and never
+    // queue unknown players (their clubs' domestic leagues are not tracked)
+    public boolean isChampionsLeague(Long leagueId) {
+        return CHAMPIONS_LEAGUE_ID.equals(leagueId);
+    }
+
     // clubs in the division, for normalising a position gap. empty for a tournament with no table
     public OptionalInt leagueSize(Long leagueId) {
         return activeTournaments.stream()

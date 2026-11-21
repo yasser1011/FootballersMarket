@@ -45,8 +45,8 @@ public class FixtureResultsService {
                 fixture.getId(), fixture.getHomeGoals(), fixture.getAwayGoals(), fixture.getWinnerTeamId());
 
         // reactions to a finished fixture: prediction settlement today, and later player stats and
-        // prices, last-5 ratings, featured players. the per-player ratings for those arrive in
-        // result.players(), which is not plumbed through yet.
+        // prices, last-5 ratings, featured players. the per-player minutes and ratings for those
+        // arrive in result.players(), handed to each handler alongside the fixture.
         //
         // note the order these run in is Spring's bean order, i.e. unspecified. if the reactions
         // ever need sequencing relative to each other, that is the point to replace this with an
@@ -56,7 +56,7 @@ public class FixtureResultsService {
         // (see FixtureFinishedHandler) so its rollback cannot reach this one
         for (FixtureFinishedHandler handler : finishedHandlers) {
             try {
-                handler.onFixtureFinished(fixture);
+                handler.onFixtureFinished(fixture, result);
             } catch (Exception e) {
                 logger.error("fixture results: handler {} failed for fixture {}, result stands: {}",
                         handler.getClass().getSimpleName(), fixture.getId(), e.getMessage(), e);

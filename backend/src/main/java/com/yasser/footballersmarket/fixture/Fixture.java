@@ -42,6 +42,11 @@ public class Fixture {
     // need them all) but only the tracked-team ones are predictable. frozen at discovery like the
     // positions. null on rows created before the column existed -- those were all important
     private Boolean important;
+    // has this fixture's player stats been added yet? the once-only latch for the stats handler:
+    // the running-average update is not idempotent, so a second pass would count the match twice.
+    // new rows start false via this initializer; a null loaded from the db (rows that existed before
+    // the column) overwrites it and reads as true, so nothing already processed is ever replayed
+    private Boolean statsApplied = false;
 
     public Fixture() {}
 
@@ -132,6 +137,14 @@ public class Fixture {
 
     public void setAwayTeamPosition(Integer awayTeamPosition) {
         this.awayTeamPosition = awayTeamPosition;
+    }
+
+    public boolean isStatsApplied() {
+        return statsApplied == null || statsApplied;
+    }
+
+    public void setStatsApplied(boolean statsApplied) {
+        this.statsApplied = statsApplied;
     }
 
     public boolean isImportant() {
