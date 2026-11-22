@@ -68,15 +68,13 @@ public class UserService implements UserDetailsService {
             Long playerId = ((BigInteger) userPlayerRecord[0]).longValue();
             Integer playerSofascoreId = (Integer) userPlayerRecord[4];
             String updatedBy = (String) userPlayerRecord[5];
-            String playerSchedulerClub = (String) userPlayerRecord[7];
-            String playerSofascoreCLub = (String) userPlayerRecord[6];
-            Player pl = new Player(playerId, playerSchedulerClub, playerSofascoreCLub);
-            PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(pl);
             Integer playerPrice;
             // world cup mode: the sql price (fn_get_wc_price) is authoritative for every player,
-            // league-stats freshness doesn't matter and must not trigger external refreshes
+            // league-stats freshness doesn't matter and must not trigger external refreshes.
+            // otherwise only players the fixtures do not maintain are refreshed (Player.refreshesExternally).
+            // missed_matches (index 9) exists only in the club-mode query, hence read after the mode check
             if(!priceStrategy.isWorldCupMode()
-                    && (!playerDetailsResDto.getAreClubStatsUpdated() || (updatedBy != null && updatedBy.contains("sofascore")))){
+                    && Player.refreshesExternally(updatedBy, (Integer) userPlayerRecord[9])){
                 PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerSofascoreId);
                 PlayerLeagueStats leagueStatsDto = scoresService.createLeagueStatsDto(playerDetailsDto.getLeagueStats());
                 playerService.updatePlayerLeagueStatsDetails(playerId, leagueStatsDto);

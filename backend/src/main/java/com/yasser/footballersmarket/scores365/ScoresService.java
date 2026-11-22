@@ -2,6 +2,7 @@ package com.yasser.footballersmarket.scores365;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yasser.footballersmarket.featuredplayer.FeaturedPlayer;
+import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.scores365.dto.*;
@@ -73,9 +74,19 @@ public class ScoresService {
         }
         logger.info("player found in database external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
         playerDetailsByExternalId.setRecentMatches(playerDetailsResponseByExternalId.getRecentMatches());
-        Boolean areClubStatsUpdated = playerDetailsByExternalId.getAreClubStatsUpdated();
-        if(!areClubStatsUpdated){
-            logger.info("player club stats not updated in db external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
+        // fixture-maintained players keep our stats; only externally maintained or flagged ones are
+        // refreshed and written (see Player.refreshesExternally)
+        if(Player.refreshesExternally(playerDetailsByExternalId.getUpdatedBy(), playerDetailsByExternalId.getMissedMatches())){
+            logger.info("player refreshed from external service, external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
+            // a flagged player has probably moved: show the club the external service says he plays for
+            if (playerDetailsByExternalId.isFlagged()) {
+                String clubPhotoUrl = clubPhotoUrl(playerDetailsResponseByExternalId.getClubId());
+                playerService.updatePlayerClubFromExternal(playerDetailsByExternalId.getId(),
+                        playerDetailsResponseByExternalId.getClubName(), clubPhotoUrl);
+                if (playerDetailsResponseByExternalId.getClubName() != null)
+                    playerDetailsByExternalId.setExternalServicePlayerClub(playerDetailsResponseByExternalId.getClubName());
+                if (clubPhotoUrl != null) playerDetailsByExternalId.setClubPhotoUrl(clubPhotoUrl);
+            }
             if(playerDetailsResponseByExternalId.getLeagueStats() != null) {
                 playerDetailsByExternalId.setLeagueStats(createLeagueStatsDto(playerDetailsResponseByExternalId.getLeagueStats()));
                 playerService.updatePlayerLeagueStatsDetails(playerDetailsByExternalId.getId(),
@@ -85,8 +96,13 @@ public class ScoresService {
                 playerService.priceDto(playerDetailsByExternalId);
             }
         }
-        logger.info("player club stats updated in db external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
         return playerDetailsByExternalId;
+    }
+
+    // 365scores club badge url; null when the external service gave no club
+    public String clubPhotoUrl(Integer clubId) {
+        if (clubId == null) return null;
+        return scoresConfig.getScoresImageBaseUrl() + scoresConfig.getScoresClubsImageEndPoint() + clubId;
     }
 
     public List<PlayerRecentMatch> fetchPlayerLastRatings(Integer playerId) {

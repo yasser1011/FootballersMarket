@@ -70,10 +70,16 @@ public class PlayerUserCurrentBoughtService {
             // world cup mode prices on tournament stats, not club league stats, so skip the external
             // club refresh entirely — it's unnecessary AND would NPE for WC-seeded players who have
             // no league_stats row (mirrors UserService.getAllUsersScores).
-            boolean needsRefresh = !playerDetailsResDto.getAreClubStatsUpdated()
-                    || (playerEntity.getUpdatedBy() != null && playerEntity.getUpdatedBy().contains("sofascore"));
-            if (!priceStrategy.isWorldCupMode() && needsRefresh) {
+            // only players the fixtures do not maintain are refreshed (Player.refreshesExternally)
+            if (!priceStrategy.isWorldCupMode() && playerEntity.refreshesExternally()) {
                 PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerEntity.getSofascoreId());
+                // a flagged player has probably moved: follow the club the external service reports
+                if (playerDetailsDto != null && playerEntity.isFlagged()) {
+                    if (playerDetailsDto.getClubName() != null) playerEntity.setSofascoreClub(playerDetailsDto.getClubName());
+                    String clubPhotoUrl = scoresService.clubPhotoUrl(playerDetailsDto.getClubId());
+                    if (clubPhotoUrl != null) playerEntity.setClubPhotoUrl(clubPhotoUrl);
+                    playerService.savePlayer(playerEntity);
+                }
                 // guard: external service may be down or have no league stats for this player
                 if (playerDetailsDto != null && playerDetailsDto.getLeagueStats() != null) {
                     PlayerLeagueStats existing = playerEntity.getLeagueStats();

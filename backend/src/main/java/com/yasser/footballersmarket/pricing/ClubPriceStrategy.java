@@ -1,10 +1,11 @@
 package com.yasser.footballersmarket.pricing;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
-// regular season pricing: age + league rating formula.
-// becomes @Primary again after the world cup ends
+// regular season pricing: age + league rating formula. the active mode again since the world cup ended
 @Component
+@Primary
 public class ClubPriceStrategy implements PriceStrategy {
 
     @Override

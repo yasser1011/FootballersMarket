@@ -1,15 +1,14 @@
 package com.yasser.footballersmarket.pricing;
 
 import com.yasser.footballersmarket.worldcup.WorldCupPriceCalculator;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
+// INACTIVE since the world cup ended (ClubPriceStrategy is @Primary); kept until the world cup cleanup.
 // tournament pricing, active for ALL players while the world cup runs:
 // - participants: frozen baseRating anchor x their live tournament rating
 // - everyone else: league rating decides the category, price stays flat at base
 // pure math, no db access (the world cup stats arrive on the player entity)
 @Component
-@Primary
 public class WorldCupPriceStrategy implements PriceStrategy {
 
     @Override

@@ -1,4 +1,6 @@
 package com.yasser.footballersmarket.player.dto;
+import com.yasser.footballersmarket.player.Player;
+import com.yasser.footballersmarket.playerstats.PlayerChampionsLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
 import com.yasser.footballersmarket.scores365.dto.PlayerRecentMatch;
@@ -22,6 +24,8 @@ public class PlayerDetailsResDto {
     private Double avgRating;
     private Boolean areClubStatsUpdated;
     private PlayerLeagueStats leagueStats;
+    // exposed like leagueStats; null for a player with no champions league games
+    private PlayerChampionsLeagueStats championsLeagueStats;
     private Integer price;
     // world cup pricing inputs, carried so the dto can be repriced after its stats
     // mutate; null for non-participants. not exposed in the api response
@@ -39,6 +43,8 @@ public class PlayerDetailsResDto {
     private String clubPhotoUrl;
     private String updatedBy;
     private List<PlayerRecentMatch> recentMatches;
+    // see Player.missedMatches; drives the refresh rule and the "flagged" view
+    private Integer missedMatches;
 
     private static final Map<String, String> NORMALIZATION_MAP = Map.of(
             "utd", "united",
@@ -58,15 +64,29 @@ public class PlayerDetailsResDto {
     }
 
 
+    // the rating the club price is built on. MUST match avg_rating in the ranking queries
+    // (UserRepository / fn_get_price input), or a player is bought at one price and valued in the
+    // rankings at another: league and champions league ratings averaged plainly when both exist,
+    // either one alone otherwise, 0 when neither does. not weighted by games (parked)
     public Double getAvgRating() {
-        if(leagueStats == null) return 0.0;
-        Double avgRating = 0.0;
-        Double clRateW = 0.7;
-        Double leagueRateW = 0.3;
+        Double league = leagueStats != null ? leagueStats.getRating() : null;
+        Double champions = championsLeagueStats != null ? championsLeagueStats.getRating() : null;
 
-        double result = leagueStats.getRating(); // * leagueRateW;
-        result = Math.round(result * 100.0) / 100.0;
-        return result;
+        double result;
+        if (league == null && champions == null) result = 0.0;
+        else if (champions == null) result = league;
+        else if (league == null) result = champions;
+        else result = (league + champions) / 2;
+
+        return Math.round(result * 100.0) / 100.0;
+    }
+
+    public PlayerChampionsLeagueStats getChampionsLeagueStats() {
+        return championsLeagueStats;
+    }
+
+    public void setChampionsLeagueStats(PlayerChampionsLeagueStats championsLeagueStats) {
+        this.championsLeagueStats = championsLeagueStats;
     }
     public Integer getTotalGoals() {
         int totalGoals = 0;
@@ -124,6 +144,19 @@ public class PlayerDetailsResDto {
 
     public void setWorldCupStats(PlayerWorldCupStats worldCupStats) {
         this.worldCupStats = worldCupStats;
+    }
+
+    public Integer getMissedMatches() {
+        return missedMatches;
+    }
+
+    public void setMissedMatches(Integer missedMatches) {
+        this.missedMatches = missedMatches;
+    }
+
+    // serialised as "flagged" so the frontend can mark a player not currently in his club's squad
+    public boolean isFlagged() {
+        return Player.isFlagged(missedMatches);
     }
 
     public Boolean getAreClubStatsUpdated() {

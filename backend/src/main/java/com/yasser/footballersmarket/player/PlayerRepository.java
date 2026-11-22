@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,10 +51,25 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
 
     Player findPlayerById(Long id);
 
-    // left join fetch world cup stats so the pricing strategy reads them without an n+1 per player
-    @Query(value = "SELECT p FROM Player p join p.leagueStats ls left join fetch p.worldCupStats wcs",
-            countQuery = "SELECT count(p) FROM Player p join p.leagueStats ls")
+    // left join fetch world cup stats so the pricing strategy reads them without an n+1 per player.
+    // flagged players (missed MISSED_MATCHES_TO_FLAG league fixtures in a row) are left out of the
+    // market table only -- search, rankings and portfolios still see them
+    @Query(value = "SELECT p FROM Player p join p.leagueStats ls left join fetch p.worldCupStats wcs "
+            + "where coalesce(p.missedMatches, 0) < " + Player.MISSED_MATCHES_TO_FLAG,
+            countQuery = "SELECT count(p) FROM Player p join p.leagueStats ls "
+            + "where coalesce(p.missedMatches, 0) < " + Player.MISSED_MATCHES_TO_FLAG)
     Page<Player> getHomePagePlayers(Pageable pageable);
+
+    // the squad we expect a club to field: every player last seen playing for it
+    List<Player> findByTeamIdIn(Collection<Long> teamIds);
+
+    // the badge most of a club's known players already carry. used when a player moves between two
+    // covered clubs: the fixture only gives api-football's team id, and the home table must keep
+    // 365scores badges (api-football's image host errors on bulk loads). null if nobody has one yet
+    @Query(nativeQuery = true, value = "select p.club_photo_url from player p "
+            + "where p.team_id = :teamId and p.id <> :excludedPlayerId and p.club_photo_url is not null "
+            + "group by p.club_photo_url order by count(*) desc limit 1")
+    String findMostCommonClubPhotoUrl(@Param("teamId") Long teamId, @Param("excludedPlayerId") Long excludedPlayerId);
 
     // world-cup-only page: inner join fetch drops non-WC players; leagueStats left-joined so WC
     // players without a domestic stats row are still included. optional national-team filter by teamId.
@@ -64,7 +80,9 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     Page<Player> getWorldCupHomePagePlayers(@Param("teamId") Long teamId, Pageable pageable);
 
     @Modifying
-    @Query("UPDATE Player p SET p.updatedBy = 'sofascore' where p.id = ?1")
+    // a sofascore_buy player keeps his marker: his id is a random placeholder, and the fixture
+    // collision guard and the pending-player merge both find him by it
+    @Query("UPDATE Player p SET p.updatedBy = 'sofascore' where p.id = ?1 and (p.updatedBy is null or p.updatedBy <> 'sofascore_buy')")
     void updatePlayerUpdatedByStatusToSofascore(Long playerId);
 
     Player findFirstBySofascoreId(Integer sofascoreId);

@@ -3,6 +3,8 @@ package com.yasser.footballersmarket.playerstats;
 import com.yasser.footballersmarket.fixture.Fixture;
 import com.yasser.footballersmarket.fixture.FixtureRepository;
 import com.yasser.footballersmarket.fixture.FixtureResultConstants;
+import com.yasser.footballersmarket.fixture.Team;
+import com.yasser.footballersmarket.fixture.TeamRepository;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto.Response;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto.Response.Games;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto.Response.PlayerEntry;
@@ -43,6 +45,7 @@ class PlayerStatsUpdateServiceTest {
     private static final Long CHELSEA_ID = 49L;
     private static final Long SAKA_ID = 1460L;
     private static final Long NEW_SIGNING_ID = 999_001L;
+    private static final Long RICE_ID = 2937L;
 
     @Mock
     private FixtureRepository fixtureRepository;
@@ -56,13 +59,15 @@ class PlayerStatsUpdateServiceTest {
     private PendingPlayerRepository pendingPlayerRepository;
     @Mock
     private TournamentCatalog tournamentCatalog;
+    @Mock
+    private TeamRepository teamRepository;
 
     private PlayerStatsUpdateService service;
 
     @BeforeEach
     void setUp() {
         service = new PlayerStatsUpdateService(fixtureRepository, playerRepository, leagueStatsRepository,
-                championsLeagueStatsRepository, pendingPlayerRepository, tournamentCatalog);
+                championsLeagueStatsRepository, pendingPlayerRepository, tournamentCatalog, teamRepository);
     }
 
     // ---- the running totals ----
@@ -262,7 +267,146 @@ class PlayerStatsUpdateServiceTest {
         verify(leagueStatsRepository, never()).saveAll(anyList());
     }
 
+    // ---- squad state: misses, flag, club moves ----
+
+    @Test
+    void shouldCountAMissForAPlayerOfTheTeamWhoWasNotInTheSquad() {
+        Fixture fixture = givenLeagueFixture();
+        Player saka = atArsenal(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1), 0);
+        Player rice = atArsenal(playerWithLeagueRow(RICE_ID, null, 10, 7.0, 0, 0), 1);
+        givenKnownPlayers(saka);
+        when(playerRepository.findByTeamIdIn(any())).thenReturn(List.of(saka, rice));
+
+        // only saka is in arsenal's squad
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "7.0", 0, 0)));
+
+        assertThat(rice.getMissedMatches()).isEqualTo(2);
+        assertThat(rice.isFlagged()).isFalse();
+        assertThat(saka.getMissedMatches()).isZero();
+    }
+
+    @Test
+    void shouldFlagAPlayerOnHisFourthMissInARow() {
+        Fixture fixture = givenLeagueFixture();
+        Player saka = atArsenal(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1), 0);
+        Player rice = atArsenal(playerWithLeagueRow(RICE_ID, null, 10, 7.0, 0, 0), 3);
+        givenKnownPlayers(saka);
+        when(playerRepository.findByTeamIdIn(any())).thenReturn(List.of(saka, rice));
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "7.0", 0, 0)));
+
+        assertThat(rice.getMissedMatches()).isEqualTo(Player.MISSED_MATCHES_TO_FLAG);
+        assertThat(rice.isFlagged()).isTrue();
+        verify(playerRepository).saveAll(List.of(rice));
+    }
+
+    @Test
+    void shouldClearTheFlagWhenHeIsBackInTheSquad() {
+        Fixture fixture = givenLeagueFixture();
+        // flagged, and refreshed externally meanwhile (which marked him sofascore)
+        Player rice = atArsenal(playerWithLeagueRow(RICE_ID, "sofascore", 10, 7.0, 0, 0), 6);
+        givenKnownPlayers(rice);
+
+        // an unused sub is enough: he is back in his club's squad
+        service.onFixtureFinished(fixture, result(entry(RICE_ID, 0, "0", 0, 0)));
+
+        assertThat(rice.getMissedMatches()).isZero();
+        assertThat(rice.isFlagged()).isFalse();
+        assertThat(rice.getUpdatedBy()).isEqualTo(PlayerStatsUpdateService.FIXTURE_MAINTAINED);
+    }
+
+    @Test
+    void shouldNotCountMissesFromAChampionsLeagueFixture() {
+        Fixture fixture = givenFixture(CHAMPIONS_LEAGUE_ID, true);
+        Player saka = atArsenal(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1), 0);
+        givenKnownPlayers(saka);
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "7.0", 0, 0)));
+
+        // the roster is never even looked up for a european match
+        verify(playerRepository, never()).findByTeamIdIn(any());
+    }
+
+    @Test
+    void shouldLeaveSquadStateAloneWhenALaterFixtureOfTheTeamIsAlreadyApplied() {
+        Fixture fixture = givenLeagueFixture();
+        Player saka = atArsenal(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1), 2);
+        Player rice = atArsenal(playerWithLeagueRow(RICE_ID, null, 10, 7.0, 0, 0), 1);
+        givenKnownPlayers(saka);
+        when(playerRepository.findByTeamIdIn(any())).thenReturn(List.of(saka, rice));
+        when(fixtureRepository.existsAppliedAfter(ARSENAL_ID, fixture.getDate())).thenReturn(true);
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "8.0", 0, 0)));
+
+        // the late result still counts as a game...
+        assertThat(saka.getLeagueStats().getTotalNumOfGames()).isEqualTo(11);
+        // ...but its squad is older news: nobody's missed count moves
+        assertThat(saka.getMissedMatches()).isEqualTo(2);
+        assertThat(rice.getMissedMatches()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldOnlyRecordTheClubOnAFirstSighting() {
+        Fixture fixture = givenLeagueFixture();
+        Player saka = playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1);   // no teamId yet
+        saka.setSofascoreClub("Arsenal FC");
+        givenKnownPlayers(saka);
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "7.0", 0, 0)));
+
+        assertThat(saka.getTeamId()).isEqualTo(ARSENAL_ID);
+        // his stored club came from the seed/external data and is trusted
+        assertThat(saka.getSofascoreClub()).isEqualTo("Arsenal FC");
+        verify(playerRepository, never()).findMostCommonClubPhotoUrl(any(), any());
+    }
+
+    @Test
+    void shouldFollowAMoveBetweenCoveredClubs() {
+        Fixture fixture = givenLeagueFixture();
+        Player mover = playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1);
+        mover.setTeamId(CHELSEA_ID);
+        mover.setSofascoreClub("Chelsea");
+        mover.setClubPhotoUrl("https://365/chelsea.png");
+        givenKnownPlayers(mover);
+        when(teamRepository.findAllById(any())).thenReturn(List.of(new Team(ARSENAL_ID, "Arsenal", "api-football-logo")));
+        when(playerRepository.findMostCommonClubPhotoUrl(ARSENAL_ID, SAKA_ID)).thenReturn("https://365/arsenal.png");
+
+        // he turns up in arsenal's squad
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "7.0", 0, 0)));
+
+        assertThat(mover.getTeamId()).isEqualTo(ARSENAL_ID);
+        assertThat(mover.getSofascoreClub()).isEqualTo("Arsenal");
+        // the 365scores badge his new teammates carry, never the api-football logo
+        assertThat(mover.getClubPhotoUrl()).isEqualTo("https://365/arsenal.png");
+    }
+
+    @Test
+    void shouldNotCountAMissAtTheOldClubForAPlayerWhoMovedToTheOpponent() {
+        Fixture fixture = givenLeagueFixture();
+        Player saka = atArsenal(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1), 0);
+        // left arsenal for chelsea and faces his old club straight away
+        Player mover = atArsenal(playerWithLeagueRow(RICE_ID, null, 10, 7.0, 0, 0), 0);
+        givenKnownPlayers(saka, mover);
+        // the rosters are loaded before any move, so he is still on arsenal's
+        when(playerRepository.findByTeamIdIn(any())).thenReturn(List.of(saka, mover));
+        when(teamRepository.findAllById(any())).thenReturn(List.of(new Team(CHELSEA_ID, "Chelsea", "api-football-logo")));
+
+        service.onFixtureFinished(fixture, new Response(null, null, null, null, List.of(
+                new TeamPlayers(new TeamRef(ARSENAL_ID, "Arsenal"), List.of(entry(SAKA_ID, 90, "7.0", 0, 0))),
+                new TeamPlayers(new TeamRef(CHELSEA_ID, "Chelsea"), List.of(entry(RICE_ID, 90, "7.0", 0, 0))))));
+
+        assertThat(mover.getTeamId()).isEqualTo(CHELSEA_ID);
+        // he left arsenal, he did not miss arsenal's match
+        assertThat(mover.getMissedMatches()).isZero();
+    }
+
     // ---- helpers ----
+
+    private Player atArsenal(Player player, int missedMatches) {
+        player.setTeamId(ARSENAL_ID);
+        player.setMissedMatches(missedMatches);
+        return player;
+    }
 
     private Fixture givenLeagueFixture() {
         return givenFixture(PREMIER_LEAGUE_ID, false);

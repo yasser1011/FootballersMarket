@@ -26,4 +26,13 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
     List<Fixture> findPollable(@Param("excludedStatuses") Set<String> excludedStatuses,
                                @Param("earliestKickoff") Instant earliestKickoff,
                                @Param("latestKickoff") Instant latestKickoff);
+
+    // has a LATER fixture of this team already had its player stats applied? then this one arrived
+    // late, and its squad is older news than what the team's players already reflect -- the caller
+    // must not let it reset or count misses. statsApplied = true deliberately skips null (rows from
+    // before the column), which all predate fixture tracking anyway
+    @Query("select case when count(f) > 0 then true else false end from Fixture f "
+            + "where f.statsApplied = true and f.date > :date "
+            + "and (f.homeTeamId = :teamId or f.awayTeamId = :teamId)")
+    boolean existsAppliedAfter(@Param("teamId") Long teamId, @Param("date") Instant date);
 }

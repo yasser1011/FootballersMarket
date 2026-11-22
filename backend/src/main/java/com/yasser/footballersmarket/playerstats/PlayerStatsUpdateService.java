@@ -4,6 +4,8 @@ import com.yasser.footballersmarket.fixture.Fixture;
 import com.yasser.footballersmarket.fixture.FixtureApiMapping;
 import com.yasser.footballersmarket.fixture.FixtureFinishedHandler;
 import com.yasser.footballersmarket.fixture.FixtureRepository;
+import com.yasser.footballersmarket.fixture.Team;
+import com.yasser.footballersmarket.fixture.TeamRepository;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto.Response.Games;
 import com.yasser.footballersmarket.fixture.dto.FixtureResponseDto.Response.StatGoals;
@@ -17,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +47,7 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
     private final PlayerChampionsLeagueStatsRepository championsLeagueStatsRepository;
     private final PendingPlayerRepository pendingPlayerRepository;
     private final TournamentCatalog tournamentCatalog;
+    private final TeamRepository teamRepository;
     private final Logger logger = LoggerFactory.getLogger(PlayerStatsUpdateService.class);
 
     public PlayerStatsUpdateService(FixtureRepository fixtureRepository,
@@ -50,7 +55,9 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
                                     PlayerLeagueStatsRepository leagueStatsRepository,
                                     PlayerChampionsLeagueStatsRepository championsLeagueStatsRepository,
                                     PendingPlayerRepository pendingPlayerRepository,
-                                    TournamentCatalog tournamentCatalog) {
+                                    TournamentCatalog tournamentCatalog,
+                                    TeamRepository teamRepository) {
+        this.teamRepository = teamRepository;
         this.fixtureRepository = fixtureRepository;
         this.playerRepository = playerRepository;
         this.leagueStatsRepository = leagueStatsRepository;
@@ -100,7 +107,8 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
 
         List<PlayerLeagueStats> leagueRows = new ArrayList<>();
         List<PlayerChampionsLeagueStats> championsLeagueRows = new ArrayList<>();
-        List<Player> backInScope = new ArrayList<>();
+        // every player whose own row changed (not his stats rows), saved once at the end
+        Set<Player> changedPlayers = new LinkedHashSet<>();
         List<Appearance> unknown = new ArrayList<>();
 
         for (Appearance appearance : lineup) {
@@ -117,7 +125,7 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
             // external refresh stops writing over him
             if (SOFASCORE.equals(player.getUpdatedBy())) {
                 player.setUpdatedBy(FIXTURE_MAINTAINED);
-                backInScope.add(player);
+                changedPlayers.add(player);
             }
 
             // an unused sub was in the squad but did not play: no game to count
@@ -132,7 +140,10 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
 
         if (!leagueRows.isEmpty()) leagueStatsRepository.saveAll(leagueRows);
         if (!championsLeagueRows.isEmpty()) championsLeagueStatsRepository.saveAll(championsLeagueRows);
-        if (!backInScope.isEmpty()) playerRepository.saveAll(backInScope);
+
+        // who is at which club, and who has been missing from his club's squad
+        changedPlayers.addAll(updateSquadState(fixture, lineup, known, championsLeague));
+        if (!changedPlayers.isEmpty()) playerRepository.saveAll(new ArrayList<>(changedPlayers));
 
         // a champions league opponent from a league we do not track would never get league stats,
         // so only league fixtures put unknown players forward to be created
@@ -173,6 +184,87 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
         row.setGoals(orZero(row.getGoals()) + goals(appearance));
         row.setAssists(orZero(row.getAssists()) + assists(appearance));
         return row;
+    }
+
+    // per team in the fixture:
+    //  - every known player in the squad (unused subs too) is at that club and present: his missed
+    //    count resets, and if he was last seen at a different club he has moved, so his club name,
+    //    badge and teamId follow
+    //  - league fixtures only: every player last seen at that club who is NOT in the squad has missed
+    //    one more match; at MISSED_MATCHES_TO_FLAG he is flagged. champions league squads are
+    //    registered and rotated differently, so they can clear a flag but never count towards one
+    // returns the players whose row changed
+    private List<Player> updateSquadState(Fixture fixture, List<Appearance> lineup,
+                                          Map<Long, Player> known, boolean championsLeague) {
+        Map<Long, List<Appearance>> squadByTeam = lineup.stream()
+                .filter(appearance -> appearance.teamId() != null)
+                .collect(Collectors.groupingBy(Appearance::teamId));
+        if (squadByTeam.isEmpty()) return List.of();
+
+        Map<Long, Team> teams = teamRepository.findAllById(squadByTeam.keySet()).stream()
+                .collect(Collectors.toMap(Team::getId, Function.identity()));
+        Map<Long, List<Player>> rosterByTeam = championsLeague
+                ? Map.of()
+                : playerRepository.findByTeamIdIn(squadByTeam.keySet()).stream()
+                        .collect(Collectors.groupingBy(Player::getTeamId));
+
+        List<Player> changed = new ArrayList<>();
+        for (Map.Entry<Long, List<Appearance>> entry : squadByTeam.entrySet()) {
+            Long teamId = entry.getKey();
+            // ordering guard: a later fixture of this club is already applied, so this squad is older
+            // news -- letting it reset or count misses would overwrite newer state
+            if (fixtureRepository.existsAppliedAfter(teamId, fixture.getDate())) {
+                logger.info("player stats: fixture {} is older than team {}'s latest, squad state left alone",
+                        fixture.getId(), teamId);
+                continue;
+            }
+
+            Set<Long> inSquad = new HashSet<>();
+            for (Appearance appearance : entry.getValue()) {
+                inSquad.add(appearance.playerId());
+                Player player = known.get(appearance.playerId());
+                if (player == null || SOFASCORE_BUY.equals(player.getUpdatedBy())) continue;
+
+                boolean dirty = false;
+                if (orZero(player.getMissedMatches()) != 0) {
+                    player.setMissedMatches(0);
+                    dirty = true;
+                }
+                if (!teamId.equals(player.getTeamId())) {
+                    moveToTeam(player, teamId, teams.get(teamId));
+                    dirty = true;
+                }
+                if (dirty) changed.add(player);
+            }
+
+            for (Player player : rosterByTeam.getOrDefault(teamId, List.of())) {
+                if (inSquad.contains(player.getId()) || SOFASCORE_BUY.equals(player.getUpdatedBy())) continue;
+                // the rosters are loaded before any move: a player who moved to the opponent earlier
+                // in this same fixture is still listed here, but he left this club, he did not miss it
+                if (!teamId.equals(player.getTeamId())) continue;
+                player.setMissedMatches(orZero(player.getMissedMatches()) + 1);
+                changed.add(player);
+            }
+        }
+        return changed;
+    }
+
+    // first sighting (no teamId yet) only records the club: his stored club name and badge came from
+    // the seed/external data and are assumed right. a change between two known clubs is a transfer
+    // between covered clubs: the name comes from the team row, and the badge from his new teammates,
+    // because the home table keeps 365scores badges and the fixture only knows api-football's team id
+    private void moveToTeam(Player player, Long teamId, Team team) {
+        Long previousTeamId = player.getTeamId();
+        player.setTeamId(teamId);
+        if (previousTeamId == null) return;
+
+        logger.info("player stats: player {} moved from team {} to team {}", player.getId(), previousTeamId, teamId);
+        if (team != null && team.getName() != null) {
+            player.setSofascoreClub(team.getName());
+            player.setRapidApiClub(team.getName());
+        }
+        String badge = playerRepository.findMostCommonClubPhotoUrl(teamId, player.getId());
+        if (badge != null) player.setClubPhotoUrl(badge);
     }
 
     // the mean over all games so far, folded one match at a time

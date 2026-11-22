@@ -55,10 +55,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     String usersScoreQuery = "select ps.player_id, ps.user_id, ps.username, ps.points, ps.sofascore_id, ps.updated_by,\n" +
             "\tps.sofascore_club, ps.rapid_api_club,\n" +
             "\tfn_get_price(cast(FLOOR((CURRENT_DATE - date (ps.date_of_birth)) / 365.25) as integer), \n" +
-            "\tcast(ps.avg_rating as numeric), ps.total_goals, ps.total_assists) as price\n" +
+            "\tcast(ps.avg_rating as numeric), ps.total_goals, ps.total_assists) as price,\n" +
+            "\tps.missed_matches\n" +
             "\tfrom  (\n" +
             "\t\tselect pu.player_id, u.id as user_id, u.username, p.sofascore_club, p.rapid_api_club,\n" +
-            "\t\tp.date_of_birth, p.sofascore_id, p.updated_by, u.points,\n" +
+            "\t\tp.date_of_birth, p.sofascore_id, p.updated_by, u.points, p.missed_matches,\n" +
             "\t\tCOALESCE(pcl.goals, 0) + COALESCE(pl.goals, 0) as total_goals,\n" +
             "\t\tCOALESCE(pcl.assists, 0) + COALESCE(pl.assists, 0) as total_assists,\n" +
             "\t\tcase when pcl.rating is null and pl.rating is null then 0\n" +

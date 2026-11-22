@@ -103,6 +103,17 @@ public class PlayerService {
         playerRepository.save(playerEntity);
     }
 
+    // a flagged player has most likely moved to a club we do not cover; the external refresh knows
+    // which one, so his club name and badge follow it instead of showing the club he left.
+    // null values (external service did not say) leave the stored ones alone
+    public void updatePlayerClubFromExternal(Long playerId, String clubName, String clubPhotoUrl) {
+        playerRepository.findById(playerId).ifPresent(player -> {
+            if (clubName != null) player.setSofascoreClub(clubName);
+            if (clubPhotoUrl != null) player.setClubPhotoUrl(clubPhotoUrl);
+            playerRepository.save(player);
+        });
+    }
+
     public Page<PlayerDetailsResDto> getHomePagePlayerData(int pageNum, boolean worldCup, Long teamId){
         // page num starts with 0
         if (worldCup) {
@@ -149,9 +160,12 @@ public class PlayerService {
         playerDto.setExternalServicePlayerClub(playerEntity.getSofascoreClub());
         playerDto.setCurrentlyInjured(playerEntity.getCurrentlyInjured());
         playerDto.setLeagueStats(playerEntity.getLeagueStats());
+        // part of the price (see PlayerDetailsResDto.getAvgRating), so it must be set before priceDto
+        playerDto.setChampionsLeagueStats(playerEntity.getChampionsLeagueStats());
         playerDto.setPhotoUrl(playerEntity.getPhotoUrl());
         playerDto.setClubPhotoUrl(playerEntity.getClubPhotoUrl());
         playerDto.setUpdatedBy(playerEntity.getUpdatedBy());
+        playerDto.setMissedMatches(playerEntity.getMissedMatches());
         PlayerWorldCupStats wcStats = playerEntity.getWorldCupStats();
         playerDto.setWorldCupBaseRating(wcStats == null ? null : wcStats.getBaseRating());
         playerDto.setWorldCupRating(wcStats == null ? null : wcStats.getRating());

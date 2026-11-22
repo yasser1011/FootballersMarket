@@ -60,6 +60,17 @@ public class Player {
 
     private String updatedBy;
 
+    // consecutive league fixtures of his team he was not in the squad for. at this many he is
+    // flagged: hidden from the home table and maintained externally (he has probably left for a
+    // club we do not cover, or is out long-term). any squad appearance resets it to 0
+    public static final int MISSED_MATCHES_TO_FLAG = 4;
+
+    // api-football id of the club he was last seen playing for in a fixture. null until his first
+    // appearance after fixture tracking began -- a player never seen cannot be flagged
+    private Long teamId;
+    // null on rows from before the column existed; read as 0
+    private Integer missedMatches = 0;
+
     public Player(){}
 //
 //    public Player(Long id, String name) {
@@ -357,4 +368,43 @@ public class Player {
 //
 //        return Period.between(dateOfBirth, currentDate).getYears();
 //    }
+
+    public Long getTeamId() {
+        return teamId;
+    }
+
+    public void setTeamId(Long teamId) {
+        this.teamId = teamId;
+    }
+
+    public Integer getMissedMatches() {
+        return missedMatches;
+    }
+
+    public void setMissedMatches(Integer missedMatches) {
+        this.missedMatches = missedMatches;
+    }
+
+    public boolean isFlagged() {
+        return isFlagged(missedMatches);
+    }
+
+    public static boolean isFlagged(Integer missedMatches) {
+        return missedMatches != null && missedMatches >= MISSED_MATCHES_TO_FLAG;
+    }
+
+    // THE refresh rule, shared by the details page, rankings and portfolio: fetch his stats from the
+    // external service and write them over ours only when the fixtures do not maintain him --
+    // a "sofascore"/"sofascore_buy" player, or a flagged one (his matches are no longer in our
+    // fixtures, so our numbers would freeze). every other player's stats come from fixtures alone,
+    // and an external write would fight them.
+    // static so the rankings path, which reads raw columns rather than an entity, can use it too
+    public static boolean refreshesExternally(String updatedBy, Integer missedMatches) {
+        boolean externallyMaintained = updatedBy != null && updatedBy.contains("sofascore");
+        return externallyMaintained || isFlagged(missedMatches);
+    }
+
+    public boolean refreshesExternally() {
+        return refreshesExternally(updatedBy, missedMatches);
+    }
 }
