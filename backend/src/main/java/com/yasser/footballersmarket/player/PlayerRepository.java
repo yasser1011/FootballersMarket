@@ -71,6 +71,12 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
             + "group by p.club_photo_url order by count(*) desc limit 1")
     String findMostCommonClubPhotoUrl(@Param("teamId") Long teamId, @Param("excludedPlayerId") Long excludedPlayerId);
 
+    // the same badge for a club as an opponent (recent matches): no player to leave out
+    @Query(nativeQuery = true, value = "select p.club_photo_url from player p "
+            + "where p.team_id = :teamId and p.club_photo_url is not null "
+            + "group by p.club_photo_url order by count(*) desc limit 1")
+    String findMostCommonClubPhotoUrlOfTeam(@Param("teamId") Long teamId);
+
     // world-cup-only page: inner join fetch drops non-WC players; leagueStats left-joined so WC
     // players without a domestic stats row are still included. optional national-team filter by teamId.
     @Query(value = "SELECT p FROM Player p left join p.leagueStats ls join fetch p.worldCupStats wcs "

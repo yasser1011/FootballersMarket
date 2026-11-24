@@ -61,13 +61,16 @@ class PlayerStatsUpdateServiceTest {
     private TournamentCatalog tournamentCatalog;
     @Mock
     private TeamRepository teamRepository;
+    @Mock
+    private PlayerMatchRatingRepository matchRatingRepository;
 
     private PlayerStatsUpdateService service;
 
     @BeforeEach
     void setUp() {
         service = new PlayerStatsUpdateService(fixtureRepository, playerRepository, leagueStatsRepository,
-                championsLeagueStatsRepository, pendingPlayerRepository, tournamentCatalog, teamRepository);
+                championsLeagueStatsRepository, pendingPlayerRepository, tournamentCatalog, teamRepository,
+                matchRatingRepository);
     }
 
     // ---- the running totals ----
@@ -400,7 +403,90 @@ class PlayerStatsUpdateServiceTest {
         assertThat(mover.getMissedMatches()).isZero();
     }
 
+    // ---- match ratings (last 5, featured) ----
+
+    @Test
+    void shouldRecordTheMatchOfAPlayerWhoPlayed() {
+        Fixture fixture = givenLeagueFixture();
+        givenKnownPlayers(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1));
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 78, "8.4", 1, 2)));
+
+        PlayerMatchRating row = savedMatchRatings().get(0);
+        assertThat(row.getPlayerId()).isEqualTo(SAKA_ID);
+        assertThat(row.getFixtureId()).isEqualTo(FIXTURE_ID);
+        assertThat(row.getFixtureDate()).isEqualTo(fixture.getDate());
+        assertThat(row.getLeagueId()).isEqualTo(PREMIER_LEAGUE_ID);
+        assertThat(row.getTeamId()).isEqualTo(ARSENAL_ID);
+        // arsenal is at home, so the opponent is the away side
+        assertThat(row.getOpponentTeamId()).isEqualTo(CHELSEA_ID);
+        assertThat(row.getMinutes()).isEqualTo(78);
+        assertThat(row.getRating()).isEqualTo(8.4);
+        assertThat(row.getGoals()).isEqualTo(1);
+        assertThat(row.getAssists()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldRecordTheDefaultRatingWhenTheApiHasNone() {
+        Fixture fixture = givenLeagueFixture();
+        givenKnownPlayers(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1));
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 12, null, 0, 0)));
+
+        assertThat(savedMatchRatings().get(0).getRating()).isEqualTo(FixtureResultConstants.DEFAULT_MATCH_RATING);
+    }
+
+    @Test
+    void shouldRecordAChampionsLeagueMatchInTheSameTable() {
+        Fixture fixture = givenFixture(CHAMPIONS_LEAGUE_ID, true);
+        givenKnownPlayers(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1));
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "7.6", 0, 0)));
+
+        assertThat(savedMatchRatings().get(0).getLeagueId()).isEqualTo(CHAMPIONS_LEAGUE_ID);
+    }
+
+    @Test
+    void shouldNotRecordAMatchForAnUnusedSub() {
+        Fixture fixture = givenLeagueFixture();
+        givenKnownPlayers(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1));
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 0, null, 0, 0)));
+
+        verify(matchRatingRepository, never()).saveAllAndFlush(any());
+        verify(matchRatingRepository, never()).trimToLatest5(any());
+    }
+
+    @Test
+    void shouldNotRecordAMatchForASofascoreBuyPlaceholder() {
+        Fixture fixture = givenLeagueFixture();
+        givenKnownPlayers(playerWithLeagueRow(SAKA_ID, "sofascore_buy", 10, 7.0, 3, 1));
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "7.0", 0, 0)));
+
+        verify(matchRatingRepository, never()).saveAllAndFlush(any());
+    }
+
+    @Test
+    void shouldKeepOnlyTheLatestFiveOfThePlayersWhoPlayed() {
+        Fixture fixture = givenLeagueFixture();
+        givenKnownPlayers(playerWithLeagueRow(SAKA_ID, null, 10, 7.0, 3, 1),
+                playerWithLeagueRow(RICE_ID, null, 10, 7.0, 0, 0));
+
+        service.onFixtureFinished(fixture, result(entry(SAKA_ID, 90, "7.0", 0, 0), entry(RICE_ID, 90, "6.8", 0, 0)));
+
+        ArgumentCaptor<List<Long>> trimmed = ArgumentCaptor.forClass(List.class);
+        verify(matchRatingRepository).trimToLatest5(trimmed.capture());
+        assertThat(trimmed.getValue()).containsExactlyInAnyOrder(SAKA_ID, RICE_ID);
+    }
+
     // ---- helpers ----
+
+    private List<PlayerMatchRating> savedMatchRatings() {
+        ArgumentCaptor<List<PlayerMatchRating>> saved = ArgumentCaptor.forClass(List.class);
+        verify(matchRatingRepository).saveAllAndFlush(saved.capture());
+        return saved.getValue();
+    }
 
     private Player atArsenal(Player player, int missedMatches) {
         player.setTeamId(ARSENAL_ID);

@@ -5,6 +5,7 @@ import com.yasser.footballersmarket.featuredplayer.FeaturedPlayer;
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
+import com.yasser.footballersmarket.playerstats.PlayerRecentMatchService;
 import com.yasser.footballersmarket.scores365.dto.*;
 import com.yasser.footballersmarket.sofascore.dto.PlayerLeagueStatsDetails;
 import com.yasser.footballersmarket.sofascore.dto.SearchPlayerEntity;
@@ -25,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,12 +36,15 @@ public class ScoresService {
     private final RestTemplate shortTimeoutRestTemplate;
     private final ScoresConfig scoresConfig;
     private final PlayerService playerService;
+    private final PlayerRecentMatchService recentMatchService;
 
     private final Logger logger = LoggerFactory.getLogger(ScoresService.class);
 
     public ScoresService(RestTemplate restTemplate,
                          @Qualifier("shortTimeoutRestTemplate") RestTemplate shortTimeoutRestTemplate,
-                         ScoresConfig scoresConfig, PlayerService playerService) {
+                         ScoresConfig scoresConfig, PlayerService playerService,
+                         PlayerRecentMatchService recentMatchService) {
+        this.recentMatchService = recentMatchService;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.scoresConfig = scoresConfig;
@@ -73,7 +78,9 @@ public class ScoresService {
             return convertDtoToPlayerDetailsDto(playerId, playerDetailsResponseByExternalId, playerDetailsResponseByExternalId.getRecentMatches());
         }
         logger.info("player found in database external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
-        playerDetailsByExternalId.setRecentMatches(playerDetailsResponseByExternalId.getRecentMatches());
+        // a fixture-maintained player's last 5 come from our own fixtures; 365scores fills in otherwise
+        playerDetailsByExternalId.setRecentMatches(recentMatchesOf(playerDetailsByExternalId)
+                .orElse(playerDetailsResponseByExternalId.getRecentMatches()));
         // fixture-maintained players keep our stats; only externally maintained or flagged ones are
         // refreshed and written (see Player.refreshesExternally)
         if(Player.refreshesExternally(playerDetailsByExternalId.getUpdatedBy(), playerDetailsByExternalId.getMissedMatches())){
@@ -105,7 +112,20 @@ public class ScoresService {
         return scoresConfig.getScoresImageBaseUrl() + scoresConfig.getScoresClubsImageEndPoint() + clubId;
     }
 
+    private Optional<List<PlayerRecentMatch>> recentMatchesOf(PlayerDetailsResDto player) {
+        return recentMatchService.fromFixtures(player.getId(), player.getUpdatedBy(), player.getMissedMatches());
+    }
+
     public List<PlayerRecentMatch> fetchPlayerLastRatings(Integer playerId) {
+        // ours first: a fixture-maintained player with 5 matches on record needs no 365 call at all
+        PlayerDetailsResDto stored = playerService.getPlayerDetailsByExternalId(playerId);
+        if (stored != null) {
+            Optional<List<PlayerRecentMatch>> fromFixtures = recentMatchesOf(stored);
+            if (fromFixtures.isPresent()) {
+                logger.info("player last ratings from fixtures, external id {} internal id {}", playerId, stored.getId());
+                return fromFixtures.get();
+            }
+        }
         logger.info("fetching player last ratings only from 365 player external id {}", playerId);
         PlayerDetailsDto playerStatsResponse = fetchPlayerEntityFromExternalService(playerId);
         if(playerStatsResponse == null) return new ArrayList<>();

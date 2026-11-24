@@ -48,6 +48,7 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
     private final PendingPlayerRepository pendingPlayerRepository;
     private final TournamentCatalog tournamentCatalog;
     private final TeamRepository teamRepository;
+    private final PlayerMatchRatingRepository matchRatingRepository;
     private final Logger logger = LoggerFactory.getLogger(PlayerStatsUpdateService.class);
 
     public PlayerStatsUpdateService(FixtureRepository fixtureRepository,
@@ -56,8 +57,10 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
                                     PlayerChampionsLeagueStatsRepository championsLeagueStatsRepository,
                                     PendingPlayerRepository pendingPlayerRepository,
                                     TournamentCatalog tournamentCatalog,
-                                    TeamRepository teamRepository) {
+                                    TeamRepository teamRepository,
+                                    PlayerMatchRatingRepository matchRatingRepository) {
         this.teamRepository = teamRepository;
+        this.matchRatingRepository = matchRatingRepository;
         this.fixtureRepository = fixtureRepository;
         this.playerRepository = playerRepository;
         this.leagueStatsRepository = leagueStatsRepository;
@@ -107,6 +110,7 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
 
         List<PlayerLeagueStats> leagueRows = new ArrayList<>();
         List<PlayerChampionsLeagueStats> championsLeagueRows = new ArrayList<>();
+        List<PlayerMatchRating> matchRatings = new ArrayList<>();
         // every player whose own row changed (not his stats rows), saved once at the end
         Set<Player> changedPlayers = new LinkedHashSet<>();
         List<Appearance> unknown = new ArrayList<>();
@@ -136,10 +140,17 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
             } else {
                 leagueRows.add(addToLeagueStats(player, appearance));
             }
+            matchRatings.add(matchRatingOf(player, fixture, appearance));
         }
 
         if (!leagueRows.isEmpty()) leagueStatsRepository.saveAll(leagueRows);
         if (!championsLeagueRows.isEmpty()) championsLeagueStatsRepository.saveAll(championsLeagueRows);
+        if (!matchRatings.isEmpty()) {
+            // flushed first: the trim is a native delete and must see this fixture's rows
+            matchRatingRepository.saveAllAndFlush(matchRatings);
+            matchRatingRepository.trimToLatest5(
+                    matchRatings.stream().map(PlayerMatchRating::getPlayerId).toList());
+        }
 
         // who is at which club, and who has been missing from his club's squad
         changedPlayers.addAll(updateSquadState(fixture, lineup, known, championsLeague));
@@ -184,6 +195,22 @@ public class PlayerStatsUpdateService implements FixtureFinishedHandler {
         row.setGoals(orZero(row.getGoals()) + goals(appearance));
         row.setAssists(orZero(row.getAssists()) + assists(appearance));
         return row;
+    }
+
+    // the same rating, goals and assists that were just added to his totals
+    private PlayerMatchRating matchRatingOf(Player player, Fixture fixture, Appearance appearance) {
+        return new PlayerMatchRating(player.getId(), fixture.getId(), fixture.getDate(), fixture.getLeagueId(),
+                appearance.teamId(), opponentOf(fixture, appearance.teamId()),
+                appearance.games().minutes(), FixtureApiMapping.matchRating(appearance.games()),
+                goals(appearance), assists(appearance));
+    }
+
+    // the other side of the fixture; null when his side is unknown or matches neither team
+    private static Long opponentOf(Fixture fixture, Long teamId) {
+        if (teamId == null) return null;
+        if (teamId.equals(fixture.getHomeTeamId())) return fixture.getAwayTeamId();
+        if (teamId.equals(fixture.getAwayTeamId())) return fixture.getHomeTeamId();
+        return null;
     }
 
     // per team in the fixture:
