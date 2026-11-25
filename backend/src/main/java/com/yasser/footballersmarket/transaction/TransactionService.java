@@ -95,7 +95,7 @@ public class TransactionService {
             if (playerResponse == null) {
                 throw new EntityNotFoundException("player not found in external service " + req.playerSofascoreId());
             }
-            return scoresService.convertDtoToPlayerDetailsDto(req.playerSofascoreId(), playerResponse, playerResponse.getRecentMatches());
+            return playerService.convertExternalToPlayerDto(req.playerSofascoreId(), playerResponse);
         }
     }
 

@@ -56,7 +56,7 @@ public class ScoresController {
     @GetMapping("/players")
     public ResponseEntity getPlayerDetails(@RequestParam(name = "externalId") Integer externalId){
         try {
-            PlayerDetailsResDto playerDetailsById = scoresService.getPlayerDetailsById(externalId);
+            PlayerDetailsResDto playerDetailsById = playerService.getPlayerDetails(externalId);
             return ResponseEntity.ok(playerDetailsById);
         }catch (EntityNotFoundException e){
             logger.warn("scores player details: not found externalId {}: {}", externalId, e.getMessage());
@@ -71,7 +71,7 @@ public class ScoresController {
     @GetMapping("/players/last-ratings")
     public ResponseEntity getPlayerLastRatingDetails(@RequestParam(name = "externalId") Integer externalId){
         try {
-            List<PlayerRecentMatch> playerRecentMatches = scoresService.fetchPlayerLastRatings(externalId);
+            List<PlayerRecentMatch> playerRecentMatches = playerService.getLastRatings(externalId);
             return ResponseEntity.ok(playerRecentMatches);
         }catch (EntityNotFoundException e){
             logger.warn("scores last-ratings: not found externalId {}: {}", externalId, e.getMessage());

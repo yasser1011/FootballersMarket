@@ -176,7 +176,7 @@ class UserControllerTest extends BaseIntegrationTest {
         playerWebServiceResponse.setName("Mr.Kane");
         playerWebServiceResponse.setDateOfBirth(dob);
         playerWebServiceResponse.setLeagueStats(playerLeagueStatsWebServiceResponse);
-        PlayerDetailsResDto playerDetailsResDto = scoresService.convertDtoToPlayerDetailsDto(10, playerWebServiceResponse, new ArrayList<>());
+        PlayerDetailsResDto playerDetailsResDto = playerService.convertExternalToPlayerDto(10, playerWebServiceResponse);
 
         when(restTemplate.getForObject(anyString(), eq(PlayerDetailsDto.class)))
                 .thenReturn(playerWebServiceResponse);

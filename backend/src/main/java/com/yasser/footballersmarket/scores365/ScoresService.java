@@ -2,10 +2,6 @@ package com.yasser.footballersmarket.scores365;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yasser.footballersmarket.featuredplayer.FeaturedPlayer;
-import com.yasser.footballersmarket.player.Player;
-import com.yasser.footballersmarket.player.PlayerService;
-import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
-import com.yasser.footballersmarket.playerstats.PlayerRecentMatchService;
 import com.yasser.footballersmarket.scores365.dto.*;
 import com.yasser.footballersmarket.sofascore.dto.PlayerLeagueStatsDetails;
 import com.yasser.footballersmarket.sofascore.dto.SearchPlayerEntity;
@@ -26,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,76 +30,19 @@ public class ScoresService {
     // featured players only — see RestTemplateConfig for why that call needs its own instance
     private final RestTemplate shortTimeoutRestTemplate;
     private final ScoresConfig scoresConfig;
-    private final PlayerService playerService;
-    private final PlayerRecentMatchService recentMatchService;
 
     private final Logger logger = LoggerFactory.getLogger(ScoresService.class);
 
     public ScoresService(RestTemplate restTemplate,
                          @Qualifier("shortTimeoutRestTemplate") RestTemplate shortTimeoutRestTemplate,
-                         ScoresConfig scoresConfig, PlayerService playerService,
-                         PlayerRecentMatchService recentMatchService) {
-        this.recentMatchService = recentMatchService;
+                         ScoresConfig scoresConfig) {
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.scoresConfig = scoresConfig;
-        this.playerService = playerService;
     }
-    // main method for fetching player details page
-    public PlayerDetailsResDto getPlayerDetailsById(Integer playerId) {
-        // fetch player stats from external service
-        // check if player is available in db
-        // if available return everything as is except league stats and recent games stats
-        // if clubs are not matching
-        // update in db from here
-        PlayerDetailsResDto playerDetailsByExternalId = playerService.getPlayerDetailsByExternalId(playerId);
-        PlayerDetailsDto playerDetailsResponseByExternalId = fetchPlayerEntityFromExternalService(playerId);
-        // if any errors occur in the web service return db data
-        if(playerDetailsResponseByExternalId == null){
-            logger.error("player not found by external id {}", playerId);
-            if(playerDetailsByExternalId == null){
-                throw new EntityNotFoundException("player not found in both db and scores service external id " + playerId);
-            }else{
-                logger.error("player not found by external id {} returning db data", playerId);
-                return playerDetailsByExternalId;
-            }
-        }
-        logger.info("player found in external service id {}", playerId);
 
-        // new player not found in db
-        if(playerDetailsByExternalId == null){
-            logger.info("new player not found in database external id {}", playerId);
-            // converter already defaults missing league stats to 6.5 and prices accordingly
-            return convertDtoToPlayerDetailsDto(playerId, playerDetailsResponseByExternalId, playerDetailsResponseByExternalId.getRecentMatches());
-        }
-        logger.info("player found in database external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
-        // a fixture-maintained player's last 5 come from our own fixtures; 365scores fills in otherwise
-        playerDetailsByExternalId.setRecentMatches(recentMatchesOf(playerDetailsByExternalId)
-                .orElse(playerDetailsResponseByExternalId.getRecentMatches()));
-        // fixture-maintained players keep our stats; only externally maintained or flagged ones are
-        // refreshed and written (see Player.refreshesExternally)
-        if(Player.refreshesExternally(playerDetailsByExternalId.getUpdatedBy(), playerDetailsByExternalId.getMissedMatches())){
-            logger.info("player refreshed from external service, external id {} internal id {}", playerId, playerDetailsByExternalId.getId());
-            // a flagged player has probably moved: show the club the external service says he plays for
-            if (playerDetailsByExternalId.isFlagged()) {
-                String clubPhotoUrl = clubPhotoUrl(playerDetailsResponseByExternalId.getClubId());
-                playerService.updatePlayerClubFromExternal(playerDetailsByExternalId.getId(),
-                        playerDetailsResponseByExternalId.getClubName(), clubPhotoUrl);
-                if (playerDetailsResponseByExternalId.getClubName() != null)
-                    playerDetailsByExternalId.setExternalServicePlayerClub(playerDetailsResponseByExternalId.getClubName());
-                if (clubPhotoUrl != null) playerDetailsByExternalId.setClubPhotoUrl(clubPhotoUrl);
-            }
-            if(playerDetailsResponseByExternalId.getLeagueStats() != null) {
-                playerDetailsByExternalId.setLeagueStats(createLeagueStatsDto(playerDetailsResponseByExternalId.getLeagueStats()));
-                playerService.updatePlayerLeagueStatsDetails(playerDetailsByExternalId.getId(),
-                        createLeagueStatsDto(playerDetailsResponseByExternalId.getLeagueStats()));
-                // league rating just changed: reprice. world cup participants keep their wc price
-                // (the dto's frozen wc inputs are untouched); others reflect the new rating
-                playerService.priceDto(playerDetailsByExternalId);
-            }
-        }
-        return playerDetailsByExternalId;
-    }
+    // a 365scores client only: it fetches and maps what 365 returns. deciding whether a player
+    // needs it, writing our db and pricing are PlayerService's (see PlayerService.getPlayerDetails)
 
     // 365scores club badge url; null when the external service gave no club
     public String clubPhotoUrl(Integer clubId) {
@@ -112,29 +50,17 @@ public class ScoresService {
         return scoresConfig.getScoresImageBaseUrl() + scoresConfig.getScoresClubsImageEndPoint() + clubId;
     }
 
-    private Optional<List<PlayerRecentMatch>> recentMatchesOf(PlayerDetailsResDto player) {
-        return recentMatchService.fromFixtures(player.getId(), player.getUpdatedBy(), player.getMissedMatches());
+    // 365scores player photo url
+    public String playerPhotoUrl(Integer playerId) {
+        return scoresConfig.getScoresImageBaseUrl() + scoresConfig.getScoresPlayersImageEndPoint() + playerId;
     }
 
-    public List<PlayerRecentMatch> fetchPlayerLastRatings(Integer playerId) {
-        // ours first: a fixture-maintained player with 5 matches on record needs no 365 call at all
-        PlayerDetailsResDto stored = playerService.getPlayerDetailsByExternalId(playerId);
-        if (stored != null) {
-            Optional<List<PlayerRecentMatch>> fromFixtures = recentMatchesOf(stored);
-            if (fromFixtures.isPresent()) {
-                logger.info("player last ratings from fixtures, external id {} internal id {}", playerId, stored.getId());
-                return fromFixtures.get();
-            }
-        }
+    // a player's recent matches as 365scores has them (opponent badges filled in); empty when the
+    // external service fails or has none, never null
+    public List<PlayerRecentMatch> fetchRecentMatches(Integer playerId) {
         logger.info("fetching player last ratings only from 365 player external id {}", playerId);
         PlayerDetailsDto playerStatsResponse = fetchPlayerEntityFromExternalService(playerId);
-        if(playerStatsResponse == null) return new ArrayList<>();
-
-        List<PlayerRecentMatch> recentMatches = playerStatsResponse.getRecentMatches();
-        for (PlayerRecentMatch recentMatch : recentMatches) {
-            recentMatch.setOpponentTeamPhotoUrl(scoresConfig.getScoresImageBaseUrl() +
-                    scoresConfig.getScoresClubsImageEndPoint() + recentMatch.getOpponentTeamId());
-        }
+        if (playerStatsResponse == null || playerStatsResponse.getRecentMatches() == null) return new ArrayList<>();
         return playerStatsResponse.getRecentMatches();
     }
 
@@ -277,40 +203,6 @@ public class ScoresService {
                 scoresConfig.getScoresImageBaseUrl() +
                         scoresConfig.getScoresClubsImageEndPoint() + playerDto.getClubId()
         );
-    }
-
-    public PlayerDetailsResDto convertDtoToPlayerDetailsDto(Integer playerId,
-                                                          PlayerDetailsDto playerStatDetailsDto,
-                                                          List<PlayerRecentMatch> recentMatches){
-        PlayerDetailsResDto playerDto = new PlayerDetailsResDto();
-        playerDto.setExternalServicePlayerId(playerId);
-        playerDto.setName(playerStatDetailsDto.getName());
-        playerDto.setNationality(playerStatDetailsDto.getNationality());
-        playerDto.setDateOfBirth(playerStatDetailsDto.getDateOfBirth());
-        playerDto.setPosition(playerStatDetailsDto.getPosition());
-        playerDto.setRapidApiClub("");
-        playerDto.setExternalServicePlayerClub(playerStatDetailsDto.getClubName());
-        playerDto.setPhotoUrl(scoresConfig.getScoresImageBaseUrl() + scoresConfig.getScoresPlayersImageEndPoint() + playerId);
-        playerDto.setClubPhotoUrl(scoresConfig.getScoresImageBaseUrl() + scoresConfig.getScoresClubsImageEndPoint() + playerStatDetailsDto.getClubId());
-
-        com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats leagueStats = playerStatDetailsDto.getLeagueStats();
-        if(leagueStats == null){
-            // external service has no stats for this player: default rating so he still prices sanely
-            playerDto.setLeagueStats(new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(0, 0, 0, 6.5));
-        }else{
-            com.yasser.footballersmarket.playerstats.PlayerLeagueStats playerEntityLeagueStats =
-                    new com.yasser.footballersmarket.playerstats.PlayerLeagueStats(leagueStats.getGoals(),
-                    leagueStats.getAssists(), leagueStats.getAppearances(), leagueStats.getRating());
-            playerDto.setLeagueStats(playerEntityLeagueStats);
-        }
-
-
-        playerDto.setRecentMatches(recentMatches);
-
-        // not-in-db player: no world cup stats, priced from his league rating
-        playerService.priceDto(playerDto);
-
-        return playerDto;
     }
 
     private String simplifyPlayerNameForSearchRequest(String playerName){

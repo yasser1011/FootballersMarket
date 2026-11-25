@@ -8,10 +8,11 @@ import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.player.dto.PlayerExternalServiceBasicDetails;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStatsService;
+import com.yasser.footballersmarket.playerstats.PlayerRecentMatchService;
 import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
 import com.yasser.footballersmarket.scores365.ScoresService;
-import com.yasser.footballersmarket.sofascore.SofascoreService;
-import com.yasser.footballersmarket.sofascore.dto.PlayerLeagueStatsDetails;
+import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
+import com.yasser.footballersmarket.scores365.dto.PlayerRecentMatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -19,7 +20,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
@@ -30,14 +34,130 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final PlayerLeagueStatsService playerLeagueStatsService;
     private final PriceStrategy priceStrategy;
+    private final ScoresService scoresService;
+    private final PlayerRecentMatchService recentMatchService;
+    // for the write after an external call: the methods making that call run outside any
+    // transaction, and calling a @Transactional method of this class from them would bypass the
+    // proxy and run with none at all
+    private final TransactionTemplate transactionTemplate;
     private final Logger logger = LoggerFactory.getLogger(PlayerService.class);
 
     public PlayerService(PlayerRepository playerRepository,
                          PlayerLeagueStatsService playerLeagueStatsService,
-                         PriceStrategy priceStrategy) {
+                         PriceStrategy priceStrategy,
+                         ScoresService scoresService,
+                         PlayerRecentMatchService recentMatchService,
+                         PlatformTransactionManager transactionManager) {
         this.playerRepository = playerRepository;
         this.playerLeagueStatsService = playerLeagueStatsService;
         this.priceStrategy = priceStrategy;
+        this.scoresService = scoresService;
+        this.recentMatchService = recentMatchService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+    }
+
+    // ---- player details: our db first, 365scores only when the player needs it ----
+    //
+    // NOT_SUPPORTED: these call 365scores, and an http call inside a transaction would hold a db
+    // connection for as long as 365 takes to answer
+
+    // the details page, by 365scores id (the home table, my squad and the search bar all open it by it)
+    //  - not in db (a search result): built from 365 and priced, nothing saved; 404 if 365 fails too
+    //  - fixture-maintained: our stats as they are, never refreshed; last 5 ours, 365's if we lack them
+    //  - flagged / sofascore / sofascore_buy: refreshed from 365 and written, then repriced; the
+    //    stored data as it is if 365 fails
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public PlayerDetailsResDto getPlayerDetails(Integer externalId) {
+        PlayerDetailsResDto stored = getPlayerDetailsByExternalId(externalId);
+        if (stored == null) return detailsOfUnknownPlayer(externalId);
+
+        if (!Player.refreshesExternally(stored.getUpdatedBy(), stored.getMissedMatches())) {
+            stored.setRecentMatches(lastRatingsOf(stored, externalId));
+            return stored;
+        }
+
+        PlayerDetailsDto external = scoresService.fetchPlayerEntityFromExternalService(externalId);
+        if (external == null) {
+            logger.error("player not found by external id {} returning db data", externalId);
+            return stored;
+        }
+        stored.setRecentMatches(external.getRecentMatches());
+        applyExternalRefresh(stored, external);
+        return stored;
+    }
+
+    // the last 5 alone, for a page that already shows the cached home table row
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public List<PlayerRecentMatch> getLastRatings(Integer externalId) {
+        PlayerDetailsResDto stored = getPlayerDetailsByExternalId(externalId);
+        return stored != null ? lastRatingsOf(stored, externalId) : scoresService.fetchRecentMatches(externalId);
+    }
+
+    // ours when the fixtures give 5 of them, otherwise 365's (empty if 365 fails)
+    private List<PlayerRecentMatch> lastRatingsOf(PlayerDetailsResDto stored, Integer externalId) {
+        return recentMatchService.fromFixtures(stored.getId(), stored.getUpdatedBy(), stored.getMissedMatches())
+                .orElseGet(() -> scoresService.fetchRecentMatches(externalId));
+    }
+
+    private PlayerDetailsResDto detailsOfUnknownPlayer(Integer externalId) {
+        PlayerDetailsDto external = scoresService.fetchPlayerEntityFromExternalService(externalId);
+        if (external == null) {
+            throw new EntityNotFoundException("player not found in both db and scores service external id " + externalId);
+        }
+        logger.info("new player not found in database external id {}", externalId);
+        return convertExternalToPlayerDto(externalId, external);
+    }
+
+    // writes what 365 reports for an externally refreshed player in ONE transaction -- his league
+    // stats (and updatedBy, see updatePlayerLeagueStatsDetails) and, when flagged, the club he has
+    // probably moved to -- then mirrors it on the dto and reprices it
+    private void applyExternalRefresh(PlayerDetailsResDto stored, PlayerDetailsDto external) {
+        logger.info("player refreshed from external service, external id {} internal id {}",
+                stored.getExternalServicePlayerId(), stored.getId());
+        boolean flagged = stored.isFlagged();
+        String clubName = external.getClubName();
+        String clubPhotoUrl = scoresService.clubPhotoUrl(external.getClubId());
+        boolean hasLeagueStats = external.getLeagueStats() != null;
+
+        transactionTemplate.executeWithoutResult(status -> {
+            if (flagged) updatePlayerClubFromExternal(stored.getId(), clubName, clubPhotoUrl);
+            // its own instance: saving attaches it to the player and the session, the dto keeps another
+            if (hasLeagueStats) {
+                updatePlayerLeagueStatsDetails(stored.getId(), scoresService.createLeagueStatsDto(external.getLeagueStats()));
+            }
+        });
+
+        if (flagged) {
+            if (clubName != null) stored.setExternalServicePlayerClub(clubName);
+            if (clubPhotoUrl != null) stored.setClubPhotoUrl(clubPhotoUrl);
+        }
+        if (hasLeagueStats) {
+            stored.setLeagueStats(scoresService.createLeagueStatsDto(external.getLeagueStats()));
+            // league rating just changed: reprice
+            priceDto(stored);
+        }
+    }
+
+    // a player we do not have, as 365 reports him, priced like any other: what the details page
+    // shows for a search result and what a buy of him is checked against. 365 without league stats
+    // for him -> the default rating, so he still prices sanely
+    public PlayerDetailsResDto convertExternalToPlayerDto(Integer externalId, PlayerDetailsDto external) {
+        PlayerDetailsResDto playerDto = new PlayerDetailsResDto();
+        playerDto.setExternalServicePlayerId(externalId);
+        playerDto.setName(external.getName());
+        playerDto.setNationality(external.getNationality());
+        playerDto.setDateOfBirth(external.getDateOfBirth());
+        playerDto.setPosition(external.getPosition());
+        playerDto.setRapidApiClub("");
+        playerDto.setExternalServicePlayerClub(external.getClubName());
+        playerDto.setPhotoUrl(scoresService.playerPhotoUrl(externalId));
+        playerDto.setClubPhotoUrl(scoresService.clubPhotoUrl(external.getClubId()));
+        playerDto.setLeagueStats(external.getLeagueStats() == null
+                ? new PlayerLeagueStats(0, 0, 0, 6.5)
+                : scoresService.createLeagueStatsDto(external.getLeagueStats()));
+        playerDto.setRecentMatches(external.getRecentMatches());
+        priceDto(playerDto);
+        return playerDto;
     }
 
     public PlayerDetailsResDto getPlayerDetailsByInternalId(Long rapidApiId) {

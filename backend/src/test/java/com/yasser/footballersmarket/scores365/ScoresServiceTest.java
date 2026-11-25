@@ -3,6 +3,7 @@ package com.yasser.footballersmarket.scores365;
 
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerRepository;
+import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.scores365.dto.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStatsRepository;
@@ -26,6 +27,9 @@ class ScoresServiceTest extends BaseIntegrationTest {
 
     @Autowired
     private ScoresService scoresService;
+    // the details flow moved here from ScoresService
+    @Autowired
+    private PlayerService playerService;
     @Autowired
     private PlayerRepository playerRepository;
     @Autowired
@@ -50,7 +54,7 @@ class ScoresServiceTest extends BaseIntegrationTest {
         player.setLeagueStats(playerLeagueStats);
         playerRepository.save(player);
 
-        PlayerDetailsResDto playerDetailsById = scoresService.getPlayerDetailsById(player.getSofascoreId());
+        PlayerDetailsResDto playerDetailsById = playerService.getPlayerDetails(player.getSofascoreId());
         assertThat(playerDetailsById).isNotNull();
         assertThat(playerDetailsById.getLeagueStats()).isNotNull();
         assertThat(playerDetailsById.getLeagueStats().getRating()).isEqualTo(playerLeagueStats.getRating());
@@ -75,7 +79,7 @@ class ScoresServiceTest extends BaseIntegrationTest {
         player.setLeagueStats(playerLeagueStats);
         playerRepository.save(player);
 
-        PlayerDetailsResDto playerDetailsById = scoresService.getPlayerDetailsById(player.getSofascoreId());
+        PlayerDetailsResDto playerDetailsById = playerService.getPlayerDetails(player.getSofascoreId());
         assertThat(playerDetailsById).isNotNull();
         assertThat(playerDetailsById.getLeagueStats()).isNotNull();
         assertThat(playerDetailsById.getLeagueStats().getRating()).isEqualTo(playerLeagueStatsWebServiceResponse.getRating());
@@ -104,7 +108,7 @@ class ScoresServiceTest extends BaseIntegrationTest {
         player.setLeagueStats(playerLeagueStats);
         playerRepository.save(player);
 
-        PlayerDetailsResDto playerDetailsById = scoresService.getPlayerDetailsById(player.getSofascoreId());
+        PlayerDetailsResDto playerDetailsById = playerService.getPlayerDetails(player.getSofascoreId());
         assertThat(playerDetailsById).isNotNull();
         assertThat(playerDetailsById.getLeagueStats()).isNotNull();
         assertThat(playerDetailsById.getLeagueStats().getRating()).isEqualTo(player.getLeagueStats().getRating());

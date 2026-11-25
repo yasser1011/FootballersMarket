@@ -78,7 +78,7 @@ public class UserService implements UserDetailsService {
                 PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerSofascoreId);
                 PlayerLeagueStats leagueStatsDto = scoresService.createLeagueStatsDto(playerDetailsDto.getLeagueStats());
                 playerService.updatePlayerLeagueStatsDetails(playerId, leagueStatsDto);
-                PlayerDetailsResDto playerDetailsResDto1 = scoresService.convertDtoToPlayerDetailsDto(playerSofascoreId, playerDetailsDto, playerDetailsDto.getRecentMatches());
+                PlayerDetailsResDto playerDetailsResDto1 = playerService.convertExternalToPlayerDto(playerSofascoreId, playerDetailsDto);
                 playerPrice = playerDetailsResDto1.getPrice();
             }else{
                 playerPrice = ((BigDecimal) userPlayerRecord[8]).intValue();

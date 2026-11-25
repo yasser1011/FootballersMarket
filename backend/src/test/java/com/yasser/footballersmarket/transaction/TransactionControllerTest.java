@@ -150,7 +150,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
 
         int playerExternalServiceId = 39779;
         PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerExternalServiceId);
-        PlayerDetailsResDto playerDetailsResDto = scoresService.convertDtoToPlayerDetailsDto(playerExternalServiceId, playerDetailsDto, playerDetailsDto.getRecentMatches());
+        PlayerDetailsResDto playerDetailsResDto = playerService.convertExternalToPlayerDto(playerExternalServiceId, playerDetailsDto);
 
         TransactionRequest transactionRequest = new TransactionRequest(null, playerDetailsResDto.getExternalServicePlayerId(),
                 1, playerDetailsResDto.getPrice());
