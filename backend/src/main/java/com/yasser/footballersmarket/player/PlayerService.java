@@ -122,6 +122,23 @@ public class PlayerService {
         return stored;
     }
 
+    // a player as a page that lists him shows him (rankings, squad), priced exactly like his details
+    // page and a buy of him: an externally refreshed player is refreshed from 365 and written on
+    // every call (the details page minus the last 5), a fixture player as stored. 365 down -> the
+    // stored data as it is
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public PlayerDetailsResDto refreshedForListing(PlayerDetailsResDto stored) {
+        if (!Player.refreshesExternally(stored.getUpdatedBy(), stored.getMissedMatches())) return stored;
+
+        PlayerDetailsDto external = scoresService.fetchPlayerEntityFromExternalService(stored.getExternalServicePlayerId());
+        if (external == null) {
+            logger.warn("player {} not refreshed, the external service failed: listed on stored data", stored.getId());
+            return stored;
+        }
+        applyExternalRefresh(stored, external);
+        return stored;
+    }
+
     // the last 5 alone, for a page that already shows the cached home table row
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public List<PlayerRecentMatch> getLastRatings(Integer externalId) {

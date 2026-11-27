@@ -1,15 +1,11 @@
 package com.yasser.footballersmarket.playerusercurrentbought;
 
-import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
-import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
-import com.yasser.footballersmarket.pricing.PriceStrategy;
-import com.yasser.footballersmarket.scores365.ScoresService;
-import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -21,18 +17,13 @@ import java.util.List;
 public class PlayerUserCurrentBoughtService {
     private final PlayerUserCurrentBoughtRepository playerUserCurrentBoughtRepository;
     private final PlayerService playerService;
-    private final ScoresService scoresService;
-    private final PriceStrategy priceStrategy;
 
     Logger logger = LoggerFactory.getLogger(PlayerUserCurrentBoughtService.class);
 
     public PlayerUserCurrentBoughtService(PlayerUserCurrentBoughtRepository playerUserCurrentBoughtRepository,
-                                          PlayerService playerService, ScoresService scoresService,
-                                          PriceStrategy priceStrategy) {
+                                          PlayerService playerService) {
         this.playerUserCurrentBoughtRepository = playerUserCurrentBoughtRepository;
         this.playerService = playerService;
-        this.scoresService = scoresService;
-        this.priceStrategy = priceStrategy;
     }
 
     public PlayerUserCurrentBoughtResponse isPlayerCurrentlyBoughtByUser(Long userId, Long playerId){
@@ -58,46 +49,20 @@ public class PlayerUserCurrentBoughtService {
         return playerUserCurrentBoughtRepository.getBoughtAt(userId, playerId);
     }
 
-    public List<PlayerUserCurrentBoughtDto> getUserBoughtPlayers(Long userId) throws InterruptedException {
+    // no transaction: refreshing an externally maintained player calls 365, and the class-level
+    // @Transactional would hold a db connection through every one of those calls. the reads and the
+    // refresh's write open their own short transactions
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public List<PlayerUserCurrentBoughtDto> getUserBoughtPlayers(Long userId) {
         logger.info("getting user id {} bought players", userId);
 
         List<PlayerUserCurrentBought> userCurrBoughtPlayers = playerUserCurrentBoughtRepository.getUserCurrBoughtPlayers(userId);
         List<PlayerUserCurrentBoughtDto> userPlayersList = new ArrayList<>();
 
         for (PlayerUserCurrentBought player : userCurrBoughtPlayers) {
-            Player playerEntity = player.getPlayer();
-            PlayerDetailsResDto playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(playerEntity);
-            // world cup mode prices on tournament stats, not club league stats, so skip the external
-            // club refresh entirely — it's unnecessary AND would NPE for WC-seeded players who have
-            // no league_stats row (mirrors UserService.getAllUsersScores).
-            // only players the fixtures do not maintain are refreshed (Player.refreshesExternally)
-            if (!priceStrategy.isWorldCupMode() && playerEntity.refreshesExternally()) {
-                PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerEntity.getSofascoreId());
-                // a flagged player has probably moved: follow the club the external service reports
-                if (playerDetailsDto != null && playerEntity.isFlagged()) {
-                    if (playerDetailsDto.getClubName() != null) playerEntity.setSofascoreClub(playerDetailsDto.getClubName());
-                    String clubPhotoUrl = scoresService.clubPhotoUrl(playerDetailsDto.getClubId());
-                    if (clubPhotoUrl != null) playerEntity.setClubPhotoUrl(clubPhotoUrl);
-                    playerService.savePlayer(playerEntity);
-                }
-                // guard: external service may be down or have no league stats for this player
-                if (playerDetailsDto != null && playerDetailsDto.getLeagueStats() != null) {
-                    PlayerLeagueStats existing = playerEntity.getLeagueStats();
-                    if (existing != null) {
-                        // reuse the managed entity (avoids "different object with same id" in the session)
-                        existing.setRating(playerDetailsDto.getLeagueStats().getRating());
-                        existing.setGoals(playerDetailsDto.getLeagueStats().getGoals());
-                        existing.setAssists(playerDetailsDto.getLeagueStats().getAssists());
-                        existing.setTotalNumOfGames(playerDetailsDto.getLeagueStats().getAppearances());
-                        playerService.updatePlayerLeagueStatsDetails(playerEntity.getId(), existing);
-                    } else {
-                        // no league row yet (e.g. a player who never had one): insert a fresh one
-                        playerService.updatePlayerLeagueStatsDetails(playerEntity.getId(),
-                                scoresService.createLeagueStatsDto(playerDetailsDto.getLeagueStats()));
-                    }
-                }
-            }
-            playerDetailsResDto = playerService.convertPlayerEntityToPlayerDto(playerEntity);
+            // the same refresh and price as his details page and the rankings
+            PlayerDetailsResDto playerDetailsResDto = playerService.refreshedForListing(
+                    playerService.convertPlayerEntityToPlayerDto(player.getPlayer()));
             PlayerUserCurrentBoughtDto playerResponse = new PlayerUserCurrentBoughtDto(playerDetailsResDto.getId(),
                     playerDetailsResDto.getExternalServicePlayerId(), playerDetailsResDto.getName(),
                     playerDetailsResDto.getPhotoUrl(), playerDetailsResDto.getExternalServicePlayerClub(), playerDetailsResDto.getClubPhotoUrl(),

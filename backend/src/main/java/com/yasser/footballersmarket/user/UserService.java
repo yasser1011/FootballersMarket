@@ -4,10 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
-import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.pricing.PriceStrategy;
-import com.yasser.footballersmarket.scores365.ScoresService;
-import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,18 +26,16 @@ import java.util.List;
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final SofascoreService sofascoreService;
-    private final ScoresService scoresService;
     private final PlayerService playerService;
     private final PriceStrategy priceStrategy;
     //private final AuthenticationManager authenticationManager;
     Logger logger = LoggerFactory.getLogger(UserService.class);
 
     public UserService(UserRepository userRepository, SofascoreService sofascoreService,
-                       PlayerService playerService, ScoresService scoresService,
+                       PlayerService playerService,
                        PriceStrategy priceStrategy) {
         this.userRepository = userRepository;
         this.sofascoreService = sofascoreService;
-        this.scoresService = scoresService;
         this.playerService = playerService;
         this.priceStrategy = priceStrategy;
       //  this.authenticationManager = authenticationManager;
@@ -66,20 +61,18 @@ public class UserService implements UserDetailsService {
             }
 
             Long playerId = ((BigInteger) userPlayerRecord[0]).longValue();
-            Integer playerSofascoreId = (Integer) userPlayerRecord[4];
             String updatedBy = (String) userPlayerRecord[5];
             Integer playerPrice;
             // world cup mode: the sql price (fn_get_wc_price) is authoritative for every player,
             // league-stats freshness doesn't matter and must not trigger external refreshes.
             // otherwise only players the fixtures do not maintain are refreshed (Player.refreshesExternally).
             // missed_matches (index 9) exists only in the club-mode query, hence read after the mode check
+            // the stored player refreshed, not one rebuilt from 365 alone: his CL stats and stored DOB
+            // stay in the price, so he is valued here exactly as on his details page and in his squad
             if(!priceStrategy.isWorldCupMode()
                     && Player.refreshesExternally(updatedBy, (Integer) userPlayerRecord[9])){
-                PlayerDetailsDto playerDetailsDto = scoresService.fetchPlayerEntityFromExternalService(playerSofascoreId);
-                PlayerLeagueStats leagueStatsDto = scoresService.createLeagueStatsDto(playerDetailsDto.getLeagueStats());
-                playerService.updatePlayerLeagueStatsDetails(playerId, leagueStatsDto);
-                PlayerDetailsResDto playerDetailsResDto1 = playerService.convertExternalToPlayerDto(playerSofascoreId, playerDetailsDto);
-                playerPrice = playerDetailsResDto1.getPrice();
+                PlayerDetailsResDto stored = playerService.getPlayerDetailsByInternalId(playerId);
+                playerPrice = playerService.refreshedForListing(stored).getPrice();
             }else{
                 playerPrice = ((BigDecimal) userPlayerRecord[8]).intValue();
             }

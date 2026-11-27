@@ -1,9 +1,11 @@
 package com.yasser.footballersmarket.player;
 
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
+import com.yasser.footballersmarket.playerstats.PlayerChampionsLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStatsService;
 import com.yasser.footballersmarket.playerstats.PlayerRecentMatchService;
+import com.yasser.footballersmarket.pricing.PlayerPricingData;
 import com.yasser.footballersmarket.pricing.PriceStrategy;
 import com.yasser.footballersmarket.scores365.ScoresService;
 import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
@@ -11,6 +13,7 @@ import com.yasser.footballersmarket.scores365.dto.PlayerRecentMatch;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -29,6 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -281,6 +285,46 @@ class PlayerServiceDetailsTest {
     void shouldRejectATransactionOfAPlayerNeitherWeNor365Have() {
         assertThatThrownBy(() -> playerService.resolveForTransaction(null, EXTERNAL_ID))
                 .isInstanceOf(EntityNotFoundException.class);
+    }
+
+    // ---- a player as the rankings and the squad list him ----
+
+    @Test
+    void shouldListAFixturePlayerAsStoredWithoutHttp() {
+        PlayerDetailsResDto stored = playerService.convertPlayerEntityToPlayerDto(player("fixture", 0));
+
+        PlayerDetailsResDto listed = playerService.refreshedForListing(stored);
+
+        assertThat(listed.getLeagueStats().getRating()).isEqualTo(7.0);
+        verify(scoresService, never()).fetchPlayerEntityFromExternalService(any());
+    }
+
+    @Test
+    void shouldRefreshAndRepriceAnExternalPlayerOnHisStoredChampionsLeagueStats() {
+        // the rankings used to rebuild him from 365 alone and drop this row from his price
+        Player stored = player("sofascore", 0);
+        stored.setChampionsLeagueStats(new PlayerChampionsLeagueStats(PLAYER_ID, 2, 0, 0, 7.5, stored));
+        givenExternal(external("Arsenal", 7.9));
+
+        PlayerDetailsResDto listed = playerService.refreshedForListing(playerService.convertPlayerEntityToPlayerDto(stored));
+
+        assertThat(listed.getLeagueStats().getRating()).isEqualTo(7.9);
+        verify(playerLeagueStatsService).savePlayerLeagueStats(any());
+        // priced once when converted (7.0 / 7.5) and again after the refresh: 365's league + our CL
+        ArgumentCaptor<PlayerPricingData> pricing = ArgumentCaptor.forClass(PlayerPricingData.class);
+        verify(priceStrategy, times(2)).calculatePrice(pricing.capture());
+        assertThat(pricing.getValue().leagueRating()).isEqualTo(7.7);
+        assertThat(pricing.getValue().dateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 1));
+    }
+
+    @Test
+    void shouldListAnExternalPlayerOnStoredDataWhen365Fails() {
+        PlayerDetailsResDto stored = playerService.convertPlayerEntityToPlayerDto(player("sofascore", 0));
+
+        PlayerDetailsResDto listed = playerService.refreshedForListing(stored);
+
+        assertThat(listed.getLeagueStats().getRating()).isEqualTo(7.0);
+        verify(playerLeagueStatsService, never()).savePlayerLeagueStats(any());
     }
 
     // ---- last ratings alone ----
