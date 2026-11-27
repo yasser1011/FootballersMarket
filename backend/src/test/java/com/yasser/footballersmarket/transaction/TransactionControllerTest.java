@@ -3,12 +3,13 @@ package com.yasser.footballersmarket.transaction;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.yasser.footballersmarket.fixture.Fixture;
+import com.yasser.footballersmarket.fixture.FixtureRepository;
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerRepository;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.playerstats.PlayerLeagueStats;
-import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
 import com.yasser.footballersmarket.playerstats.PlayerWorldCupStatsRepository;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
@@ -20,7 +21,6 @@ import com.yasser.footballersmarket.transaction.dto.TransactionRequest;
 import com.yasser.footballersmarket.transaction.dto.TransactionResponse;
 import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserService;
-import com.yasser.footballersmarket.worldcup.WorldCupFixture;
 import com.yasser.footballersmarket.worldcup.WorldCupFixtureRepository;
 import com.yasser.footballersmarket.worldcup.WorldCupPredictionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,8 +33,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -75,7 +73,8 @@ class TransactionControllerTest extends BaseIntegrationTest {
     @Autowired
     private PlayerRepository playerRepository;
     @Autowired
-    private PlatformTransactionManager txManager;
+    private FixtureRepository fixtureRepository;
+    private static final Long LIVE_FIXTURE_ID = 5000L;
 
     @Autowired
     private MockMvc mockMvc;
@@ -88,6 +87,7 @@ class TransactionControllerTest extends BaseIntegrationTest {
         transactionService.deleteAll();
         worldCupPredictionRepository.deleteAll(); // predictions FK usr -> clear before deleting users
         worldCupFixtureRepository.deleteAll();
+        fixtureRepository.findById(LIVE_FIXTURE_ID).ifPresent(fixtureRepository::delete);
         userService.deleteAll();
         // clear world cup stats before players: the stats row's FK to player would otherwise
         // block the player delete
@@ -416,19 +416,15 @@ class TransactionControllerTest extends BaseIntegrationTest {
         LocalDate dob = LocalDate.of(1998, 1, 8);
         Player player1 = new Player(1L, 818244, "player1", dob, "club1", "club1", null);
         player1.setLeagueStats(new PlayerLeagueStats(10, 2, 7.8));
+        player1.setTeamId(100L);
         User user1 = new User("user1", "pass1");
         user1.setPoints(10000);
 
         userService.saveUsersList(List.of(user1));
-        // seed player + world cup stats in one tx; the @MapsId stats must reference the managed
-        // player copy (save() merges an assigned-id entity) or hibernate re-inserts the player
-        new TransactionTemplate(txManager).executeWithoutResult(s -> {
-            Player managed = playerRepository.save(player1);
-            playerWorldCupStatsRepository.save(new PlayerWorldCupStats(100L, 6.5, 0, 0, 0, 6.5, managed));
-        });
-        // team 100 kicked off 30 min ago and isn't finished -> within the live window
-        worldCupFixtureRepository.save(new WorldCupFixture(5000L,
-                Instant.now().minus(30, ChronoUnit.MINUTES), "Group A", 100L, 200L, "1H"));
+        playerRepository.save(player1);
+        // his club 100 kicked off 30 min ago and isn't finished -> within the live window
+        fixtureRepository.save(new Fixture(LIVE_FIXTURE_ID, Instant.now().minus(30, ChronoUnit.MINUTES),
+                39L, "Regular Season - 14", "1H", 100L, 200L, null, null, null));
 
         // price is computed by the world cup strategy; read it back so the request matches
         Integer livePrice = playerService.getPlayerDetailsByInternalId(player1.getId()).getPrice();

@@ -1,28 +1,31 @@
 package com.yasser.footballersmarket.transaction;
 
+import com.yasser.footballersmarket.fixture.FixtureRepository;
+import com.yasser.footballersmarket.fixture.FixtureResultConstants;
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerService;
 import com.yasser.footballersmarket.pricing.PriceStrategy;
 import com.yasser.footballersmarket.player.dto.PlayerDetailsResDto;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBought;
 import com.yasser.footballersmarket.playerusercurrentbought.PlayerUserCurrentBoughtService;
-import com.yasser.footballersmarket.scores365.ScoresService;
-import com.yasser.footballersmarket.scores365.dto.PlayerDetailsDto;
 import com.yasser.footballersmarket.sofascore.SofascoreService;
 import com.yasser.footballersmarket.transaction.dto.*;
 import com.yasser.footballersmarket.user.User;
 import com.yasser.footballersmarket.user.UserService;
-import com.yasser.footballersmarket.worldcup.WorldCupLiveMatchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityNotFoundException;
 import java.math.BigInteger;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -33,32 +36,40 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final PlayerService playerService;
     private final SofascoreService sofascoreService;
-    private final ScoresService scoresService;
     private final PlayerUserCurrentBoughtService playerUserCurrentBoughtService;
     private final UserService userService;
-    private final WorldCupLiveMatchService worldCupLiveMatchService;
     private final PriceStrategy priceStrategy;
+    private final FixtureRepository fixtureRepository;
+    // the buy/sell write, see makeTransaction
+    private final TransactionTemplate buyOrSellTransaction;
 
     // a freshly bought player can't be sold until this many hours pass, so a player can't be
     // bought right before his match and dumped right after to harvest the in-match price spike
     private static final long SELL_LOCK_HOURS = 48;
+
+    // a league fixture that kicked off longer ago than this no longer counts as live, whatever its
+    // status says: a match with extra time and penalties fits inside it
+    static final Duration LIVE_MATCH_WINDOW = Duration.ofHours(3);
 
     Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     public TransactionService(TransactionRepository transactionRepository, PlayerService playerService,
                               SofascoreService sofascoreService,
                               PlayerUserCurrentBoughtService playerUserCurrentBoughtService,
-                              UserService userService, ScoresService scoresService,
-                              WorldCupLiveMatchService worldCupLiveMatchService,
-                              PriceStrategy priceStrategy) {
+                              UserService userService,
+                              PriceStrategy priceStrategy,
+                              FixtureRepository fixtureRepository,
+                              PlatformTransactionManager transactionManager) {
         this.transactionRepository = transactionRepository;
         this.playerService = playerService;
         this.sofascoreService = sofascoreService;
-        this.scoresService = scoresService;
         this.playerUserCurrentBoughtService = playerUserCurrentBoughtService;
         this.userService = userService;
-        this.worldCupLiveMatchService = worldCupLiveMatchService;
         this.priceStrategy = priceStrategy;
+        this.fixtureRepository = fixtureRepository;
+        this.buyOrSellTransaction = new TransactionTemplate(transactionManager);
+        // the budget the old @Transactional(timeout = 10) gave the whole call, now for the db work only
+        this.buyOrSellTransaction.setTimeout(10);
     }
 
     public List<Transaction> getPlayerTransactions(Integer playerSofascoreId){
@@ -79,34 +90,20 @@ public class TransactionService {
         transactionRepository.saveAll(playerTransactions);
     }
 
-    private PlayerDetailsResDto resolvePlayer(TransactionRequest req) {
-        if (req.playerId() != null) {
-            return playerService.getPlayerDetailsByInternalId(req.playerId());
-        }
-        // in normal condition db lookup by external id is not needed because of player id is not provided it would mean player is not in db
-        // but in case of having a race condition when two users checking the same search player
-        // and one of them buys it before the other. the second user would not have internal player id so need to check by external id
-        // and not rely on frontend providing correct data entirely
-        PlayerDetailsResDto inDb = playerService.getPlayerDetailsByExternalId(req.playerSofascoreId());
-        if(inDb != null)
-            return inDb;
-        else{
-            PlayerDetailsDto playerResponse = scoresService.fetchPlayerEntityFromExternalService(req.playerSofascoreId());
-            if (playerResponse == null) {
-                throw new EntityNotFoundException("player not found in external service " + req.playerSofascoreId());
-            }
-            return playerService.convertExternalToPlayerDto(req.playerSofascoreId(), playerResponse);
-        }
-    }
-
-    @Transactional(timeout = 10)
+    // two steps, deliberately NOT one transaction:
+    //  1. resolve the player and check the price -- no transaction. this may call 365 (a player not
+    //     in our db, or an externally refreshed one whose data is stale), and an http call inside the
+    //     transaction would hold a db connection and eat the 10s budget while waiting on the network
+    //  2. the buy/sell itself -- one short transaction (user lock, holdings, transaction row), db only.
+    //     a TransactionTemplate, because calling a @Transactional method of this class from here
+    //     would bypass the proxy and run with no transaction at all
     public TransactionResponse makeTransaction(Long userId, TransactionRequest req) {
-        PlayerDetailsResDto playerDto = resolvePlayer(req);
+        PlayerDetailsResDto playerDto = playerService.resolveForTransaction(req.playerId(), req.playerSofascoreId());
 
         if(!playerDto.getPrice().equals(req.price())){
             throw new TransactionException(TransactionFailure.PRICE_MISMATCH, playerDto.getPrice());
         }
-        return applyBuyOrSell(userId, req, playerDto);
+        return buyOrSellTransaction.execute(status -> applyBuyOrSell(userId, req, playerDto));
     }
 
     public TransactionResponse applyBuyOrSell(Long userId, TransactionRequest req, PlayerDetailsResDto playerDto) {
@@ -124,8 +121,7 @@ public class TransactionService {
             if (ownedPlayers.size() >= MAX_BUY_SIZE) throw new TransactionException(TransactionFailure.MAX_BUY_REACHED);
             if (alreadyOwned)                        throw new TransactionException(TransactionFailure.ALREADY_OWNED);
             if (user.getPoints() < req.price())      throw new TransactionException(TransactionFailure.INSUFFICIENT_POINTS);
-            // can't buy a player whose world cup match is being played right now (price mid-swing)
-            if (worldCupMode && worldCupLiveMatchService.isPlayerInLiveMatch(playerDto.getId()))
+            if (isInLiveMatch(playerDto.getId()))
                 throw new TransactionException(TransactionFailure.PLAYER_IN_LIVE_MATCH);
 
             // Persist player only after validations pass so a failed buy doesn't leave an orphan row.
@@ -147,6 +143,8 @@ public class TransactionService {
             playerUserCurrentBoughtService.savePlayerUserCurrBoughtTransaction(holding);
         } else {
             if (!alreadyOwned) throw new TransactionException(TransactionFailure.NOT_OWNED);
+            if (isInLiveMatch(playerDto.getId()))
+                throw new TransactionException(TransactionFailure.PLAYER_IN_LIVE_MATCH);
             // a player can't be sold within the lock window after buying him
             if (worldCupMode) {
                 LocalDateTime boughtAt = playerUserCurrentBoughtService.getBoughtAt(userId, playerDto.getId());
@@ -161,6 +159,16 @@ public class TransactionService {
                 req.transactionType(), req.price(), LocalDateTime.now(), userId, playerDto.getId()));
 
         return new TransactionResponse(0, saved.getId(), saved.getTimestamp(), null);
+    }
+
+    // no buy or sell while his match is being played: the price only moves after it, so trading
+    // mid-match would be trading on a result already known. db only, safe inside the transaction.
+    // a player not in our db yet (null id) has no fixtures of ours, so he reads as not playing
+    private boolean isInLiveMatch(Long playerId) {
+        if (playerId == null) return false;
+        Instant now = Instant.now();
+        return fixtureRepository.isPlayersClubPlayingNow(playerId, now, now.minus(LIVE_MATCH_WINDOW),
+                FixtureResultConstants.EXCLUDED_FROM_RESULTS_POLL);
     }
     public Page<Transaction> getTransactions(int pageNum){
         // page num starts with 0

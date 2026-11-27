@@ -45,6 +45,9 @@ public class PlayerDetailsResDto {
     private List<PlayerRecentMatch> recentMatches;
     // see Player.missedMatches; drives the refresh rule and the "flagged" view
     private Integer missedMatches;
+    // see Player.externallyRefreshedAt; decides whether a buy/sell refreshes him first. internal only
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private java.time.Instant externallyRefreshedAt;
 
     private static final Map<String, String> NORMALIZATION_MAP = Map.of(
             "utd", "united",
@@ -152,6 +155,14 @@ public class PlayerDetailsResDto {
 
     public void setMissedMatches(Integer missedMatches) {
         this.missedMatches = missedMatches;
+    }
+
+    public java.time.Instant getExternallyRefreshedAt() {
+        return externallyRefreshedAt;
+    }
+
+    public void setExternallyRefreshedAt(java.time.Instant externallyRefreshedAt) {
+        this.externallyRefreshedAt = externallyRefreshedAt;
     }
 
     // serialised as "flagged" so the frontend can mark a player not currently in his club's squad

@@ -6,6 +6,7 @@ import com.yasser.footballersmarket.playerstats.PlayerWorldCupStats;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Period;
@@ -70,6 +71,14 @@ public class Player {
     private Long teamId;
     // null on rows from before the column existed; read as 0
     private Integer missedMatches = 0;
+
+    // an externally refreshed player's data counts as current this long: a player rarely plays twice
+    // in under 3 days (the premier league's 48h festive turnarounds don't matter, fixtures maintain it)
+    public static final Duration EXTERNAL_REFRESH_MAX_AGE = Duration.ofDays(3);
+
+    // when his stats were last written from the external service. only meaningful while he
+    // refreshes externally; null = never (or before the column existed), i.e. stale
+    private Instant externallyRefreshedAt;
 
     public Player(){}
 //
@@ -406,5 +415,23 @@ public class Player {
 
     public boolean refreshesExternally() {
         return refreshesExternally(updatedBy, missedMatches);
+    }
+
+    // an externally refreshed player whose stored data is older than EXTERNAL_REFRESH_MAX_AGE (or
+    // was never refreshed): what a buy or sell refreshes before pricing him. fixture-maintained
+    // players are never stale -- their data is the fixtures'
+    public static boolean needsExternalRefresh(String updatedBy, Integer missedMatches,
+                                               Instant externallyRefreshedAt, Instant now) {
+        if (!refreshesExternally(updatedBy, missedMatches)) return false;
+        return externallyRefreshedAt == null
+                || externallyRefreshedAt.isBefore(now.minus(EXTERNAL_REFRESH_MAX_AGE));
+    }
+
+    public Instant getExternallyRefreshedAt() {
+        return externallyRefreshedAt;
+    }
+
+    public void setExternallyRefreshedAt(Instant externallyRefreshedAt) {
+        this.externallyRefreshedAt = externallyRefreshedAt;
     }
 }

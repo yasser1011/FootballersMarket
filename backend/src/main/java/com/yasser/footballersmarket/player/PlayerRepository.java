@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -90,6 +91,11 @@ public interface PlayerRepository extends JpaRepository<Player, Long> {
     // collision guard and the pending-player merge both find him by it
     @Query("UPDATE Player p SET p.updatedBy = 'sofascore' where p.id = ?1 and (p.updatedBy is null or p.updatedBy <> 'sofascore_buy')")
     void updatePlayerUpdatedByStatusToSofascore(Long playerId);
+
+    // see Player.externallyRefreshedAt
+    @Modifying
+    @Query("UPDATE Player p SET p.externallyRefreshedAt = :refreshedAt where p.id = :playerId")
+    void markExternallyRefreshed(@Param("playerId") Long playerId, @Param("refreshedAt") Instant refreshedAt);
 
     Player findFirstBySofascoreId(Integer sofascoreId);
 

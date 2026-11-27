@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -82,6 +83,41 @@ public class PlayerService {
             return stored;
         }
         stored.setRecentMatches(external.getRecentMatches());
+        // does changes on the stored object directly
+        applyExternalRefresh(stored, external);
+        return stored;
+    }
+
+    // the player a buy or sell is priced against, resolved BEFORE the transaction opens (it may call
+    // 365, see TransactionService.makeTransaction):
+    //  - in db, fixture-maintained or refreshed in the last 3 days: his stored data, no http
+    //  - in db, externally refreshed and older than that (e.g. a page left open for days): refreshed
+    //    and written first, so he cannot be bought at a price nobody has seen in weeks. 365 down ->
+    //    the stored (stale) price is allowed
+    //  - not in db (a search result): built from 365 as the details page showed him; 404 if 365 fails
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public PlayerDetailsResDto resolveForTransaction(Long playerId, Integer externalId) {
+        // the request carries the internal id when the page had one. without it, he may still have
+        // been bought (and so created) by someone else since that page loaded
+        PlayerDetailsResDto stored = playerId != null
+                ? getPlayerDetailsByInternalId(playerId)
+                : getPlayerDetailsByExternalId(externalId);
+
+        if (stored == null) {
+            PlayerDetailsDto external = scoresService.fetchPlayerEntityFromExternalService(externalId);
+            if (external == null) throw new EntityNotFoundException("player not found in external service " + externalId);
+            return convertExternalToPlayerDto(externalId, external);
+        }
+
+        if (!Player.needsExternalRefresh(stored.getUpdatedBy(), stored.getMissedMatches(),
+                stored.getExternallyRefreshedAt(), Instant.now())) {
+            return stored;
+        }
+        PlayerDetailsDto external = scoresService.fetchPlayerEntityFromExternalService(stored.getExternalServicePlayerId());
+        if (external == null) {
+            logger.warn("player {} stale and the external service failed: transaction priced on stored data", stored.getId());
+            return stored;
+        }
         applyExternalRefresh(stored, external);
         return stored;
     }
@@ -124,6 +160,10 @@ public class PlayerService {
             // its own instance: saving attaches it to the player and the session, the dto keeps another
             if (hasLeagueStats) {
                 updatePlayerLeagueStatsDetails(stored.getId(), scoresService.createLeagueStatsDto(external.getLeagueStats()));
+            } else {
+                // 365 answered but has no league stats for him: still a refresh, so a buy within
+                // the next 3 days does not ask again (updatePlayerLeagueStatsDetails stamps otherwise)
+                playerRepository.markExternallyRefreshed(stored.getId(), Instant.now());
             }
         });
 
@@ -190,6 +230,8 @@ public class PlayerService {
         }
         playerLeagueStatsService.savePlayerLeagueStats(updatedLeagueStats);
         updatePlayerUpdatedByStatusToSofascore(rapidId);
+        // every caller writes what the external service just reported: his data is current as of now
+        playerRepository.markExternallyRefreshed(rapidId, Instant.now());
         logger.info("player data updated in database player id {}", rapidId);
     }
 
@@ -286,6 +328,7 @@ public class PlayerService {
         playerDto.setClubPhotoUrl(playerEntity.getClubPhotoUrl());
         playerDto.setUpdatedBy(playerEntity.getUpdatedBy());
         playerDto.setMissedMatches(playerEntity.getMissedMatches());
+        playerDto.setExternallyRefreshedAt(playerEntity.getExternallyRefreshedAt());
         PlayerWorldCupStats wcStats = playerEntity.getWorldCupStats();
         playerDto.setWorldCupBaseRating(wcStats == null ? null : wcStats.getBaseRating());
         playerDto.setWorldCupRating(wcStats == null ? null : wcStats.getRating());

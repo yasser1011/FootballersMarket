@@ -8,7 +8,7 @@ public enum TransactionFailure {
     ALREADY_OWNED("player is already bought by this user", "already_owned"),
     NOT_OWNED("player wasn't bought by this user", "not_owned"),
     INSUFFICIENT_POINTS("not enough points to buy the player", "insufficient_points"),
-    PLAYER_IN_LIVE_MATCH("this player is currently playing a match and can't be bought right now", "live_match"),
+    PLAYER_IN_LIVE_MATCH("this player is currently playing a match and can't be bought or sold right now", "live_match"),
     SELL_TOO_SOON("a player can only be sold 48 hours after buying him", "sell_locked");
 
     public final String message;

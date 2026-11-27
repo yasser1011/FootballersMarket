@@ -35,4 +35,19 @@ public interface FixtureRepository extends JpaRepository<Fixture, Long> {
             + "where f.statsApplied = true and f.date > :date "
             + "and (f.homeTeamId = :teamId or f.awayTeamId = :teamId)")
     boolean existsAppliedAfter(@Param("teamId") Long teamId, @Param("date") Instant date);
+
+    // is this player's club in a match that has kicked off and isn't over? his price only moves
+    // after FT, so a buy/sell mid-match would trade on a price the match has already made stale.
+    // earliestKickoff bounds it so a fixture stuck with a stale status (e.g. a postponed one that
+    // keeps its old date) can't block his club forever. a player whose club we don't track reads
+    // as not playing
+    @Query("select case when count(f) > 0 then true else false end from Fixture f, Player p "
+            + "where p.id = :playerId "
+            + "and (f.homeTeamId = p.teamId or f.awayTeamId = p.teamId) "
+            + "and f.date <= :now and f.date >= :earliestKickoff "
+            + "and (f.status is null or f.status not in :overStatuses)")
+    boolean isPlayersClubPlayingNow(@Param("playerId") Long playerId,
+                                    @Param("now") Instant now,
+                                    @Param("earliestKickoff") Instant earliestKickoff,
+                                    @Param("overStatuses") Set<String> overStatuses);
 }

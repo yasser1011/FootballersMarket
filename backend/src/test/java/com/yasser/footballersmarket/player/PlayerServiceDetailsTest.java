@@ -16,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import javax.persistence.EntityNotFoundException;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -174,6 +178,111 @@ class PlayerServiceDetailsTest {
         verify(playerLeagueStatsService, never()).savePlayerLeagueStats(any());
     }
 
+    @Test
+    void shouldStampWhenAnExternalRefreshWasWritten() {
+        givenStored(player("sofascore", 0));
+        givenExternal(external("Al Hilal", 7.9));
+
+        playerService.getPlayerDetails(EXTERNAL_ID);
+
+        verify(playerRepository).markExternallyRefreshed(eq(PLAYER_ID), any());
+    }
+
+    @Test
+    void shouldStampARefreshEvenWhen365HasNoLeagueStatsForHim() {
+        givenStored(player("sofascore", 0));
+        PlayerDetailsDto external = mock(PlayerDetailsDto.class);
+        when(external.getRecentMatches()).thenReturn(theirLastFive);
+        givenExternal(external);
+
+        playerService.getPlayerDetails(EXTERNAL_ID);
+
+        // asked and answered: a buy in the next 3 days does not ask again
+        verify(playerRepository).markExternallyRefreshed(eq(PLAYER_ID), any());
+        verify(playerLeagueStatsService, never()).savePlayerLeagueStats(any());
+    }
+
+    // ---- the player a buy/sell is priced against ----
+
+    @Test
+    void shouldPriceATransactionOfAFixturePlayerOnStoredDataWithoutHttp() {
+        givenStoredById(player("fixture", 0));
+
+        PlayerDetailsResDto resolved = playerService.resolveForTransaction(PLAYER_ID, EXTERNAL_ID);
+
+        assertThat(resolved.getId()).isEqualTo(PLAYER_ID);
+        verify(scoresService, never()).fetchPlayerEntityFromExternalService(any());
+    }
+
+    @Test
+    void shouldNotRefreshAnExternalPlayerRefreshedInTheLastThreeDays() {
+        givenStoredById(player("sofascore", 0, Instant.now().minus(Duration.ofDays(1))));
+
+        playerService.resolveForTransaction(PLAYER_ID, EXTERNAL_ID);
+
+        verify(scoresService, never()).fetchPlayerEntityFromExternalService(any());
+    }
+
+    @Test
+    void shouldRefreshAStaleExternalPlayerBeforePricingTheTransaction() {
+        // the page was left open for weeks and nobody opened him since
+        givenStoredById(player("fixture", 4, Instant.now().minus(Duration.ofDays(20))));
+        givenExternal(external("Al Hilal", 7.9));
+
+        PlayerDetailsResDto resolved = playerService.resolveForTransaction(PLAYER_ID, EXTERNAL_ID);
+
+        assertThat(resolved.getLeagueStats().getRating()).isEqualTo(7.9);
+        verify(playerLeagueStatsService).savePlayerLeagueStats(any());
+        verify(playerRepository).markExternallyRefreshed(eq(PLAYER_ID), any());
+    }
+
+    @Test
+    void shouldRefreshAnExternalPlayerNeverRefreshedBeforeTheTransaction() {
+        givenStoredById(player("sofascore_buy", 0, null));
+        givenExternal(external("Al Hilal", 7.9));
+
+        playerService.resolveForTransaction(PLAYER_ID, EXTERNAL_ID);
+
+        verify(playerLeagueStatsService).savePlayerLeagueStats(any());
+    }
+
+    @Test
+    void shouldAllowTheStalePriceWhen365FailsDuringATransaction() {
+        givenStoredById(player("sofascore", 0, Instant.now().minus(Duration.ofDays(20))));
+
+        PlayerDetailsResDto resolved = playerService.resolveForTransaction(PLAYER_ID, EXTERNAL_ID);
+
+        assertThat(resolved.getLeagueStats().getRating()).isEqualTo(7.0);
+        verify(playerLeagueStatsService, never()).savePlayerLeagueStats(any());
+    }
+
+    @Test
+    void shouldFindByExternalIdWhenTheRequestHasNoInternalId() {
+        // he was a search result on the page, but someone else bought (and so created) him since
+        givenStored(player("sofascore_buy", 0, Instant.now()));
+
+        PlayerDetailsResDto resolved = playerService.resolveForTransaction(null, EXTERNAL_ID);
+
+        assertThat(resolved.getId()).isEqualTo(PLAYER_ID);
+        verify(scoresService, never()).fetchPlayerEntityFromExternalService(any());
+    }
+
+    @Test
+    void shouldPriceATransactionOfAPlayerWeDoNotHaveFrom365() {
+        givenExternal(external("Al Hilal", 7.4));
+
+        PlayerDetailsResDto resolved = playerService.resolveForTransaction(null, EXTERNAL_ID);
+
+        assertThat(resolved.getId()).isNull();
+        assertThat(resolved.getLeagueStats().getRating()).isEqualTo(7.4);
+    }
+
+    @Test
+    void shouldRejectATransactionOfAPlayerNeitherWeNor365Have() {
+        assertThatThrownBy(() -> playerService.resolveForTransaction(null, EXTERNAL_ID))
+                .isInstanceOf(EntityNotFoundException.class);
+    }
+
     // ---- last ratings alone ----
 
     @Test
@@ -195,15 +304,24 @@ class PlayerServiceDetailsTest {
     // ---- helpers ----
 
     private Player player(String updatedBy, int missedMatches) {
+        return player(updatedBy, missedMatches, null);
+    }
+
+    private Player player(String updatedBy, int missedMatches, Instant externallyRefreshedAt) {
         Player player = new Player(PLAYER_ID, EXTERNAL_ID, "Player", LocalDate.of(2000, 1, 1),
                 "Arsenal", "Arsenal", updatedBy);
         player.setLeagueStats(new PlayerLeagueStats(PLAYER_ID, 3, 1, 10, 7.0, player));
         player.setMissedMatches(missedMatches);
+        player.setExternallyRefreshedAt(externallyRefreshedAt);
         return player;
     }
 
     private void givenStored(Player player) {
         when(playerRepository.findFirstBySofascoreId(EXTERNAL_ID)).thenReturn(player);
+    }
+
+    private void givenStoredById(Player player) {
+        when(playerRepository.findById(PLAYER_ID)).thenReturn(Optional.of(player));
     }
 
     private void givenExternal(PlayerDetailsDto external) {
@@ -217,7 +335,8 @@ class PlayerServiceDetailsTest {
         when(external.getClubName()).thenReturn(clubName);
         when(external.getClubId()).thenReturn(77);
         when(external.getLeagueStats()).thenReturn(leagueStats);
-        when(external.getRecentMatches()).thenReturn(theirLastFive);
+        // lenient: a transaction's refresh has no page to show them on, so it never reads them
+        lenient().when(external.getRecentMatches()).thenReturn(theirLastFive);
         // createLeagueStatsDto is the 365 -> our stats mapping; a fresh instance per call, like the real one
         when(scoresService.createLeagueStatsDto(leagueStats))
                 .thenAnswer(invocation -> new PlayerLeagueStats(4, 2, 12, rating));
