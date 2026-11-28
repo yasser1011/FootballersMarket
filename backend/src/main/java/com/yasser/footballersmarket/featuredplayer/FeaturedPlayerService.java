@@ -1,44 +1,42 @@
 package com.yasser.footballersmarket.featuredplayer;
 
+import com.yasser.footballersmarket.fixture.TeamRepository;
+import com.yasser.footballersmarket.fixture.tournament.TournamentCatalog;
 import com.yasser.footballersmarket.player.Player;
 import com.yasser.footballersmarket.player.PlayerRepository;
-import com.yasser.footballersmarket.scores365.ScoresService;
+import com.yasser.footballersmarket.playerstats.PlayerMatchRatingRepository;
 import com.yasser.footballersmarket.scores365.dto.FeaturedPlayersResponse;
-import com.yasser.footballersmarket.sofascore.SofascoreConfig;
-import com.yasser.footballersmarket.sofascore.SofascoreService;
-import com.yasser.footballersmarket.sofascore.dto.TrendingPlayer;
-import com.yasser.footballersmarket.sofascore.dto.TrendingPlayersResponse;
-import com.yasser.footballersmarket.worldcup.WorldCupTeam;
 import com.yasser.footballersmarket.worldcup.WorldCupTeamRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class FeaturedPlayerService {
 
 
     private final FeaturedPlayerRepository featuredPlayerRepository;
-    private final ScoresService scoresService;
+    private final PlayerMatchRatingRepository playerMatchRatingRepository;
     private final PlayerRepository playerRepository;
+    private final TeamRepository teamRepository;
     private final WorldCupTeamRepository worldCupTeamRepository;
-    private final Logger logger = LoggerFactory.getLogger(FeaturedPlayerService.class);
 
-    public FeaturedPlayerService(FeaturedPlayerRepository featuredPlayerRepository, ScoresService scoresService,
-                                 PlayerRepository playerRepository, WorldCupTeamRepository worldCupTeamRepository){
+    public FeaturedPlayerService(FeaturedPlayerRepository featuredPlayerRepository,
+                                 PlayerMatchRatingRepository playerMatchRatingRepository,
+                                 PlayerRepository playerRepository, TeamRepository teamRepository,
+                                 WorldCupTeamRepository worldCupTeamRepository){
         this.featuredPlayerRepository = featuredPlayerRepository;
-        this.scoresService = scoresService;
+        this.playerMatchRatingRepository = playerMatchRatingRepository;
         this.playerRepository = playerRepository;
+        this.teamRepository = teamRepository;
         this.worldCupTeamRepository = worldCupTeamRepository;
     }
 
@@ -64,46 +62,43 @@ public class FeaturedPlayerService {
         return new FeaturedPlayersResponse(rows);
     }
 
+    // the club featured players: the 5 best match ratings of the leagues' current rounds, or of the
+    // CL's alone while it is the newest (see PlayerMatchRatingRepository.findTop5OfCurrentRounds), straight from our own fixture
+    // data -- no external call and nothing cached. the rows are built, never saved, in the shape the
+    // card always got. nothing applied yet -> an empty list (the card says so)
     public FeaturedPlayersResponse getFeaturedPlayers(){
-        List<FeaturedPlayer> currDateFeaturedPlayers = featuredPlayerRepository.
-                findByDate(LocalDate.now());
+        List<Object[]> top = playerMatchRatingRepository.findTop5OfCurrentRounds(TournamentCatalog.CHAMPIONS_LEAGUE_ID);
+        if (top.isEmpty()) return new FeaturedPlayersResponse(new ArrayList<>());
 
-        if (!currDateFeaturedPlayers.isEmpty()){
-            logger.info("featured players fetched from database");
-            FeaturedPlayersResponse featuredPlayersResponse = new FeaturedPlayersResponse(currDateFeaturedPlayers);
-            scoresService.addBaseUrlToTrendingPlayersResponse(featuredPlayersResponse);
-            return featuredPlayersResponse;
+        Map<Long, Player> players = new HashMap<>();
+        playerRepository.findAllById(top.stream().map(row -> idOf(row[0])).collect(Collectors.toSet()))
+                .forEach(player -> players.put(player.getId(), player));
+        Map<Long, String> teamNames = new HashMap<>();
+        teamRepository.findAllById(top.stream().flatMap(row -> Stream.of(idOf(row[3]), idOf(row[4])))
+                        .filter(Objects::nonNull).collect(Collectors.toSet()))
+                .forEach(team -> teamNames.put(team.getId(), team.getName()));
+
+        List<FeaturedPlayer> featured = new ArrayList<>();
+        for (Object[] row : top) {
+            Player player = players.get(idOf(row[0]));
+            if (player == null) continue; // deleted since: nothing to show for him
+            FeaturedPlayer card = new FeaturedPlayer(player.getName(), player.getSofascoreId(),
+                    ratingText(((Number) row[1]).doubleValue()), featured.size() + 1, null,
+                    teamNames.get(idOf(row[3])), teamNames.get(idOf(row[4])));
+            // the same images his details page shows; the badge is his current club's
+            card.setPlayerImgUrl(player.getPhotoUrl());
+            card.setPlayerTeamImgUrl(player.getClubPhotoUrl());
+            featured.add(card);
         }
-        logger.info("fetching featured players from external service");
-//        FeaturedPlayersResponse trendingPlayers = sofascoreService.getTrendingPlayers();
-        FeaturedPlayersResponse trendingPlayers = scoresService.getFeaturedPlayers();
-        if (trendingPlayers == null){
-            // return last 5 in db
-            List<FeaturedPlayer> top5ByOrderByIdDesc = featuredPlayerRepository.findTop5ByWorldCupFalseOrderByDateDescPositionAsc();
-            logger.info("returned last 5 rows from db from database");
-            FeaturedPlayersResponse featuredPlayersResponse = new FeaturedPlayersResponse(top5ByOrderByIdDesc);
-            scoresService.addBaseUrlToTrendingPlayersResponse(featuredPlayersResponse);
-            return featuredPlayersResponse;
-        }
+        return new FeaturedPlayersResponse(featured);
+    }
 
-        try {
-            logger.info("fetched featured players from external service saving to database");
-            featuredPlayerRepository.saveAll(trendingPlayers.getFeaturedPlayers());
-            logger.info("featured players saved to database");
-            scoresService.addBaseUrlToTrendingPlayersResponse(trendingPlayers);
+    private static Long idOf(Object column) {
+        return column == null ? null : ((Number) column).longValue();
+    }
 
-            return trendingPlayers;
-        } catch (DataIntegrityViolationException e) {
-            // there are already data saved for this date
-            List<FeaturedPlayer> featuredPlayers = featuredPlayerRepository.
-                    findByDate(LocalDate.now());
-
-            logger.info("featured players fetching again from db");
-            FeaturedPlayersResponse featResponse = new FeaturedPlayersResponse(featuredPlayers);
-            scoresService.addBaseUrlToTrendingPlayersResponse(featResponse);
-            return featResponse;
-
-        }
-
+    // one decimal, the way ratings are shown everywhere ("7.5", not "7.53")
+    private static String ratingText(double rating) {
+        return String.format(Locale.ROOT, "%.1f", rating);
     }
 }

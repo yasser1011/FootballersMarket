@@ -18,7 +18,7 @@ public class TournamentCatalog {
     private static final Long ITALIAN_LEAGUE_ID = 135L;
     private static final Long FRENCH_LEAGUE_ID = 61L;
     private static final Long GERMAN_LEAGUE_ID = 78L;
-    private static final Long CHAMPIONS_LEAGUE_ID = 2L;
+    public static final Long CHAMPIONS_LEAGUE_ID = 2L;
 
     private static final Long LIVERPOOL_ID = 40L;
     private static final Long ARSENAL_ID = 42L;
